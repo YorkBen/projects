@@ -1,0 +1,36 @@
+<!-- 引入导航模块的宏 render_nav_item -->
+{% from 'bootstrap/nav.html' import render_nav_item %}
+<!-- 下面是正常的 Bootstrap 页面代码，看起来很复杂，不过可以从官网上拷贝 -->
+<!DOCTYPE html>
+<html lang="cn" style="height: 100%">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>{% block title %} 疾病诊断系统 {% endblock %}</title> <!-- 定义标题块 -->
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  {{ bootstrap.load_css() }}  <!-- 动态加载 Bootstrap 样式 -->
+</head>
+<body style="height: 100%;">
+  <main style="height: 100%; overflow: hidden;">
+    <header style="height: 6.1%" class="p-3 mb-0 bg-primary text-white clearfix">
+      <div id="logo" class="float-left">
+        <h3 style="margin-bottom: 0;">疾病诊断系统</h3>
+      </div>
+      <div class="float-right mt-1">
+      {% block header %}
+      {% endblock %}
+      </div>
+    </header>
+
+    <section style="height: 94%; padding: 10px 0; box-sizing: border-box;">
+      {% block content %}
+      <h1> Hello Flask Bootstrap! </h1>
+      {% endblock %}
+    </section>
+
+  </main>    <!-- 动态加载 Bootstrap js 脚本 -->
+  {% block script %} <!-- 定义页脚块 -->
+    {{ bootstrap.load_js() }}
+  {% endblock %}
+</body>
+</html>

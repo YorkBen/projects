@@ -1,0 +1,23 @@
+{% extends "base.html" %} <!-- 继承基础模板 -->
+{% from 'bootstrap4/form.html' import render_form, render_hidden_errors %}
+{% from 'bootstrap4/utils.html' import render_messages %}
+
+{% block content %} <!-- 替换页面内容 -->
+<div class="form" style="width: 80%; max-width: 400px; margin: 12% auto 0;">
+  <div class="msg">
+    {{ render_hidden_errors(form) }}
+    {{ render_messages() }}
+  </div>
+  {{ render_form(form, action="login", method="post") }}
+  <div class="text-right" style="font-size: smaller;">
+    <span>还没有账户？-></span>&nbsp;
+    <a href="">注册账户</a>
+  </div>
+</div>
+{% endblock %}
+
+{% block script %} <!-- 定义页脚块 -->
+  {{ super() }}
+  <script type = "text/javascript"
+           src = "{{ url_for('static', filename = 'login.js') }}" ></script>
+{% endblock %}

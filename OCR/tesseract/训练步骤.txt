@@ -1,0 +1,34 @@
+# tif图片合并成一个tif
+1. 打开D:\Program Files\jTessBoxEditor
+2. 双击运行jTessBoxEditor.jar
+3. Tools菜单 -> Merge tiff -> 选中要合并的tif图片 -> 输入要输出的tif图片名称 -> 确定
+
+# 合并tif图片生成box
+tesseract eng.fushi.exp0.tif eng.fushi.exp0 -l eng --psm 6 batch.nochop makebox
+
+# 修正box标注
+从jTessBoxEditor中加载eng.fushi.exp0.tif
+
+# 从tif图像生成lstmf文件
+tesseract eng.fushi.exp0.tif eng.fushi.exp0 -l eng --psm 6 lstm.train
+
+# 训练部分
+# 从官方模型提取lstm模型
+combine_tessdata -e chi_sim.traineddata chi_sim.lstm
+
+# 训练
+lstmtraining --debug_interval -5 --max_iterations 3000 --continue_from="eng.lstm" --model_output="./imgs3" --train_listfile="imgs3/training_files.txt" --traineddata="eng.traineddata"
+
+max_iterations  增加后，可以在原来基础上继续训练
+
+# 训练后生成traineddata文件
+lstmtraining --stop_training --continue_from="imgs0_checkpoint" --traineddata="eng.traineddata" --model_output="imgs0\fushi.exp0.traineddata"
+
+# 运行预测
+tesseract 004.tif res -l fushi.exp0 --psm 6
+
+
+# 生成box命令，待测试
+tesseract phototest.tif phototest-wordstr  -l eng --psm 6 wordstrbox
+tesseract eng.fushi.exp0.tif eng.fushi.exp0 -l eng lstmbox
+tesseract eng.fushi.exp0.tif eng.fushi.exp0 -l eng --psm 6 batch.nochop makebox

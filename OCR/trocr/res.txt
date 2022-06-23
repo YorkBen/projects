@@ -1,0 +1,8 @@
+FR:F/T
+MM: FICE
+RC: TRIG
+
+12.8
+CQ)
+
+163976011

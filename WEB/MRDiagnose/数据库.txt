@@ -1,0 +1,52 @@
+create database mrdiagnose;
+
+# 特征编号表
+create table features (
+  id int primary key,
+  name varchar(200) not null,
+  no varchar(10) not null
+);
+
+# 疾病特征表
+create table diease_features (
+  id int primary key,
+  name varchar(200) not null,
+  feature_no varchar(10) not null
+);
+
+# 用户表
+create table user (
+  id varchar(20) not null,
+  name varchar(10) not null,
+  password varchar(20)
+);
+
+# 病历数据表
+create table medical_record (
+  id int primary key,
+  did varchar(20) not null,
+  pid varchar(20) not null,
+  record_type varchar(20) not null,
+  record_cnt TEXT,
+  update_date varchar(20)
+);
+
+# 疾病特征抽取结果
+create table feature_extract_value (
+  id int primary key,
+  pid varchar(20) not null,
+  feature_no varchar(10) not null,
+  feature_val varchar(1),
+  update_date varchar(20),
+  update_by varchar(20) not null
+);
+
+# 疾病特征医生修改结果
+create table feature_modify_value (
+  id int primary key,
+  pid varchar(20) not null,
+  feature_no varchar(10) not null,
+  feature_val varchar(1),
+  update_date varchar(20),
+  update_by varchar(20) not null
+);

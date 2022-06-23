@@ -1,0 +1,52 @@
+{% extends "base.html" %} <!-- 继承基础模板 -->
+
+{% block header %}
+<a href="logout" class="btn-primary mr-3">登出</a>
+{% endblock %}
+
+{% block content %} <!-- 替换页面内容 -->
+    <div class="form" style="width: 100%;">
+      <!-- 表格内容 -->
+      <table id="patient_list" class="table table-striped">
+        <thead>
+          <tr>
+            {% for item in header %}
+            <th scope="col">{{ item }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="7"></td></tr>
+        </tbody>
+      </table>
+
+      <!-- 分页按钮 -->
+      <nav aria-label="患者页面分页按钮" class="form-row px-2">
+        <div class="input-group col-md-4">
+            <input type="text" class="form-control" placeholder="患者姓名" aria-label="患者姓名" aria-describedby="button-query">
+            <div class="input-group-append">
+              <button class="btn btn-primary" type="button" id="button-query">查询</button>
+            </div>
+        </div>
+
+        <ul class="pagination justify-content-end col" style="margin-bottom: 0;">
+          <li class="page-item active" aria-current="page">
+            <span class="page-link">1</span>
+          </li>
+          <li class="page-item"><a class="page-link" href="#">2</a></li>
+          <li class="page-item"><a class="page-link" href="#">3</a></li>
+        </ul>
+      </nav>
+    </div>
+    <input type="text" value="{{depart}}" id="depart" style="display: none !important;" />
+{% endblock %}
+
+{% block script %} <!-- 定义页脚块 -->
+  {{ super() }}
+  <script type = "text/javascript"
+           src = "{{ url_for('static', filename = 'patient_list.js') }}" ></script>
+  <script type = "text/javascript">
+    patientTable = PatientTable.createNew("patient_list", 10)
+    patientTable.init()
+  </script>
+{% endblock %}

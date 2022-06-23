@@ -1,0 +1,158 @@
+2022-06-14 09:53:25
+++++++++++++++++++++++++++++++++++++++++CONFIGURATION SUMMARY++++++++++++++++++++++++++++++++++++++++
+ Status:
+     mode                 : train
+ ++++++++++++++++++++++++++++++++++++++++
+ Datasets:
+     datasets         fold: data
+     train            file: train.txt
+     validation       file: None
+     vocab             dir: data/vocabs
+     delimiter            : b
+     use  pretrained model: True
+     pretrained      model: Bert
+     finetune             : False
+     use    middle   model: True
+     middle          model: bilstm
+     checkpoints       dir: ckpts/bert-bilstm-crf
+     log               dir: data/logs
+ ++++++++++++++++++++++++++++++++++++++++
+Labeling Scheme:
+     label          scheme: BIO
+     label           level: 2
+     suffixes             : ['Symptom', 'Physiology', 'Status', 'Property', 'Body', 'Value']
+     measuring     metrics: ['precision', 'recall', 'f1', 'accuracy']
+ ++++++++++++++++++++++++++++++++++++++++
+Model Configuration:
+     embedding         dim: 768
+     max  sequence  length: 500
+     hidden            dim: 200
+     filter           nums: 64
+     idcnn            nums: 2
+     CUDA  VISIBLE  DEVICE: 0
+     seed                 : 42
+ ++++++++++++++++++++++++++++++++++++++++
+ Training Settings:
+     epoch                : 300
+     batch            size: 8
+     dropout              : 0.5
+     learning         rate: 0.001
+     optimizer            : Adam
+     use               gan: False
+     gan            method: fgm
+     checkpoint       name: model
+     max       checkpoints: 3
+     print       per_batch: 20
+     is     early     stop: True
+     patient              : 5
+++++++++++++++++++++++++++++++++++++++++CONFIGURATION SUMMARY END++++++++++++++++++++++++++++++++++++++++
+loading vocab...
+dataManager initialed...
+mode: train
+loading data...
+validating set is not exist, built...
+training set size: 857, validating set size: 96
+++++++++++++++++++++training starting++++++++++++++++++++
+epoch:1/300
+training batch:    20, loss: 4.11622, precision: 0.943 recall: 0.833 f1: 0.885 accuracy: 0.947 
+training batch:    40, loss: 2.29762, precision: 0.882 recall: 0.714 f1: 0.789 accuracy: 0.979 
+training batch:    60, loss: 1.47084, precision: 0.952 recall: 1.000 f1: 0.976 accuracy: 0.981 
+training batch:    80, loss: 3.96997, precision: 0.949 recall: 0.860 f1: 0.902 accuracy: 0.959 
+training batch:   100, loss: 0.99284, precision: 0.938 recall: 1.000 f1: 0.968 accuracy: 0.997 
+start evaluate engines...
+label: Symptom, precision: 0.968 recall: 1.000 f1: 0.983 
+label: Physiology, precision: 0.965 recall: 0.967 f1: 0.965 
+label: Status, precision: 0.828 recall: 0.924 f1: 0.871 
+label: Property, precision: 0.583 recall: 0.583 f1: 0.583 
+label: Body, precision: 0.901 recall: 0.966 f1: 0.924 
+label: Value, precision: 0.689 recall: 0.785 f1: 0.723 
+time consumption:6.15(min), precision: 0.902 recall: 0.965 f1: 0.932 accuracy: 0.967 
+saved the new best model with f1: 0.932
+epoch:2/300
+training batch:    20, loss: 3.52905, precision: 0.963 recall: 0.963 f1: 0.963 accuracy: 0.967 
+training batch:    40, loss: 1.09058, precision: 0.983 recall: 1.000 f1: 0.992 accuracy: 0.993 
+training batch:    60, loss: 2.23534, precision: 0.943 recall: 0.825 f1: 0.880 accuracy: 0.947 
+training batch:    80, loss: 1.40430, precision: 1.000 recall: 0.810 f1: 0.895 accuracy: 0.967 
+training batch:   100, loss: 1.10651, precision: 0.979 recall: 0.939 f1: 0.958 accuracy: 0.983 
+start evaluate engines...
+label: Symptom, precision: 0.961 recall: 0.985 f1: 0.972 
+label: Physiology, precision: 0.965 recall: 0.958 f1: 0.960 
+label: Status, precision: 0.862 recall: 0.914 f1: 0.886 
+label: Property, precision: 0.583 recall: 0.556 f1: 0.567 
+label: Body, precision: 0.953 recall: 0.950 f1: 0.945 
+label: Value, precision: 0.833 recall: 0.722 f1: 0.765 
+time consumption:6.08(min), precision: 0.925 recall: 0.949 f1: 0.936 accuracy: 0.974 
+saved the new best model with f1: 0.936
+epoch:3/300
+training batch:    20, loss: 2.88247, precision: 0.923 recall: 0.906 f1: 0.914 accuracy: 0.957 
+training batch:    40, loss: 0.81487, precision: 0.947 recall: 0.947 f1: 0.947 accuracy: 0.964 
+training batch:    60, loss: 2.10567, precision: 0.961 recall: 0.986 f1: 0.973 accuracy: 0.980 
+training batch:    80, loss: 5.09356, precision: 0.919 recall: 0.791 f1: 0.850 accuracy: 0.951 
+training batch:   100, loss: 3.02850, precision: 0.980 recall: 0.943 f1: 0.962 accuracy: 0.988 
+start evaluate engines...
+label: Symptom, precision: 0.946 recall: 0.985 f1: 0.965 
+label: Physiology, precision: 0.986 recall: 0.955 f1: 0.967 
+label: Status, precision: 0.791 recall: 0.932 f1: 0.854 
+label: Property, precision: 0.583 recall: 0.583 f1: 0.583 
+label: Body, precision: 0.883 recall: 0.967 f1: 0.914 
+label: Value, precision: 0.771 recall: 0.715 f1: 0.724 
+time consumption:6.05(min), precision: 0.883 recall: 0.958 f1: 0.918 accuracy: 0.961 
+epoch:4/300
+training batch:    20, loss: 4.40331, precision: 0.891 recall: 0.919 f1: 0.905 accuracy: 0.971 
+training batch:    40, loss: 1.81399, precision: 0.927 recall: 0.950 f1: 0.938 accuracy: 0.973 
+training batch:    60, loss: 2.30750, precision: 0.929 recall: 0.929 f1: 0.929 accuracy: 0.981 
+training batch:    80, loss: 1.80123, precision: 0.900 recall: 1.000 f1: 0.947 accuracy: 0.959 
+training batch:   100, loss: 1.94023, precision: 0.884 recall: 0.974 f1: 0.927 accuracy: 0.944 
+start evaluate engines...
+label: Symptom, precision: 0.956 recall: 0.985 f1: 0.970 
+label: Physiology, precision: 0.965 recall: 0.967 f1: 0.965 
+label: Status, precision: 0.861 recall: 0.911 f1: 0.883 
+label: Property, precision: 0.583 recall: 0.583 f1: 0.583 
+label: Body, precision: 0.983 recall: 0.928 f1: 0.949 
+label: Value, precision: 0.780 recall: 0.715 f1: 0.726 
+time consumption:6.08(min), precision: 0.924 recall: 0.948 f1: 0.935 accuracy: 0.972 
+epoch:5/300
+training batch:    20, loss: 1.61837, precision: 0.969 recall: 0.984 f1: 0.977 accuracy: 0.988 
+training batch:    40, loss: 1.10756, precision: 0.957 recall: 0.917 f1: 0.936 accuracy: 0.969 
+training batch:    60, loss: 2.59684, precision: 0.767 recall: 1.000 f1: 0.868 accuracy: 0.961 
+training batch:    80, loss: 1.53691, precision: 1.000 recall: 0.943 f1: 0.971 accuracy: 0.987 
+training batch:   100, loss: 2.29372, precision: 0.934 recall: 0.966 f1: 0.950 accuracy: 0.974 
+start evaluate engines...
+label: Symptom, precision: 0.972 recall: 0.972 f1: 0.971 
+label: Physiology, precision: 0.965 recall: 0.958 f1: 0.960 
+label: Status, precision: 0.845 recall: 0.926 f1: 0.881 
+label: Property, precision: 0.583 recall: 0.583 f1: 0.583 
+label: Body, precision: 0.873 recall: 0.967 f1: 0.908 
+label: Value, precision: 0.792 recall: 0.688 f1: 0.727 
+time consumption:6.08(min), precision: 0.915 recall: 0.949 f1: 0.931 accuracy: 0.971 
+epoch:6/300
+training batch:    20, loss: 1.61943, precision: 0.967 recall: 0.983 f1: 0.975 accuracy: 0.987 
+training batch:    40, loss: 1.32649, precision: 0.981 recall: 1.000 f1: 0.990 accuracy: 0.994 
+training batch:    60, loss: 1.19869, precision: 0.912 recall: 1.000 f1: 0.954 accuracy: 0.986 
+training batch:    80, loss: 3.80965, precision: 0.973 recall: 0.930 f1: 0.951 accuracy: 0.963 
+training batch:   100, loss: 1.05242, precision: 1.000 recall: 0.957 f1: 0.978 accuracy: 0.991 
+start evaluate engines...
+label: Symptom, precision: 0.935 recall: 0.985 f1: 0.959 
+label: Physiology, precision: 0.965 recall: 0.979 f1: 0.972 
+label: Status, precision: 0.810 recall: 0.932 f1: 0.864 
+label: Property, precision: 0.583 recall: 0.583 f1: 0.583 
+label: Body, precision: 0.799 recall: 0.978 f1: 0.868 
+label: Value, precision: 0.667 recall: 0.736 f1: 0.678 
+time consumption:6.11(min), precision: 0.873 recall: 0.962 f1: 0.915 accuracy: 0.960 
+epoch:7/300
+training batch:    20, loss: 1.00835, precision: 0.950 recall: 1.000 f1: 0.974 accuracy: 0.986 
+training batch:    40, loss: 1.93358, precision: 1.000 recall: 0.962 f1: 0.980 accuracy: 0.991 
+training batch:    60, loss: 1.44310, precision: 0.957 recall: 0.978 f1: 0.968 accuracy: 0.982 
+training batch:    80, loss: 2.14112, precision: 0.891 recall: 0.911 f1: 0.901 accuracy: 0.975 
+training batch:   100, loss: 3.03915, precision: 0.930 recall: 0.952 f1: 0.941 accuracy: 0.973 
+start evaluate engines...
+label: Symptom, precision: 0.954 recall: 0.985 f1: 0.968 
+label: Physiology, precision: 0.986 recall: 0.958 f1: 0.969 
+label: Status, precision: 0.812 recall: 0.920 f1: 0.860 
+label: Property, precision: 0.583 recall: 0.583 f1: 0.583 
+label: Body, precision: 0.961 recall: 0.917 f1: 0.932 
+label: Value, precision: 0.771 recall: 0.715 f1: 0.724 
+time consumption:6.11(min), precision: 0.899 recall: 0.949 f1: 0.923 accuracy: 0.964 
+early stopped, no progress obtained within 5 epochs
+overall best f1 is 0.9360978962535164 at 2 epoch
+total training time consumption: 42.662(min)

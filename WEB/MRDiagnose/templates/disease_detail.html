@@ -1,0 +1,108 @@
+{% extends "base.html" %} <!-- 继承基础模板 -->
+
+{% block header %}
+<a href="logout" class="btn-primary mr-3">登出</a>
+{% endblock %}
+
+{% block content %} <!-- 替换页面内容 -->
+<style>
+  #breadnav {
+    margin-top: -10px;
+    margin-bottom: -18px;
+  }
+  #breadnav ol.breadcrumb {
+    border: none;
+    background: white;
+    margin-bottom: 0;
+    padding: 0.55rem 0.75rem 0.45rem;
+  }
+  #breadnav .breadcrumb-item+.breadcrumb-item::before {
+    content: ">";
+  }
+
+  h5 {
+    font-weight: bold;
+    margin-top: 2rem;
+  }
+  #fhqk .col {
+    padding-bottom: 30px;
+  }
+</style>
+
+<!--面包屑导航-->
+<nav id="breadnav" aria-label="breadcrumb" style="height: 37px;">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/">患者列表</a></li>
+    <li class="breadcrumb-item"><a href="/patient/{{pid}}">病例辅助诊断</a></li>
+    <li class="breadcrumb-item active" aria-current="page">特征检索</li>
+  </ol>
+</nav>
+
+<!--主要内容-->
+<div class="row px-5">
+  <h5>诊断特征符合情况</h5>
+  <div id="fhqk" class="card w-100">
+    <div class="card-body">
+      <div class="row row-cols-3">
+        <div class="col">
+          <div class="card" style="">
+            <div class="card-body">
+              <h6 class="card-subtitle mb-3 text-muted">临床表现：</h6>
+              <p class="card-text">绞痛——<a href="#" class="card-link">未检测到</a></p>
+              <p class="card-text">腹胀——<a href="#" class="card-link text-success"><img src="{{ url_for('static', filename = 'x.svg') }}" /></a></p>
+              <p class="card-text">无法排气排便——<a href="#" class="card-link text-danger"><img src="{{ url_for('static', filename = 'check-lg.svg') }}" /></a></p>
+              <p class="card-text">恶心呕吐——<a href="#" class="card-link">未检测到</a></p>
+            </div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="card" style="">
+            <div class="card-body">
+              <h6 class="card-subtitle mb-3 text-muted">病史：</h6>
+              <p class="card-text">腹部肿瘤史——<a href="#" class="card-link">未检测到</a></p>
+              <p class="card-text">疝气或疝气修复史——<a href="#" class="card-link">未检测到</a></p>
+              <p class="card-text">炎症性肠病史——<a href="#" class="card-link">未检测到</a></p>
+            </div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="card" style="">
+            <div class="card-body">
+              <h6 class="card-subtitle mb-3 text-muted">体格检查：</h6>
+              <p class="card-text">腹部叩诊鼓音——<a href="#" class="card-link">未检测到</a></p>
+              <p class="card-text">肠鸣音亢进（病程早期）——<a href="#" class="card-link">未检测到</a></p>
+              <p class="card-text">肠鸣音减弱（病程晚期）——<a href="#" class="card-link">未检测到</a></p>
+            </div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="card" style="">
+            <div class="card-body">
+              <h6 class="card-subtitle mb-3 text-muted">实验室数据：</h6>
+              <p class="card-text">全血细胞计数——<a href="#" class="card-link">未检测到</a></p>
+              <p class="card-text">血生化检验——<a href="#" class="card-link">未检测到</a></p>
+            </div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="card" style="">
+            <div class="card-body">
+              <h6 class="card-subtitle mb-3 text-muted">影像学检查：</h6>
+              <p class="card-text">立体腹部平片（首选）——<a href="#" class="card-link">未检测到</a></p>
+              <p class="card-text">腹部CT（次选）——<a href="#" class="card-link">未检测到</a></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h5>下一步治疗建议</h5>
+  <div class="card w-100" id="xybjy">
+    <div class="card-body">
+      <p class="card-text">完善未检测到的特征以明确诊断（若病人体征稳定）</p>
+      <p class="card-text">进行抢救（若病人体征不稳定）</p>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,107 @@
+{% extends "base.html" %} <!-- 继承基础模板 -->
+
+{% block header %}
+<a href="logout" class="btn-primary mr-3">登出</a>
+{% endblock %}
+
+{% block content %} <!-- 替换页面内容 -->
+<style>
+  #breadnav {
+    margin-top: -10px;
+  }
+  #breadnav ol.breadcrumb {
+    border: none;
+    background: white;
+    margin-bottom: 0;
+    padding: 0.55rem 0.75rem 0.45rem;
+  }
+  #breadnav .breadcrumb-item+.breadcrumb-item::before {
+    content: ">";
+  }
+  .list-group a {
+    cursor: pointer;
+  }
+  #accordionMR button {
+    font-size: 0.5em;
+    box-shadow: none;
+  }
+  #accordionMR .card-header {
+    padding: .55rem 1.25rem;
+  }
+  #accordionMR {
+    overflow: auto;
+  }
+  .lv-1 {
+    text-indent: 1rem;
+  }
+  .lv-2 {
+    text-indent: 2rem;
+  }
+  .lv-3 {
+    text-indent: 3rem;
+  }
+  .lv-4 {
+    text-indent: 4rem;
+  }
+</style>
+
+<!--面包屑导航-->
+<nav id="breadnav" aria-label="breadcrumb" style="height: 37px;">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/">患者列表</a></li>
+    <li class="breadcrumb-item active" aria-current="page">病例辅助诊断</li>
+  </ol>
+</nav>
+
+
+<input type="text" id="pid" value="{{pid}}" class="d-none" />
+<div class="row px-3" style="height: calc(100% - 27px);">
+    <div class="col-6 px-1 h-100">
+      <div class="card h-100">
+        <div class="accordion" id="accordionMR">
+
+
+        </div>
+      </div>
+    </div>
+    <div class="col-6 px-1 h-100">
+      <div class="card" style="height: calc(50% - 3px); margin-bottom: 5px;">
+        <div class="alert alert-secondary mb-0" role="alert">
+          怀疑诊断列表
+        </div>
+        <div style="overflow: auto;">
+          <div class="list-group list-group-flush">
+            <a href="/diease/{{pid}}_肠梗阻" class="list-group-item list-group-item-action">肠梗阻</a>
+            <a href="/diease/{{pid}}_肠梗阻" class="list-group-item list-group-item-action">急性阑尾炎</a>
+            <a href="/diease/{{pid}}_肠梗阻" class="list-group-item list-group-item-action">急性胰腺炎</a>
+            <a href="/diease/{{pid}}_肠梗阻" class="list-group-item list-group-item-action">胆总管结石</a>
+            <a href="/diease/{{pid}}_肠梗阻" class="list-group-item list-group-item-action">急性胆管炎</a>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="height: calc(50% - 2px); margin-top: 5px;">
+        <div class="alert alert-secondary mb-0" role="alert">
+          优先待排诊断
+        </div>
+        <div style="overflow: auto;">
+          <div class="list-group list-group-flush">
+            <a href="" class="list-group-item list-group-item-action">主动脉夹层</a>
+            <a href="" class="list-group-item list-group-item-action">腹主动脉瘤破裂</a>
+            <a href="" class="list-group-item list-group-item-action">心梗</a>
+          </div>
+        </div>
+      </div>
+    </div>
+</div>
+{% endblock %}
+
+
+{% block script %} <!-- 定义页脚块 -->
+  {{ super() }}
+  <script type = "text/javascript"
+           src = "{{ url_for('static', filename = 'patient_detail.js') }}" ></script>
+  <script type = "text/javascript">
+    pObj = PatientObj.createNew({{pid}})
+    pObj.init()
+  </script>
+{% endblock %}
