@@ -1,0 +1,6 @@
+运行方法：
+1. 在wsl下执行python main.py
+2. 相关参数修改system.config
+
+数据生成：
+1. 在data目录下运行loadjson.py，将从LabelStudio导出的json数据转化为train.txt
