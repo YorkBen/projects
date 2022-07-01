@@ -8,6 +8,7 @@ import argparse
 import random
 import numpy as np
 import os
+import json
 from engines.train import Train
 from engines.data import DataManager
 from engines.configure import Configure
@@ -86,6 +87,25 @@ if __name__ == '__main__':
                 break
             results = predictor.predict_one(sentence)
             print(results)
+    elif mode == 'batch_predict':
+        logger.info('mode: batch_predict')
+        predictor = Predictor(configs, dataManager, logger)
+        predictor.predict_one('warm start')
+        datasets_fold = configs.datasets_fold
+        batch_predict_file = configs.batch_predict_file
+        batch_predict_result = configs.batch_predict_result
+        in_path = os.path.join(datasets_fold, batch_predict_file)
+        ot_path = os.path.join(datasets_fold, batch_predict_result)
+        if os.path.exists(in_path):
+            results = []
+            with open(in_path, 'r') as f:
+                for sentence in f.readlines():
+                    if len(sentence.strip()) > 0:
+                        t_result = predictor.predict_one(sentence.strip())
+                        results.append([[t_result[1][k], t_result[2][k]] for k in range(len(t_result[1]))])
+            with open(ot_path, 'w') as f:
+                json.dump(results, f, ensure_ascii=False)
+
     elif mode == 'test':
         logger.info('mode: test')
         predictor = Predictor(configs, dataManager, logger)

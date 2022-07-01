@@ -33,6 +33,16 @@ class Configure:
             self.test_file = self.str2none(config[the_item])
         else:
             self.test_file = None
+        the_item = 'batch_predict_file'
+        if the_item in config:
+            self.batch_predict_file = self.str2none(config[the_item])
+        else:
+            self.batch_predict_file = None
+        the_item = 'batch_predict_result'
+        if the_item in config:
+            self.batch_predict_result = self.str2none(config[the_item])
+        else:
+            self.batch_predict_result = None
 
         the_item = 'delimiter'
         if the_item in config:
@@ -214,6 +224,9 @@ class Configure:
         logger.info('     datasets         fold: {}'.format(self.datasets_fold))
         logger.info('     train            file: {}'.format(self.train_file))
         logger.info('     validation       file: {}'.format(self.dev_file))
+        logger.info('     test             file: {}'.format(self.test_file))
+        logger.info('     batch predict    file: {}'.format(self.batch_predict_file))
+        logger.info('     batch result     file: {}'.format(self.batch_predict_result))
         logger.info('     vocab             dir: {}'.format(self.vocabs_dir))
         logger.info('     delimiter            : {}'.format(self.delimiter))
         logger.info('     use  pretrained model: {}'.format(self.use_pretrained_model))
