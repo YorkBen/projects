@@ -1,7 +1,6 @@
 import json
 import random
 
-
 def load_nerlbl_from_manual(json_file):
     """
     从LabelStudio的导出数据中，抓取人工标注的命名实体数据，即词和命名实体类别对。

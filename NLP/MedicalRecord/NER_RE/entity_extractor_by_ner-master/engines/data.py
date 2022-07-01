@@ -67,9 +67,9 @@ class DataManager:
         若不存在词表则生成，若已经存在则加载词表
         :return:
         """
-        if not os.path.exists(self.token2id_file):
-            self.logger.info('label vocab files not exist, building label vocab...')
-            return self.build_vocab(self.train_file)
+        # if not os.path.exists(self.token2id_file):
+            # self.logger.info('label vocab files not exist, building label vocab...')
+        return self.build_vocab(self.train_file)
 
         self.logger.info('loading vocab...')
         token2id, id2token = {}, {}
@@ -114,6 +114,11 @@ class DataManager:
                     outfile.write(id2token[idx] + '\t' + str(idx) + '\n')
 
         labels = list(set(df_train['label'][df_train['label'].notnull()]))
+
+        # 生成suffix
+        self.suffix = [label[2:] for label in labels if label[0] == 'B']
+
+
         label2id = dict(zip(labels, range(1, len(labels) + 1)))
         id2label = dict(zip(range(1, len(labels) + 1), labels))
         id2label[0] = self.PADDING

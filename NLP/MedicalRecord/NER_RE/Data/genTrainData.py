@@ -164,9 +164,10 @@ def assembleNERData(text, ann_dict):
 
     # 标记
     for ann in ann_dict.values():
-        raw_lbl[ann['value']['start']] = 'B_' + ann['value']['labels'][0]
+        label_id = ann['value']['labels'][0]
+        raw_lbl[ann['value']['start']] = 'B_' + label_id
         for i in range(ann['value']['start'] + 1, ann['value']['end']):
-            raw_lbl[i] = 'I_' + ann['value']['labels'][0]
+            raw_lbl[i] = 'I_' + label_id
 
     return (text, raw_lbl)
 
@@ -306,7 +307,7 @@ if __name__ == "__main__":
                 relations = expand_neg_samples(relations, id_list, ratio)
                 results.extend(assembleREData(text, ann_dict, relations))
 
-    # random.shuffle(results)
+    random.shuffle(results)
 
     # write results
     if type == 'NER':
