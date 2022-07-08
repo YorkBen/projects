@@ -1,3 +1,4 @@
+import random
 import logging
 from Lib.DataLoader import DataLoader
 from Lib.TextClassifier import TextClassifier
@@ -8,26 +9,27 @@ def train_all_features():
     dl = DataLoader()
     ## 训练TextClassifier ############################################
     # 加载所有数据
-    lines = dl.load_data_lines(file_path='data/data_20220506_fortrain.txt', num_fields=35, skip_title=False, shuffle=False)
+    lines = dl.load_data_lines(file_path='data/data_20220708_fortrain.txt', num_fields=32, skip_title=False, shuffle=False)
+    cols, data_lines = lines[0], lines[1:]
+    random.shuffle(data_lines)
     # 训练循环
-    # for k in range(4, 29):
-    for k in [4]:
+    for k in range(29, 32):
         # 生成训练数据
-        feature_name = lines[0][k]
+        feature_name = cols[k]
         logging.debug('Training Feature: %s' % feature_name)
-        sentences = [l[1] for l in lines[1:]]
-        keywords = [feature_name] * len(lines[1:])
-        labels = [l[k] for l in lines[1:]]
-        dl.stat_cls_num(lines[1:], k)
+        sentences = [l[1] for l in data_lines]
+        keywords = [feature_name] * len(data_lines)
+        labels = [l[k] for l in data_lines]
+        dl.stat_cls_num(data_lines, k)
 
         # 初始化模型
         model = TextClassifier(model_save_path='output/models/textclassify',
-                                pre_model_path="BertModels/medical-roberta-wwm",
-                                num_cls=2,
+                                pre_model_path="../../BertModels/medical-roberta-wwm",
+                                num_cls=3,
                                 model_name=feature_name)
 
         model.load_data(sentences, labels, texts_pair=keywords, batch_size=8)
-        model.train(write_result_to_file='output/textclassify_train_20220518.txt', early_stopping_num=5)
+        model.train(write_result_to_file='output/textclassify_train_20220708.txt', early_stopping_num=5)
 
     # 所有数据混合训练
     # print('mix feature training, sample nums: 0:%s, 1:%s, 2:%s' % (labels_cls_count_all[0], labels_cls_count_all[1], labels_cls_count_all[2]))

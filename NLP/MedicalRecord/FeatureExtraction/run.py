@@ -143,6 +143,7 @@ def stat_empty(lbl_dict):
 if __name__ == "__main__":
     ts = TextStructral()
     lbl_dict = load_choose_map()
+    print(len(lbl_dict))
 
     ############入院记录######################################
     starttime = time.time()
@@ -154,20 +155,32 @@ if __name__ == "__main__":
     # print(json.dumps(results, indent=1, separators=(',', ':'), ensure_ascii=False))
     ts.write_result('data/入院记录.json')
 
+    ts.set_processor('label')
+    ts.load_template('data/template/病史小结.json')
+    ct = 0
     for i in range(len(records)):
         mr_no = get_mr_no(records[i])
         if mr_no is None:
             mr_no = ''
         results[i]['现病史'] = results[i]['现病史'].replace(',', '，').replace(' ', '').replace('\"\"', '\"').replace('\n', '').replace('\t', '')
+        results[i]['病史小结'] = ts.process_record('病史小结：' + results[i]['病史小结'])
         key = mr_no + results[i]['现病史']
+        # 比较key不同
+        # if mr_no == '10023464':
+        #     print(key)
         if key in lbl_dict:
+            ct = ct + 1
             lbl_dict[key] = {
                 '医保编号': mr_no,
                 '入院记录': results[i]
             }
+    print(ct)
 
     result_records = {}
-    for key in lbl_dict:
+    for key in lbl_dict.keys():
+        # 比较key不同
+        # if '医保编号' not in lbl_dict[key]:
+        #     print(key)
         result_records[lbl_dict[key]['医保编号']] = lbl_dict[key]
     endtime = time.time()
     print('入院记录处理记录数: ', len(result_records))

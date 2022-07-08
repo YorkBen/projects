@@ -85,7 +85,7 @@ def format_by_type(str, type):
     elif type != "":
         return format_regex(str, type)
 
-def format_num(str):
+def format_num(str, default=''):
     """
     字符串匹配数字
     """
@@ -94,7 +94,10 @@ def format_num(str):
     str = str.replace('五', '5').replace('六', '6').replace('七', '7').replace('八', '8')
     str = str.replace('九', '9')
 
-    return str
+    if str == '':
+        return defalut
+    else:
+        return str
 
 def format_age(str):
     """

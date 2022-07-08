@@ -164,10 +164,12 @@ def assembleNERData(text, ann_dict):
 
     # 标记
     for ann in ann_dict.values():
-        label_id = ann['value']['labels'][0]
-        raw_lbl[ann['value']['start']] = 'B_' + label_id
+        label = ann['value']['labels'][0]
+        if label in ['缓解因素', '小便', '程度', '放射痛', '转移性疼痛', '持续时间']:
+            continue
+        raw_lbl[ann['value']['start']] = 'B_' + label
         for i in range(ann['value']['start'] + 1, ann['value']['end']):
-            raw_lbl[i] = 'I_' + label_id
+            raw_lbl[i] = 'I_' + label
 
     return (text, raw_lbl)
 

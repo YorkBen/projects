@@ -17,8 +17,9 @@ class Utils:
             3. sex
             4. date
             5. temprature
-            6. 空
-            7. regex正则表达式
+            6. pressure
+            7. 空
+            8. regex正则表达式
         """
         if type == "":
             return str
@@ -32,10 +33,12 @@ class Utils:
             return self.format_date(str)
         elif type == "temprature":
             return self.format_temprature(str)
+        elif type == "pressure":
+            return self.format_pressure(str)
         elif type != "":
             return self.format_regex(str, type)
 
-    def format_num(self, str):
+    def format_num(self, str, default=''):
         """
         字符串匹配数字
         """
@@ -44,7 +47,10 @@ class Utils:
         str = str.replace('五', '5').replace('六', '6').replace('七', '7').replace('八', '8')
         str = str.replace('九', '9')
 
-        return str
+        if str == '':
+            return default
+        else:
+            return str
 
     def format_age(self, str):
         """
@@ -70,6 +76,12 @@ class Utils:
         格式化温度
         """
         return self.format_regex(str, re.compile(r'[0-4]\d\.?\d℃?'))
+
+    def format_pressure(self, str):
+        """
+        格式化血压
+        """
+        return self.format_regex(str, re.compile(r'\d{2,3}/\d{2,3}[mmhgMMHG]*?'))
 
     def format_regex(self, str, pattern_str):
         match = re.search(pattern_str, str)

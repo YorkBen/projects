@@ -42,7 +42,6 @@ class TextStructral:
 
         return records
 
-
     def load_template(self, template_file):
         """
         加载正则匹配模板
@@ -131,4 +130,12 @@ class TextStructral:
                 self.results.append(self.process_1_layer(str, self.template))
 
         return self.results
+
+
+    def process_record(self, str):
+        """
+        处理单条记录
+        """
+        str = self.Utils.remove_squarebracket_cnt(str)
+        return self.process_1_layer(str, self.template)
 #
