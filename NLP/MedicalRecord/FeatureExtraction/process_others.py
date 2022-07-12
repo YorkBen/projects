@@ -13,18 +13,18 @@ def is_float(str):
         return False
 
 
-def load_mrno():
+def load_mrno(file_path):
     mr_no = []
-    with open('data/labeled_ind.txt') as f:
+    with open(file_path) as f:
         for line in f.readlines():
             mr_no.append(line.split('	')[0])
 
     return set(mr_no)
 
 
-def process_chaoshen(mr_nos):
+def process_chaoshen(mr_nos, file_path, out_file_path):
     results = []
-    with open(r"data/超声.csv") as f:
+    with open(file_path) as f:
         for line in f.readlines():
             elems = line.strip().split(',')
             if elems[0] in mr_nos:
@@ -33,15 +33,15 @@ def process_chaoshen(mr_nos):
 
     results = sorted(results, key=lambda x: x[0] + x[1])
 
-    with open(r"data/tmp/chaoshen.txt", "w") as f:
+    with open(out_file_path, "w") as f:
         for row in results:
             f.write("%s\n" % ','.join(row))
-        print('%s lines write to file data/tmp/chaoshen.txt' % len(results))
+        print('%s lines write to file %s' % (len(results), out_file_path))
 
 
-def process_fangshe(mr_nos):
+def process_fangshe(mr_nos, file_path, out_file_path):
     results = []
-    with open(r"data/放射.csv") as f:
+    with open(file_path) as f:
         for line in f.readlines():
             elems = line.strip().split(',')
             if elems[0] in mr_nos:
@@ -50,15 +50,15 @@ def process_fangshe(mr_nos):
 
     results = sorted(results, key=lambda x: x[0] + x[1])
 
-    with open(r"data/tmp/fangshe.txt", "w") as f:
+    with open(out_file_path, "w") as f:
         for row in results:
             f.write("%s\n" % ','.join(row))
-        print('%s lines write to file data/tmp/fangshe.txt' % len(results))
+        print('%s lines write to file %s' % (len(results), out_file_path))
 
 
-def process_bingli(mr_nos):
+def process_bingli(mr_nos, file_path, out_file_path):
     results = []
-    with open(r"data/病理.csv") as f:
+    with open(file_path) as f:
         for line in f.readlines():
             elems = line.strip().split(',')
             if elems[0] in mr_nos:
@@ -68,45 +68,16 @@ def process_bingli(mr_nos):
 
     results = sorted(results, key=lambda x: x[0] + x[1])
 
-    with open(r"data/tmp/bingli.txt", "w") as f:
+    with open(out_file_path, "w") as f:
         for row in results:
             f.write("%s\n" % ','.join(row))
-        print('%s lines write to file data/tmp/bingli.txt' % len(results))
-
-
-def trans_arr_tomap(data_inspect):
-    result = {}
-    for r in data_inspect:
-        m_no = r[0]
-        if m_no not in result:
-            result[m_no] = []
-        result[m_no].append(r[1:])
-
-    return result
-
-
-def load_txt(type):
-    filename = ""
-    if type == "超声":
-        filename = "chaoshen.txt"
-    elif type == "放射":
-        filename = "fangshe.txt"
-    elif type == "病理":
-        filename = "bingli.txt"
-
-    results = []
-    with open(r"data/tmp/%s" % filename, "r") as f:
-        for row in f.readlines():
-            results.append(row.strip().split(','))
-    return results
-
-
-def load_dict(type):
-    return trans_arr_tomap(load_txt(type))
+        print('%s lines write to file %s' % (len(results), out_file_path))
 
 
 if __name__ == "__main__":
-    mr_nos = load_mrno()
-    process_chaoshen(mr_nos)
-    process_fangshe(mr_nos)
-    process_bingli(mr_nos)
+    postfix = '1432'
+
+    mr_nos = load_mrno('data/labeled_ind_%s.txt' % postfix)
+    process_chaoshen(mr_nos, r"data/超声.csv", r"data/tmp/chaoshen_%s.txt" % postfix)
+    process_fangshe(mr_nos, r"data/放射.csv", r"data/tmp/fangshe_%s.txt" % postfix)
+    process_bingli(mr_nos, r"data/病理.csv", r"data/tmp/bingli_%s.txt" % postfix)

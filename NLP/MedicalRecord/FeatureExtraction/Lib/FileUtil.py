@@ -72,3 +72,30 @@ def mergeRelabeled(relabeled_file, idx):
             results.append(','.join(arr).strip())
 
     write_lines(results, "data/medical_labeled3.txt")
+
+
+
+def trans_arr_to_dict(data_arr):
+    """
+    数组第一个字段作为key，其余数组部分作为value，生成字典
+    """
+    result = {}
+    for r in data_arr:
+        m_no = r[0]
+        if m_no not in result:
+            result[m_no] = []
+        result[m_no].append(r[1:])
+
+    return result
+
+
+def load_arr(file_path, separator=','):
+    results = []
+    with open(file_path, "r") as f:
+        for row in f.readlines():
+            results.append(row.strip().split(separator))
+    return results
+
+
+def load_dict(file_path, separator=','):
+    return trans_arr_to_dict(load_arr(file_path, separator))

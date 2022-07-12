@@ -12,9 +12,9 @@ def is_float(str):
     else:
         return False
 
-def load_mrno():
+def load_mrno(file_path):
     mr_no = []
-    with open('data/labeled_ind.txt') as f:
+    with open(file_path) as f:
         for line in f.readlines():
             mr_no.append(line.split('	')[0])
 
@@ -43,31 +43,12 @@ def process(mr_nos):
     return results
 
 
-def trans_inspect_tomap(data_inspect):
-    result = {}
-    for r in data_inspect:
-        m_no = r[0]
-        if m_no not in result:
-            result[m_no] = []
-        result[m_no].append(r[1:])
-
-    return result
-
-
-def load():
-    results = []
-    with open(r"data/tmp/yz_all.txt", "r") as f:
-        for row in f.readlines():
-            results.append(row.strip().split(','))
-    return results
-
-def load_dict():
-    return trans_inspect_tomap(load())
-
 if __name__ == "__main__":
-    mr_nos = load_mrno()
+    postfix = '1432'
+
+    mr_nos = load_mrno('data/labeled_ind_%s.txt' % postfix)
     results = process(mr_nos)
-    with open(r"data/tmp/yz_all.txt", "w") as f:
+    with open(r"data/tmp/yz_all_%s.txt" % postfix, "w") as f:
         for row in results:
             f.write("%s\n" % ','.join(row))
-        print('%s lines write to file data/tmp/yz_all.txt' % len(results))
+        print('%s lines write to file data/tmp/yz_all_%s.txt' % (len(results), postfix))

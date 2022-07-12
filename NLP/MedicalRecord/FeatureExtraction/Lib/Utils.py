@@ -106,12 +106,16 @@ class Utils:
         return str
 
 
-    def find_key_value_pattern(self, str, key):
+    def find_key_value_pattern(self, str, key, dotall=True):
         """
         输入字符串和label值，返回value值。
         """
         # re.DOTALL 可以匹配换行符
-        res = re.match('^.*?[%s]{%s,}[：:]?(.*)' % (key, (len(key)+1)//2), str, re.DOTALL)
+        if dotall:
+            res = re.match('^.*?[%s]{%s,}[：:]?(.*)' % (key, (len(key)+1)//2), str, re.DOTALL)
+        else:
+            res = re.match('^.*?[%s]{%s,}[：:]?(.*)' % (key, (len(key)+1)//2), str)
+
         if res is not None:
             return res.group(1)
         else:

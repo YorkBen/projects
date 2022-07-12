@@ -139,7 +139,7 @@ def record_split(record_type=None):
     return medical_records
 
 
-def choose_records(data_records):
+def choose_records(data_records, labeled_file):
     """
     从所有病历数据中选出待标记的数据
     病历数据：
@@ -151,7 +151,7 @@ def choose_records(data_records):
     输出：
         格式：'medicalrecordno', '###', '###', '###', '病历文本', '入院日期', '现病史'
     """
-    lbl_lines = load_file('data/labeled_ind.txt', separator='	')
+    lbl_lines = load_file(labeled_file, separator='	')
     lbl_dict = {}
     for line in lbl_lines:
         key = ''.join(line).replace(',', '，').replace(' ', '')
@@ -332,7 +332,7 @@ def process():
     results = extract_now_dieasehistory(results)
     print('nodh extract finished...')
     print('record filtr starting...')
-    results = choose_records(results)
+    results = choose_records(results, 'data/labeled_ind_1432.txt')
     print('record filtr finished...')
     # results = extract_temp(results)
     # print('temp extract finished...')
@@ -358,7 +358,7 @@ def findPatternLine(pattern):
 
 def load():
     results = []
-    with open(r"data/tmp/mr_s1.txt", "r") as f:
+    with open(r"data/tmp/mr_1432.txt", "r") as f:
         for row in f.readlines():
             results.append(row.strip().split(','))
     return results
@@ -366,12 +366,12 @@ def load():
 
 if __name__ == "__main__":
     results = process()
-    with open(r"data/tmp/mr_s2.txt", "w") as f:
+    with open(r"data/tmp/mr_1432.txt", "w") as f:
         for row in results:
             # medical_no, 入院日期, 现病史，体温>37.5℃, 反跳通，肌紧张, 是否停经
             # f.write("%s,%s,%s,%s,%s,%s,%s\n" % (row[0], row[5], row[6], row[7], row[8], row[9], row[10]))
             f.write("%s||%s||%s||%s\n%s\n\n" % (row[0], row[1], row[2], row[3], row[4].strip()[:-1]))
-        print('%s lines write to file data/tmp/mr_s2.txt' % len(results))
+        print('%s lines write to file data/tmp/mr_1432.txt' % len(results))
 
 
 
