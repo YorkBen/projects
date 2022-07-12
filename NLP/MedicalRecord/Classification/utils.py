@@ -43,6 +43,8 @@ def load_data(id_map, input_file=r'data/medical_record_merge_labeled.txt', has_t
     return sentences, features, labels, len(features[0])
 
 
+
+
 def load_data_one_id(id, input_file=r'data/medical_record_merge_labeled.txt', has_title=True, pn_balance=True):
     """
     一个作为正例，其它作为反例

@@ -4,12 +4,31 @@ from sklearn import svm
 from sklearn import metrics
 from utils import *
 
-
 if __name__ == "__main__":
     idc11_id, num_cls = "DB10", 2
 
-    sentences, features, labels, feature_size = load_data(id_map = id_map_6, input_file=r'data/train_data_20220424.txt')
+    # sentences, features, labels, feature_size = load_data(id_map = id_map_6, input_file=r'data/train_data_20220424.txt')
     # sentences, features, labels = load_data_one_id(id = idc11_id)
+    lines = []
+    with open(r'data\train_data_202207.txt', "r") as f:
+        for idx, line in enumerate(f.readlines()):
+            lines.append(line)
+
+    random.shuffle(lines)
+    print('data total lines: %s' % len(lines))
+
+    # create id set
+    row_len = len(lines[0].split(','))
+    features, labels = [], []
+    for line in lines:
+        arr = line.split(',')
+        if len(arr) != row_len:
+            print('illegal line: ' + line)
+            exit()
+
+        labels.append(int(arr[1]))
+        features.append([int(e) for e in arr[2:]])
+
 
     train_num = int(len(features) * 0.8)
 

@@ -541,6 +541,57 @@ def stat_results(results, labeled_data, ignore02=True):
     for line in stat_results:
         print(line)
 
+
+def merge_results(results, labeled_data, out_file, ignore02=True):
+    """
+    将正则提取结果和人工标记结果做比对，有差异部分用正则覆盖
+    输入：
+        1. results： "医保编号" -> 特征id -> (result_class, match1, match2, record)
+        2. labeled_data："医保编号" -> 特征id -> labeled_class
+        3. ignore02：当人工标记和正则提取标志分别未0和2时，是否区分结果是否相同。
+    """
+    for mrno in results.keys():
+        for feature in features:
+            # 用模型处理的特征跳过
+            if 'type' in feature and feature['type'] == 'model':
+                continue
+
+            fid, fname = feature['id'], feature['name']
+            if fid in labeled_data[mrno]:
+                rno, lno = results[mrno][fid][0], labeled_data[mrno][fid]
+                if rno == lno:
+                    pass
+                else:
+                    labeled_data[mrno][fid] = rno
+
+    keys = []
+    for mrno in labeled_data.keys():
+        keys = list(labeled_data[mrno].keys())
+        break
+
+    labels, train_x = [], [[] for i in range(len(keys[1:]))]
+    for mrno in labeled_data.keys():
+        for idx, key in enumerate(keys):
+            if key == '金标准':
+                labels.append(labeled_data[mrno][key])
+            else:
+                train_x[idx-1].append(labeled_data[mrno][key])
+
+    label_set = list(set(labels))
+    labels_id = []
+    for label in labels:
+        labels_id.append(label_set.index(label))
+
+    with open(out_file, 'w') as f:
+        for k in range(len(labels)):
+            line = '%s,%s' % (labels[k], labels_id[k])
+            for j in range(len(train_x)):
+                 line = line + ',' + str(train_x[j][k])
+            f.write(line + '\n')
+
+    return labels, labels_id, train_x
+
+
 def debug_feature(results, labeled_data, fid, ignore02=True, mrno_spec=None):
     """
     打印单个特征调试信息
@@ -583,12 +634,13 @@ def debug_feature(results, labeled_data, fid, ignore02=True, mrno_spec=None):
 
 
 if __name__ == '__main__':
-    medical_data = load_medical_data(r'data/汇总结果.json')
+    medical_data = load_medical_data(r'data/汇总结果_1432.json')
     sheet_data = load_feature_sheet(r"data/高发病率腹痛疾病特征标注2022.6.23.xlsx", "前500个疾病特征标注")
     results = process_by_regular(medical_data, set(list(sheet_data.keys())))
-    stat_results(results, sheet_data)
+    # stat_results(results, sheet_data)
     # debug_feature(results, sheet_data, '腹胀')
-
+    data = merge_results(results, sheet_data, r'data\train_data_202207.txt')
+    print(data)
 
 
 #
