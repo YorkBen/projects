@@ -4,7 +4,7 @@ import json
 
 # 加载json数据
 json_data = ''
-with open(r'data/汇总结果.json') as f:
+with open(r'汇总结果_231.json') as f:
     json_data = json.load(f, strict=False)
 
 def get_max_num(json_data):
@@ -27,9 +27,9 @@ columns = [
     ['性别', '年龄', '入院时间', '主诉', '现病史', '既往史', '手术外伤史', '输血史', '药物过敏史',
      '个人史', '婚育史', '月经史', '家族史', '体格检查', '专科情况（体检）', '病史小结'],
     'US',
-    ['CT', 'MR', 'CR/DR、移动DR'],
+    ['CT', 'MR', 'CR/DR、移动DR', 'X线'],
     '病理',
-    ['中性粒细胞', '白细胞', '超敏C-反应蛋白', '降钙素原', '脂肪酶', '淀粉酶', 'β-绒毛膜促性腺激素',
+    ['中性粒细胞%', '白细胞', '超敏C-反应蛋白', '降钙素原', '脂肪酶', '淀粉酶', 'β-绒毛膜促性腺激素',
      '总胆红素', '天冬氨酸氨基转移酶', '丙氨酸氨基转移酶', '碱性磷酸酶', 'γ-谷氨酰转移酶', '血沉', '红细胞']
 ]
 
@@ -66,16 +66,20 @@ for ind, item in enumerate(json_data):
         for item_cs in item['超声']:
             for item_cs_sj in item_cs['数据']:
                 arr = item_cs_sj.split(',')
+                if len(arr) == 3:
+                    arr.append('')
                 str_cs = str_cs + '检查部位：%s\n影像描述：%s\n影像结论：%s\n\n' % (arr[1], arr[2], arr[3])
     sheet.cell(rn, cn).value = str_cs
     cn = cn + 1
 
     # 放射
-    str_ct, str_mr, str_dr = '', '', ''
+    str_ct, str_mr, str_dr, str_xl = '', '', '', ''
     if '放射' in item:
         for item_fs in item['放射']:
             for item_fs_sj in item_fs['数据']:
                 arr = item_fs_sj.split(',')
+                if len(arr) == 3:
+                    arr.append('')
                 type = arr[0].upper()
                 if 'CT' in type:
                     str_ct = str_ct + '检查名称：%s\n影像表现：%s\n影像诊断：%s\n\n' % (arr[1], arr[2], arr[3])
@@ -83,10 +87,13 @@ for ind, item in enumerate(json_data):
                     str_mr = str_mr + '检查名称：%s\n影像表现：%s\n影像诊断：%s\n\n' % (arr[1], arr[2], arr[3])
                 elif 'DR' in type or 'CR' in type:
                     str_dr = str_dr + '检查名称：%s\n影像表现：%s\n影像诊断：%s\n\n' % (arr[1], arr[2], arr[3])
+                elif 'X线' in type:
+                    str_xl = str_xl + '检查名称：%s\n影像表现：%s\n影像诊断：%s\n\n' % (arr[1], arr[2], arr[3])
     sheet.cell(rn, cn).value = str_ct
     sheet.cell(rn, cn+1).value = str_mr
     sheet.cell(rn, cn+2).value = str_dr
-    cn = cn + 3
+    sheet.cell(rn, cn+3).value = str_xl
+    cn = cn + 4
 
     # 病理
     str_bl = ''
@@ -112,7 +119,8 @@ for ind, item in enumerate(json_data):
                     str_dict[key] = str_dict[key] + ','.join(arr[-3:]) + '\n'
 
     for col in cols_jy:
-        sheet.cell(rn, cn).value = str_dict[col]
+        if col in str_dict:
+            sheet.cell(rn, cn).value = str_dict[col]
         cn = cn + 1
 
 
