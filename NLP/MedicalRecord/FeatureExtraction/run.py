@@ -1,13 +1,46 @@
 import time
-import logging
 import json
+import re
+import os
+import datetime
 import numpy as np
+import argparse
+import logging
+
 from Lib.TextStructral import TextStructral
 from Lib.FileUtil import load_file, load_dict
 from Lib.Utils import Utils
 
 logging.basicConfig(level=logging.INFO)
 utils = Utils()
+
+
+def init_with_mrno(file_path, with_head=True, sperator='	'):
+    """
+    输入：mrno	入院日期(20220101)
+    初始化病历数据
+    """
+    results = {}
+    with open(file_path, encoding="utf-8") as f:
+        for idx, line in enumerate(f.readlines()):
+            if idx == 0 and with_head or line.strip() == '':
+                continue
+
+            arr = line.strip().split(sperator)
+            mr_no, ry_date = arr[0], ''
+            if len(arr) == 2:
+                ry_date = arr[1]
+                if ry_date != '' and not re.match('[0-9]{8}', ry_date):
+                    print('%s:%s line illegal!' % (idx, line))
+                    exit()
+
+            results[mr_no] = {
+                '医保编号': mr_no,
+                '入院时间': ry_date
+            }
+
+    return results
+
 
 def get_mr_no(record):
     """
@@ -18,19 +51,19 @@ def get_mr_no(record):
             return line.split('||')[0]
 
 
-def load_choose_map(file_path):
-    """
-    加载选择数据集作为字典
-    """
-    lbl_lines = load_file(file_path, separator='	')
-
-    lbl_dict = {}
-    for line in lbl_lines:
-        key = ''.join(line).replace(',', '，').replace(' ', '').replace('\"\"', '\"')
-        # key = line[0]
-        lbl_dict[key] = ''
-
-    return lbl_dict
+# def load_choose_map(file_path):
+#     """
+#     加载选择数据集作为字典
+#     """
+#     lbl_lines = load_file(file_path, separator='	')
+#
+#     lbl_dict = {}
+#     for line in lbl_lines:
+#         key = ''.join(line).replace(',', '，').replace(' ', '').replace('\"\"', '\"')
+#         # key = line[0]
+#         lbl_dict[key] = ''
+#
+#     return lbl_dict
 
 
 # def join_inspec(data_records):
@@ -123,6 +156,26 @@ def join_others(data_records, o_dict, name, delta=90, fix_date=False):
     return data_records
 
 
+def check_date(date1, date2, delta):
+    """
+    比较时间和入院时间：
+    1. 如果入院时间为空，则直接返回True。
+    2. 入院时间不为空，比较时间为空，返回False。
+    3. 两个时间都不为空，看时间差值绝对值是否小于delta，是则True，否则False
+    """
+    if date1 == '':
+        return True
+    elif date2 == '':
+        return False
+    else:
+        date1_dt = datetime.datetime.strptime(date1, '%Y%m%d').date()
+        date2_dt = datetime.datetime.strptime(date2, '%Y%m%d').date()
+        if abs((date1_dt - date2_dt).days) < delta:
+            return True
+        else:
+            return False
+
+
 def stat_empty(lbl_dict):
     """
     统计没有匹配数
@@ -138,82 +191,73 @@ def stat_empty(lbl_dict):
 
 
 if __name__ == "__main__":
+    # 参数
+    parser = argparse.ArgumentParser(description='Select Data With MR_NOs')
+    parser.add_argument('-p', type=str, default='2409', help='postfix num')
+    args = parser.parse_args()
+
+    postfix = args.p
+    print("postfix: %s" % (postfix))
+    if not os.path.exists('data/labeled_ind_%s.txt' % postfix):
+        print('mrnos file: data/labeled_ind_%s.txt not exists!' % postfix)
+        exit()
+
     ts = TextStructral()
-    postfix = '1432'
+    # postfix = '2409'
 
     # 因为数据总量6万条，这是从中筛选的部分
     # # 原始2049条数据
     # 'data/labeled_ind_2409\.txt'
     # 202207根据主诉补充新增1432条数据
-    lbl_dict = load_choose_map(r'data/labeled_ind_%s.txt' % postfix)
-    print(len(lbl_dict))
+    # lbl_dict = load_choose_map(r'data/labeled_ind_%s.txt' % postfix)
+    # print(len(lbl_dict))
+    print('根据医保编号数据初始化病历对象...')
+    result_records = init_with_mrno(file_path=r'data/labeled_ind_%s.txt' % postfix, with_head=False, sperator='	')
 
     ############入院记录######################################
     starttime = time.time()
     print('开始处理入院记录....')
-    records = ts.load_records('data/records/入院记录_%s.txt' % postfix)
-    ts.load_template('data/template/入院.json')
+    records = ts.load_records('data/tmp/mr_ry_%s.txt' % postfix)
+    ts.load_template('data/template/入院记录.json')
     ts.set_processor()
     results = ts.process()
     # print(json.dumps(results, indent=1, separators=(',', ':'), ensure_ascii=False))
-    ts.write_result('data/入院记录.json')
+    # ts.write_result('data/入院记录.json')
 
     # 处理病史小结
-    ts.set_processor('label')
-    ts.load_template('data/template/病史小结.json')
+    # ts.set_processor('label')
+    # ts.load_template('data/template/病史小结.json')
     ct = 0
     for i in range(len(records)):
         mr_no = get_mr_no(records[i])
-        if mr_no is None:
-            mr_no = ''
+        if mr_no is not None and mr_no in result_records \
+            and check_date(result_records[mr_no]['入院时间'], results[i]['入院时间'], 10):
 
-        # 对现病史和病史小结数据做处理
-        results[i]['现病史'] = results[i]['现病史'].replace(',', '，').replace(' ', '').replace('\"\"', '\"').replace('\n', '').replace('\t', '')
-        results[i]['病史小结'] = ts.process_record('病史小结：' + results[i]['病史小结'])
-        key = mr_no + results[i]['现病史']
-
-        # 比较key不同
-        if mr_no == '10020133':
-            print(key)
-
-        if key in lbl_dict:
+            # 对现病史和病史小结数据做处理
+            results[i]['现病史'] = results[i]['现病史'].replace(',', '，').replace(' ', '').replace('\"\"', '\"').replace('\n', '').replace('\t', '')
+            # results[i]['病史小结'] = ts.process_record('病史小结：' + results[i]['病史小结'])
+            result_records[mr_no]['入院记录'] = results[i]
             ct = ct + 1
-            lbl_dict[key] = {
-                '医保编号': mr_no,
-                '入院记录': results[i]
-            }
-        else:
-            print(key)
-    print(ct)
 
-    result_records = {}
-    for key in lbl_dict.keys():
-        # 比较key不同
-        if '医保编号' not in lbl_dict[key]:
-            print(key)
-        result_records[lbl_dict[key]['医保编号']] = lbl_dict[key]
     endtime = time.time()
-    print('入院记录处理记录数: ', len(result_records))
+    print('入院记录处理记录数: ', ct)
     print('入院记录处理用时: ', endtime - starttime)
 
 
     ##############首次病程#######################################
     starttime = time.time()
     print('开始处理首次病程....')
-    records = ts.load_records('data/records/首次病程.txt')
+    records = ts.load_records('data/tmp/mr_sc_%s.txt' % postfix)
     ts.load_template('data/template/首次病程.json')
     ts.set_processor('label')
     results = ts.process()
     ct = 0
     for i in range(len(records)):
         mr_no = get_mr_no(records[i])
-        mr_no = '' if mr_no is None else mr_no
-        if mr_no in result_records and results[i]['DATE'] != '':
-            date1 = int(result_records[mr_no]['入院记录']['入院时间'])
-            date2 = int(results[i]['DATE'])
-            if date2 >= date1 and date2 - date1 < 10:
-                ct = ct + 1
-                result_records[mr_no]['首次病程'] = results[i]
+        if mr_no is not None and mr_no in result_records \
+            and check_date(result_records[mr_no]['入院时间'], results[i]['DATE'], 10):
+            ct = ct + 1
+            result_records[mr_no]['首次病程'] = results[i]
     endtime = time.time()
     print('首次病程处理记录数: ', ct)
     print('首次病程处理用时: ', endtime - starttime)
@@ -222,22 +266,19 @@ if __name__ == "__main__":
     ##############日常病程#######################################
     starttime = time.time()
     print('开始处理日常病程记录....')
-    records = ts.load_records('data/records/日常病程记录.txt')
+    records = ts.load_records('data/tmp/mr_rc_%s.txt' % postfix)
     ts.load_template('data/template/日常病程.json')
     ts.set_processor()
     results = ts.process()
     ct = 0
     for i in range(len(records)):
         mr_no = get_mr_no(records[i])
-        mr_no = '' if mr_no is None else mr_no
-        if mr_no in result_records and results[i]['DATE'] != '':
-            date1 = int(result_records[mr_no]['入院记录']['入院时间'])
-            date2 = int(results[i]['DATE'])
-            if date2 >= date1 and date2 - date1 < 90:
-                ct = ct + 1
-                if '日常病程' not in result_records[mr_no]:
-                    result_records[mr_no]['日常病程'] = []
-                result_records[mr_no]['日常病程'].append(results[i])
+        if mr_no is not None and mr_no in result_records \
+            and check_date(result_records[mr_no]['入院时间'], results[i]['DATE'], 90):
+            ct = ct + 1
+            if '日常病程' not in result_records[mr_no]:
+                result_records[mr_no]['日常病程'] = []
+            result_records[mr_no]['日常病程'].append(results[i])
 
     endtime = time.time()
     print('日常病程处理记录数: ', ct)
@@ -247,23 +288,39 @@ if __name__ == "__main__":
     ##############出院记录#######################################
     starttime = time.time()
     print('开始处理出院记录....')
-    records = ts.load_records('data/records/出院记录.txt')
+    records = ts.load_records('data/tmp/mr_cy_%s.txt' % postfix)
     ts.load_template('data/template/出院记录.json')
     ts.set_processor('label')
     results = ts.process()
     ct = 0
     for i in range(len(records)):
         mr_no = get_mr_no(records[i])
-        mr_no = '' if mr_no is None else mr_no
-        if mr_no in result_records and results[i]['出院时间'] != '':
-            date1 = int(result_records[mr_no]['入院记录']['入院时间'])
-            date2 = int(results[i]['出院时间'])
-            if date2 >= date1 and date2 - date1 < 300:
-                ct = ct + 1
-                result_records[mr_no]['出院记录'] = results[i]
+        if mr_no is not None and mr_no in result_records \
+            and check_date(result_records[mr_no]['入院时间'], results[i]['入院时间'], 10):
+            ct = ct + 1
+            result_records[mr_no]['出院记录'] = results[i]
     endtime = time.time()
     print('出院记录处理记录数: ', ct)
     print('出院记录处理用时: ', endtime - starttime)
+
+
+    # ##############出院诊断证明#######################################
+    # starttime = time.time()
+    # print('开始处理出院诊断证明书....')
+    # records = ts.load_records('data/records/出院诊断证明书.txt')
+    # ts.load_template('data/template/出院诊断证明书.json')
+    # ts.set_processor('label')
+    # results = ts.process()
+    # ct = 0
+    # for i in range(len(records)):
+    #     mr_no = get_mr_no(records[i])
+    #     if mr_no is not None and mr_no in result_records \
+    #         and check_date(result_records[mr_no]['入院时间'], results[i]['入院时间'], 300):
+    #         ct = ct + 1
+    #         result_records[mr_no]['出院诊断证明书'] = results[i]
+    # endtime = time.time()
+    # print('出院诊断证明书记录数: ', ct)
+    # print('出院诊断证明书处理用时: ', endtime - starttime)
 
 
     ###############结果转换为数组###################################
@@ -277,11 +334,11 @@ if __name__ == "__main__":
 
     #########白细胞计数、中性粒细胞计数##############################
     # results = join_inspec(results)
-    results = join_others(results, load_dict(r"data/tmp/is_all_%s.txt" % postfix), "检验", fix_date=True)
+    results = join_others(results, load_dict(r"data/tmp/is_%s.txt" % postfix), "检验", fix_date=True)
     results = join_others(results, load_dict(r'data/tmp/chaoshen_%s.txt' % postfix), '超声')
     results = join_others(results, load_dict(r'data/tmp/fangshe_%s.txt' % postfix), '放射')
     results = join_others(results, load_dict(r'data/tmp/bingli_%s.txt' % postfix), '病理', delta=360)
-    results = join_others(results, load_dict(r"data/tmp/yz_all_%s.txt" % postfix), '医嘱')
+    results = join_others(results, load_dict(r"data/tmp/yz_%s.txt" % postfix), '医嘱')
 
     ###############结果写到文件####################################
     ts.write_result('data/汇总结果_%s.json' % postfix, results)

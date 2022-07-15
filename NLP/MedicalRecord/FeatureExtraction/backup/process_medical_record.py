@@ -365,13 +365,16 @@ def load():
 
 
 if __name__ == "__main__":
+    # postfix = '1432'
+    postfix = '2409'
+
     results = process()
-    with open(r"data/tmp/mr_1432.txt", "w") as f:
+    with open(r"data/tmp/mr_%s.txt" % postfix, "w") as f:
         for row in results:
             # medical_no, 入院日期, 现病史，体温>37.5℃, 反跳通，肌紧张, 是否停经
             # f.write("%s,%s,%s,%s,%s,%s,%s\n" % (row[0], row[5], row[6], row[7], row[8], row[9], row[10]))
             f.write("%s||%s||%s||%s\n%s\n\n" % (row[0], row[1], row[2], row[3], row[4].strip()[:-1]))
-        print('%s lines write to file data/tmp/mr_1432.txt' % len(results))
+        print('%s lines write to file data/tmp/mr_%s.txt' % (len(results), postfix))
 
 
 

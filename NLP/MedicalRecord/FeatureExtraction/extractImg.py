@@ -49,7 +49,7 @@ def extract_fangshe(texts, mrno, type):
     """
     OCR识别结果，放射后处理
     """
-    no, part, jcsj, jcjl  = '', '', '', ''
+    date, part, jcsj, jcjl  = '', '', '', ''
     jcsj_start, jcjl_start = False, False
     for text in texts:
         # if re.match('[A-Z]+号[：:](.*)', text):
@@ -123,7 +123,7 @@ if __name__ == '__main__':
     utils = Utils()
 
     # 图片处理
-    in_folder = r'D:\项目资料\病历辅助诊断\人机大赛数据集'
+    in_folder = r'D:\项目资料\病历辅助诊断\人机大赛数据集\肠道穿孔14'
     # in_folder = r'C:\Users\Administrator\Desktop\新建文件夹'
     results_bl, results_cs, results_fs = [], [], []
     for root, dirs, files in os.walk(in_folder):
@@ -131,18 +131,19 @@ if __name__ == '__main__':
             if name.endswith('.png') or name.endswith('.jpg'):
                 file_path = os.path.join(root, name)
                 mrno = root.split('\\')[-1]
-                print('mrno: %s' % mrno)
+                # print('mrno: %s' % mrno)
+                if not ('病理' in name or '超声' in name or '放射' in name):
+                    print('%s not processed!' % file_path)
+                    continue
 
+                print('processing %s' % file_path)
                 texts = extract_text(file_path)
-                # print('processing %s' % file_path)
                 if '病理' in name:
                     results_bl.append(extract_bingli(texts, mrno))
                 elif '超声' in name:
                     results_cs.append(extract_chaoshen(texts, mrno))
                 elif '放射' in name:
-                    results_fs.append(extract_fangshe(texts, mrno, name.split('_')[1]))
-                else:
-                    print('%s not processed!' % file_path)
+                    results_fs.append(extract_fangshe(texts, mrno, name.split('_')[1].replace('.jpg', '').replace('.png', '')))
 
 
     # 初始化输出文件

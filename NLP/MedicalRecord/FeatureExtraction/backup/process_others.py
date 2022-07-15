@@ -75,7 +75,8 @@ def process_bingli(mr_nos, file_path, out_file_path):
 
 
 if __name__ == "__main__":
-    postfix = '1432'
+    # postfix = '1432'
+    postfix = '2409'
 
     mr_nos = load_mrno('data/labeled_ind_%s.txt' % postfix)
     process_chaoshen(mr_nos, r"data/超声.csv", r"data/tmp/chaoshen_%s.txt" % postfix)

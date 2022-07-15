@@ -66,7 +66,7 @@ if __name__ == '__main__':
         for name in files:
             if name.endswith('.pdf'):
                 file_path = os.path.join(root, name)
-                # print('processing %s' % file_path)
+                print('processing %s' % file_path)
                 if '检验' in name:
                     with pdfplumber.open(file_path) as pdf:
                         for page in pdf.pages:

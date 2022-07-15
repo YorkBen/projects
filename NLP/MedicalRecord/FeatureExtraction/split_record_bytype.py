@@ -90,7 +90,7 @@ def record_split(record_type=None):
                     # 保留\n在后面作为行分割使用
                     if line.strip().endswith('\"'):
                         # 只记录入院记录
-                        if record_type and record_type in mr_item[3] or not record_type:
+                        if record_type and record_type in mr_item[3] or record_type is None:
                             mr_item.append(mr_cnt + line.strip()[:-1] + "\n")
                             # medical_records.append(mr_item)
                             append_to_dict(mr_item)
