@@ -119,28 +119,25 @@ def join_others(data_records, o_dict, name, delta=90, fix_date=False):
     starttime = time.time()
     has_o_num = 0
     for r_rd in data_records:
-        ih_date = r_rd['入院记录']['入院时间']
-        mr_no = r_rd['医保编号']
-        if ih_date != '' and mr_no in o_dict:
+        if r_rd['医保编号'] in o_dict:
             has_o_num = has_o_num + 1
-            o_records = o_dict[mr_no]
+            o_records = o_dict[r_rd['医保编号']]
             o_date_list = []
             for r_o in o_records:
                 o_date_list.append(r_o[0])
             o_date_list = sorted(list(set(o_date_list)))
-            # 补齐日期中的','
-            if fix_date:
-                ih_date = utils.fix_datestr(ih_date, o_date_list[0], ',')
-                r_rd['入院记录']['入院时间'] = ih_date
+            # # 补齐日期中的','
+            # if fix_date:
+            #     ih_date = utils.fix_datestr(ih_date, o_date_list[0], ',')
+            #     r_rd['入院记录']['入院时间'] = ih_date
 
-            ih_date_int = int(ih_date)
+            # ih_date_int = int(ih_date)
             # 附加结果
             r_rd[name] = []
 
             # 按时间来规整
             for o_date in o_date_list:
-                o_date_int = int(o_date)
-                if abs(o_date_int - ih_date_int) < delta:
+                if check_date(r_rd['入院时间'], o_date, delta):
                     date_result = {
                         '日期': o_date,
                         '数据': []
