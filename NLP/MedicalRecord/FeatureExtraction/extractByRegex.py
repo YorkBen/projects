@@ -1,4 +1,4 @@
-from openpyxl import load_workbook
+from openpyxl import load_workbook, Workbook
 import json
 import re
 from Lib.Utils import Utils
@@ -176,6 +176,31 @@ def load_medical_data(path):
 
     return json_data
 
+
+def load_mrnos(file_path, with_head=True, sperator='	'):
+    """
+    输入：mrno	入院日期(20220101)
+    初始化病历数据
+    """
+    mrnos = []
+    with open(file_path, encoding="utf-8") as f:
+        for idx, line in enumerate(f.readlines()):
+            if idx == 0 and with_head or line.strip() == '':
+                continue
+
+            arr = line.strip().split(sperator)
+            mr_no, ry_date = arr[0], ''
+            if len(arr) == 2:
+                ry_date = arr[1]
+                if ry_date != '' and not re.match('[0-9]{8}', ry_date):
+                    print('%s:%s line illegal!' % (idx, line))
+                    exit()
+
+            mrnos.append(mr_no)
+
+    return mrnos
+
+
 def load_feature_sheet(workbook_path, sheet_name):
     """
     workbook_path: excel路径
@@ -213,11 +238,13 @@ def load_feature_sheet(workbook_path, sheet_name):
 
     return sheet_data
 
+
 def split_text(text):
     # text = text.replace('，间断', ' 间断').replace('，持续', ' 持续').replace('，阵发', ' 阵发')
     # text = text.replace('，呈', ' 呈').replace('，为', ' 为')
     # text = text.replace('，', '。')
     return text.split('。')
+
 
 def search_by_regex(text, regex, negregex, default):
     pos_match, pneg_match, neg_match, rt1, rt2 = None, None, None, 2, 2
@@ -268,6 +295,7 @@ def search_by_regex(text, regex, negregex, default):
         return default, '', ''
     else:
         return 2, '', ''
+
 
 def search_by_strc(record, src, name):
     """
@@ -467,6 +495,7 @@ def get_text_from_mr(record, key):
 
     return text
 
+
 def process_by_regular(json_data, mrnos=None):
     """
     病历数据抽取正则部分特征
@@ -505,9 +534,32 @@ def process_by_regular(json_data, mrnos=None):
                 if result_ == 0 or result_ == 1 or result_strc == -1:
                     result = result_
 
-            results[record["医保编号"]][feature['id']] = (result, match1, match2, record)
+            results[record["医保编号"]][feature['id']] = (result, match1, match2, record, text)
 
     return results
+
+
+def write_to_excel(results, file_path):
+    wb = Workbook()
+    sheet = wb.create_sheet('Sheet1', 0)
+    for idx, mrno in enumerate(results.keys()):
+        sheet.cell(1, 1).value = '医保编号'
+        for idx2, id in enumerate(results[mrno].keys()):
+            sheet.cell(1, 2 + idx2 * 4).value = id
+        break
+
+    for idx, mrno in enumerate(results.keys()):
+        sheet.cell(idx + 2, 1).value = mrno
+        for idx2, id in enumerate(results[mrno].keys()):
+            sheet.cell(idx + 2, 2 + idx2 * 4).value = results[mrno][id][0]
+            sheet.cell(idx + 2, 3 + idx2 * 4).value = '' if results[mrno][id][1] == '' or results[mrno][id][1] is None else results[mrno][id][1].group(0)
+            sheet.cell(idx + 2, 4 + idx2 * 4).value = '' if results[mrno][id][2] == '' or results[mrno][id][2] is None else results[mrno][id][2].group(0)
+            sheet.cell(idx + 2, 5 + idx2 * 4).value = results[mrno][id][4]
+
+    wb.save(file_path)
+    wb.close()
+
+
 
 def stat_results(results, labeled_data, ignore02=True):
     """
@@ -634,13 +686,27 @@ def debug_feature(results, labeled_data, fid, ignore02=True, mrno_spec=None):
 
 
 if __name__ == '__main__':
-    medical_data = load_medical_data(r'data/汇总结果_1432.json')
-    sheet_data = load_feature_sheet(r"data/高发病率腹痛疾病特征标注2022.6.23.xlsx", "前500个疾病特征标注")
-    results = process_by_regular(medical_data, set(list(sheet_data.keys())))
+    # medical_data = load_medical_data(r'data/汇总结果_1611.json')
+    # results = process_by_regular(medical_data, load_mrnos(r'data/labeled_ind_1380.txt', False))
+    # write_to_excel(results, r'data/正则预测结果_2.xlsx')
+
+    # medical_data = load_medical_data(r'data/汇总结果_2724.json')
+    # results = process_by_regular(medical_data, load_mrnos(r'data/labeled_ind_546.txt', False))
+    # write_to_excel(results, r'data/正则预测结果_1.xlsx')
+
+    medical_data = load_medical_data(r'data/汇总结果_231.json')
+    results = process_by_regular(medical_data, load_mrnos(r'data/labeled_ind_231.txt', False))
+    write_to_excel(results, r'data/正则预测结果_人机.xlsx')
+
+    # sheet_data = load_feature_sheet(r"data/2409模型特征提取.xlsx", "正则特征")
+    # results = process_by_regular(medical_data, set(list(sheet_data.keys())))
+    # 统计正则效果
     # stat_results(results, sheet_data)
-    # debug_feature(results, sheet_data, '腹胀')
-    data = merge_results(results, sheet_data, r'data\train_data_202207.txt')
-    print(data)
+    # debug_feature(results, sheet_data, '下腹压痛')
+
+    # 生成拟合训练数据
+    # data = merge_results(results, sheet_data, r'data\train_data_202207.txt')
+    # print(data)
 
 
 #

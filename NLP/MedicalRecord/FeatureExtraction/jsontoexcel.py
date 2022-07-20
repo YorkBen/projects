@@ -1,10 +1,12 @@
 # pip install openpyxl
 from openpyxl import load_workbook
 import json
+import re
 
 if __name__ == '__main__':
+    # postfix = '1432'
+    postfix = '2724'
     # postfix = '1611'
-    postfix = '2409'
 
     # 加载json数据
     json_data = ''
@@ -68,7 +70,7 @@ if __name__ == '__main__':
                     sheet.cell(rn, cn).value = get_json_value(item['出院诊断证明书'], elem)
                 else:
                     sheet.cell(rn, cn).value = ''
-            else:
+            elif '入院记录' in item:
                 sheet.cell(rn, cn).value = get_json_value(item['入院记录'], elem)
 
         # 按照日期先后排列日常病程和实验室数据
@@ -98,6 +100,10 @@ if __name__ == '__main__':
         for i in range(1, num+1):
             sheet2.cell(1, cn).value = '%s_%d' % (key, i)
             cn = cn + 1
+    sheet2.cell(1, cn).value = '外院&超声_1'
+    sheet2.cell(1, cn+1).value = '外院&超声_2'
+    sheet2.cell(1, cn+2).value = '外院&超声_3'
+    sheet2.cell(1, cn+3).value = '外院&超声_4'
 
     cn_starts = [2, 2 + num_cs, 2 + num_cs + num_fs]
     rn = 2
@@ -112,6 +118,18 @@ if __name__ == '__main__':
                 for item_str in str_arr:
                     sheet2.cell(rn, cn).value = item_str[1]
                     cn = cn + 1
+
+        # 后面附加一列，提取外院&超声数据
+        s1 = get_json_value(item['入院记录'], '门诊及院外重要辅助检查') if '入院记录' in item else ''
+        s2 = get_json_value(item['入院记录']['病史小结'], '辅助检查') if '入院记录' in item and '病史小结' in item['入院记录'] else ''
+        s3 = get_json_value(item['首次病程']['病例特点'], '辅助检查') if '首次病程' in item else ''
+        s4 = get_json_value(item['出院记录']['入院情况'], '辅助检查') if '出院记录' in item else ''
+        # if re.search('(超声)|(彩超)|(B超)', s):
+        regex = '(医院)|(外院)|(超声)|(彩超)|(B超)'
+        sheet2.cell(rn, cn).value = s1 if re.search(regex, s1) else ''
+        sheet2.cell(rn, cn+1).value = s2 if re.search(regex, s2) else ''
+        sheet2.cell(rn, cn+2).value = s3 if re.search(regex, s3) else ''
+        sheet2.cell(rn, cn+3).value = s4 if re.search(regex, s4) else ''
 
         rn = rn + 1
 

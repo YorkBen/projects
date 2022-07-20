@@ -1,4 +1,6 @@
-
+"""
+需要修改，参考Lib.MRRecordUtil.py
+"""
 data_path = r"data/medical_record.csv"
 
 """

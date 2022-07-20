@@ -20,7 +20,7 @@ model_name, hidden_size, BATCH_SIZE = "BertModels/medical-roberta-wwm", 768, 8
 
 # input_file, num_cls = r'data/processed2.txt', 2    # 急性阑尾炎
 # input_file, num_cls = r'data/train_data_20220424.txt', 3  # 恶心呕吐
-input_file, num_cls = r'data/data_20220506.txt', 3
+input_file, num_cls = r'data/data_model_2049.txt', 3
 
 max_length = 500
 epochs = 100
