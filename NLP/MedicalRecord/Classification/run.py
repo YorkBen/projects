@@ -6,22 +6,54 @@ from openpyxl import load_workbook, Workbook
 
 logging.basicConfig(level=logging.DEBUG)
 
+def split_data_by_cls_num(data_lines, label_col):
+    """
+    根据标签的样本数量来拆分训练和测试集
+    """
+    dl = DataLoader()
+    cls_num_dict = dl.stat_cls_num(data_lines, label_col)
+    cust_logging(log_file, str(cls_num_dict))
+
+    train_lines, val_lines = [], []
+    for cls in cls_num_dict.keys():
+        train_num = int(cls_num_dict[cls] * 0.8)
+        cls_lines = [line for line in data_lines if line[label_col] == cls]
+        random.shuffle(cls_lines)
+        train_lines.extend(cls_lines[:train_num])
+        val_lines.extend(cls_lines[train_num:])
+
+    return train_lines, val_lines
+
+
+def gen_train_val_data(train_lines, val_lines, text_col, label_col, feature_name):
+    """
+    从原始txt数据合成训练所需格式的数据
+    """
+    train_data = [(line[text_col], feature_name, line[label_col]) for line in train_lines]
+    val_data = [(line[text_col], feature_name, line[label_col]) for line in val_lines]
+    return train_data, val_data
+
+
+def cust_logging(log_file, str):
+    with open(log_file, 'a+') as f:
+        f.write(str + '\n')
+
+
 def train_all_features():
     dl = DataLoader()
     ## 训练TextClassifier ############################################
     # 加载所有数据
     lines = dl.load_data_lines(file_path='data/data_model_2049.txt', num_fields=23, skip_title=False, shuffle=False)
     cols, data_lines = lines[0], lines[1:]
-    random.shuffle(data_lines)
     # 训练循环
-    for k in range(13, 23):
+    for k in range(2, 23):
         # 生成训练数据
         feature_name = cols[k]
+        cust_logging(log_file, 'Training Feature: %s' % feature_name)
         logging.debug('Training Feature: %s' % feature_name)
-        sentences = [l[1] for l in data_lines]
-        keywords = [feature_name] * len(data_lines)
-        labels = [l[k] for l in data_lines]
-        dl.stat_cls_num(data_lines, k)
+        train_lines, val_lines = split_data_by_cls_num(data_lines, k)
+        train_data, val_data = gen_train_val_data(train_lines, val_lines, 1, k, feature_name)
+        print('train data size: %s, val data size: %s' % (len(train_data), len(val_data)))
 
         # 初始化模型
         model = TextClassifier(model_save_path='output/models/textclassify',
@@ -29,8 +61,8 @@ def train_all_features():
                                 num_cls=3,
                                 model_name=feature_name)
 
-        model.load_data(sentences, labels, texts_pair=keywords, batch_size=8)
-        model.train(write_result_to_file='output/textclassify_train_20220719.txt', early_stopping_num=5)
+        model.load_train_val_data(train_data, val_data, batch_size=8)
+        model.train(write_result_to_file=log_file, early_stopping_num=5)
 
     # 所有数据混合训练
     # print('mix feature training, sample nums: 0:%s, 1:%s, 2:%s' % (labels_cls_count_all[0], labels_cls_count_all[1], labels_cls_count_all[2]))
@@ -92,6 +124,7 @@ def load_data_sheet(sheet):
 
 
 if __name__ == "__main__":
+    log_file = r'output/textclassify_train_20220722.txt'
     train_all_features()
     # predict_all_features()
 

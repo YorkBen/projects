@@ -1,8 +1,20 @@
 import re
 
-num_fields = 5
+def load_mrno(file_path, with_head=True, separator='	'):
+    """
+    提取mrnos，文件的第一个字段是mrnos
+    """
+    mr_no = []
+    with open(file_path, encoding="utf-8") as f:
+        for idx, line in enumerate(f.readlines()):
+            if idx == 0 and with_head:
+                continue
+            mr_no.append(line.strip().split(separator)[0])
 
-def process_mr(file_path, with_head=True, type_regex_and_outpath=[('出.*院记录', r"data/tmp/mr.txt")], mr_nos=None):
+    return set(mr_no)
+
+
+def process_mr(file_path, with_head=True, type_regex_and_outpath=[('出.*院记录', r"data/tmp/mr.txt")], mr_nos=None, num_fields = 5):
     """
     处理病历数据，从中挑选出入院记录、出院记录、首次病程记录、日常病程记录等等
     """
@@ -30,7 +42,7 @@ def process_mr(file_path, with_head=True, type_regex_and_outpath=[('出.*院记�
             head_line, line_items = False, []
             if re.match('[IP0-9]{6}', line[:6]):
                 line_items = line.split(',')
-                if len(line_items) >= num_fields and re.search('((记录)|(证明书)|(同意书)|(病程))', line_items[3]):
+                if len(line_items) >= num_fields and re.search('((记录)|(证明书)|(同意书)|(病程))', line_items[num_fields-2]):
                     head_line = True
 
             print(line_items, head_line)

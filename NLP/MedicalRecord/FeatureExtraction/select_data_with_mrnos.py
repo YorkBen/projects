@@ -1,25 +1,11 @@
 import os
 import re
 import argparse
-from Lib.MRRecordUtil import process_mr
+from Lib.MRRecordUtil import process_mr, load_mrno
 
 """
 检查数据特征提取
 """
-
-def load_mrno(file_path, with_head=True):
-    """
-    提取mrnos，文件的第一个字段是mrnos
-    """
-    mr_no = []
-    with open(file_path, encoding="utf-8") as f:
-        for idx, line in enumerate(f.readlines()):
-            if idx == 0 and with_head:
-                continue
-            mr_no.append(line.split('	')[0])
-
-    return set(mr_no)
-
 
 def process_yizhu(mr_nos, outfile_path, folder="yizhu", file_prefix='ftyz'):
     """

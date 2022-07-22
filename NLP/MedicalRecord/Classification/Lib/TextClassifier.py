@@ -126,6 +126,40 @@ class TextClassifier:
             logging.debug("Data For Predicting")
             self.predict_loader = DataLoader(dataset=datasets, batch_size=batch_size, shuffle=False, num_workers=1)
 
+    def load_train_val_data(self, train_data, val_data, batch_size=8):
+        """
+        加载数据：
+            1. train_data：训练数据，(文本数据, 文本对, 分类)
+            2. val_data：测试数据，(文本, 文本对, 分类)
+            3. batch_size：批处理尺寸
+        输入数据行格式：
+            1. 非文本对： text + separator + label
+            2. 文本对： text1 + separator + text2 + separator + label
+        """
+        logging.info('TextClassifier Loading Data...')
+        logging.debug('Using Text Pair? -> %s' % 'Yes' if len(train_data[0]) == 3 else 'No')
+
+        train_labels = [item[2] for item in train_data]
+        # 标签转换数字
+        label_elem_list = list(set(train_labels))
+        self.label_num_dict = {e:int(i) for i,e in enumerate(label_elem_list)}
+        self.num_label_dict = {int(i):e for i,e in enumerate(label_elem_list)}
+
+        # 训练数据
+        train_texts = [item[0] for item in train_data]
+        train_texts_pair = [item[1] for item in train_data] if len(train_data[0]) == 3 else None
+        train_labels = [self.label_num_dict[l] for l in train_labels]
+        train_dataset = DataToDataset(self.tokenizer, train_texts, train_texts_pair, train_labels, self.max_txt_len)
+        self.train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True, num_workers=1)
+
+        # 测试数据
+        val_texts = [item[0] for item in val_data]
+        val_texts_pair = [item[1] for item in val_data] if len(val_data[0]) == 3 else None
+        val_labels = [item[2] for item in val_data]
+        val_labels = [self.label_num_dict[l] for l in val_labels]
+        val_dataset = DataToDataset(self.tokenizer, val_texts, val_texts_pair, val_labels, self.max_txt_len)
+        self.val_loader = DataLoader(dataset=val_dataset, batch_size=batch_size, shuffle=True, num_workers=1)
+
 
     def flat_accuracy(self, preds, labels):
         pred_flat = np.argmax(preds,axis=1).flatten()
@@ -229,5 +263,20 @@ class TextClassifier:
                 for k, e in enumerate(results):
                     f.write('%s,%s,%s,%s\n' % (self.texts[k], self.texts_pair[k], self.labels[k], self.num_label_dict[e]))
 
+
+    def predict_nowrite(self):
+        """
+        推理
+        """
+        results = []
+        self.model.eval()
+        for data in self.predict_loader:
+            input_ids, attention_mask, types, labels = [elem.to(self.device) for elem in data]
+            with torch.no_grad():
+                pred = self.model(input_ids, attention_mask, types)
+                pred = pred.detach().cpu().numpy()
+                results.extend(np.argmax(pred, axis=1).flatten())
+
+        return results
 
 #
