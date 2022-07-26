@@ -14,7 +14,22 @@ def load_mrno(file_path, with_head=True, separator='	'):
     return set(mr_no)
 
 
-def process_mr(file_path, with_head=True, type_regex_and_outpath=[('出.*院记录', r"data/tmp/mr.txt")], mr_nos=None, num_fields = 5):
+def load_keys(file_path, with_head=True, separator='	'):
+    """
+    提取mrnos和入院日期，文件的第一个字段是mrnos
+    """
+    results = []
+    with open(file_path, encoding="utf-8") as f:
+        for idx, line in enumerate(f.readlines()):
+            if idx == 0 and with_head:
+                continue
+            arr = line.strip().split(separator)
+            results.append((arr[0], arr[1]))
+
+    return results
+
+
+def process_mr(file_path, with_head=True, type_regex_and_outpath=[('出.*院记录', r"data/tmp/mr.txt")], mr_nos=None, num_fields=4):
     """
     处理病历数据，从中挑选出入院记录、出院记录、首次病程记录、日常病程记录等等
     """
@@ -45,9 +60,6 @@ def process_mr(file_path, with_head=True, type_regex_and_outpath=[('出.*院记�
                 if len(line_items) >= num_fields and re.search('((记录)|(证明书)|(同意书)|(病程))', line_items[num_fields-2]):
                     head_line = True
 
-            print(line_items, head_line)
-            exit()
-
             # 有结果要写入
             if head_line:
                 if len(mr_item) > 0 and not skip:
@@ -60,18 +72,18 @@ def process_mr(file_path, with_head=True, type_regex_and_outpath=[('出.*院记�
                         # if item[0] == '出院记录':
                         #     match_dict[mr_item[0]] = 1
                         # ##########
-                        if type_regex == '出院记录' and mr_item[-2] != '日常病程记录' and mr_item[-2] != '日常病程记录':
-                            print(mr_item[-2])
+
+                        # if re.search(type_regex, mr_item[-2]):
+                        # if type_regex == '出院记录':
+                        #     print(mr_item[-2])
 
                         if re.search(type_regex, mr_item[-2]):
                             medical_records[idx].append(mr_item)
 
 
-                # skip = False if mr_nos is None or elems[0] in mr_nos else True
-                skip = False
+                skip = False if mr_nos is None or line_items[0] in mr_nos else True
                 mr_item = line_items[:num_fields]
                 mr_item[-1] = ' '.join(line_items[num_fields-1:]).replace('\"', '')
-
                 # ###debug####
                 # if elems[0] == '20051022':
                 #     print(skip, line)

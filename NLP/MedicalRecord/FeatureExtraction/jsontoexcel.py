@@ -2,15 +2,30 @@
 from openpyxl import load_workbook
 import json
 import re
+import os
+import argparse
 
 if __name__ == '__main__':
-    # postfix = '1432'
-    postfix = '2724'
-    # postfix = '1611'
+    # 参数
+    parser = argparse.ArgumentParser(description='Select Data With MR_NOs')
+    parser.add_argument('-p', type=str, default='2409', help='postfix num')
+    parser.add_argument('-t', type=str, default='腹痛', help='数据类型')
+    args = parser.parse_args()
+
+    postfix = args.p
+    data_type = args.t
+    if not os.path.exists('data/%s' % data_type):
+        print('data type: %s not exists' % data_type)
+        exit()
+    print("postfix: %s, data_type: %s" % (data_type, postfix))
+    if not os.path.exists('data/%s/labeled_ind_%s.txt' % (data_type, postfix)):
+        print('mrnos file: data/%s/labeled_ind_%s.txt not exists!' % (data_type, postfix))
+        exit()
+
 
     # 加载json数据
     json_data = ''
-    with open(r'data/汇总结果_%s.json' % postfix) as f:
+    with open(r'data/%s/汇总结果_%s.json' % (data_type, postfix)) as f:
         json_data = json.load(f, strict=False)
 
 
@@ -90,7 +105,6 @@ if __name__ == '__main__':
 
 
 
-
     # # sheet2
     # 表头
     sheet2.cell(1, 1).value = '医保编号'
@@ -100,10 +114,7 @@ if __name__ == '__main__':
         for i in range(1, num+1):
             sheet2.cell(1, cn).value = '%s_%d' % (key, i)
             cn = cn + 1
-    sheet2.cell(1, cn).value = '外院&超声_1'
-    sheet2.cell(1, cn+1).value = '外院&超声_2'
-    sheet2.cell(1, cn+2).value = '外院&超声_3'
-    sheet2.cell(1, cn+3).value = '外院&超声_4'
+
 
     cn_starts = [2, 2 + num_cs, 2 + num_cs + num_fs]
     rn = 2
@@ -119,19 +130,7 @@ if __name__ == '__main__':
                     sheet2.cell(rn, cn).value = item_str[1]
                     cn = cn + 1
 
-        # 后面附加一列，提取外院&超声数据
-        s1 = get_json_value(item['入院记录'], '门诊及院外重要辅助检查') if '入院记录' in item else ''
-        s2 = get_json_value(item['入院记录']['病史小结'], '辅助检查') if '入院记录' in item and '病史小结' in item['入院记录'] else ''
-        s3 = get_json_value(item['首次病程']['病例特点'], '辅助检查') if '首次病程' in item else ''
-        s4 = get_json_value(item['出院记录']['入院情况'], '辅助检查') if '出院记录' in item else ''
-        # if re.search('(超声)|(彩超)|(B超)', s):
-        regex = '(医院)|(外院)|(超声)|(彩超)|(B超)'
-        sheet2.cell(rn, cn).value = s1 if re.search(regex, s1) else ''
-        sheet2.cell(rn, cn+1).value = s2 if re.search(regex, s2) else ''
-        sheet2.cell(rn, cn+2).value = s3 if re.search(regex, s3) else ''
-        sheet2.cell(rn, cn+3).value = s4 if re.search(regex, s4) else ''
-
         rn = rn + 1
 
     # # 保存文档
-    workbook.save(r"data/r_%s.xlsx" % postfix)
+    workbook.save(r"data/%s/r_%s.xlsx" % (data_type, postfix))

@@ -146,13 +146,13 @@ features = [
     #
     # {'id':'HMT1', 'name': '昏迷', 'src': ['体格检查', '专科情况（体检）', '查体'],
     #    'regex':'(昏迷)|(意识不清)|(呼之不应)|(意识丧失)|(随意运动消失)|(对外界的刺激的反应迟钝或丧失)|(瞳孔散大)|(对光反射消失)|(双侧瞳孔不等大)|(神经反射消失)', 'default': 0},
-    {'id':'TWGT1', 'name': '体温升高', 'src': ['体格检查'], 'regex':''},
-    {'id':'MBKT1', 'name': '脉搏显著加快', 'src': ['体格检查'], 'regex':''},
-    {'id':'DXYT1', 'name': '低血压', 'src': ['体格检查'], 'regex':''},
+    # {'id':'TWGT1', 'name': '体温升高', 'src': ['体格检查'], 'regex':''},
+    # {'id':'MBKT1', 'name': '脉搏显著加快', 'src': ['体格检查'], 'regex':''},
+    # {'id':'DXYT1', 'name': '低血压', 'src': ['体格检查'], 'regex':''},
     # {'id':'JJZT1', 'name': '反跳痛或肌紧张', 'src': ['体格检查', '现病史', '查体'], 'regex':'(反跳痛)|(肌紧张)|(腹' + inner_neg + '紧)|(腹肌抵触感)|(板状腹)|(腹强直)'},
     # {'id':'MFST1', 'name': '墨菲征Murphy征', 'src': ['体格检查', '查体'], 'regex':'((墨菲征)|(Murphys?征?：?’?))', 'negregex': '((墨菲征)|(Murphys?))' + inner + '阴性'},
     # {'id':'ZDDNT1', 'name': '肿大胆囊', 'src': ['体格检查'], 'regex':'上腹' + inner_neg + '肿块', 'default': 0}, #
-    {'id':'FJT1', 'name': '附件肿块', 'src': ['体格检查'], 'regex':'(上腹' + inner_neg + '肿块)|(附件' + inner_neg + '触及' + inner_neg + '[肿包]块)|(附件' + inner_neg + '增[粗厚])', 'default': 0}#, #
+    # {'id':'FJT1', 'name': '附件肿块', 'src': ['体格检查'], 'regex':'(上腹' + inner_neg + '肿块)|(附件' + inner_neg + '触及' + inner_neg + '[肿包]块)|(附件' + inner_neg + '增[粗厚])', 'default': 0}#, #
     #
     #
     # {'id':'XJG1', 'name': '酗酒', 'src': ['个人史'], 'regex':'酗酒'},
