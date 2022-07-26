@@ -6,25 +6,6 @@ from openpyxl import load_workbook, Workbook
 
 logging.basicConfig(level=logging.DEBUG)
 
-def split_data_by_cls_num(data_lines, label_col):
-    """
-    根据标签的样本数量来拆分训练和测试集
-    """
-    dl = DataLoader()
-    cls_num_dict = dl.stat_cls_num(data_lines, label_col)
-    cust_logging(log_file, str(cls_num_dict))
-
-    train_lines, val_lines = [], []
-    for cls in cls_num_dict.keys():
-        train_num = int(cls_num_dict[cls] * 0.8)
-        cls_lines = [line for line in data_lines if line[label_col] == cls]
-        random.shuffle(cls_lines)
-        train_lines.extend(cls_lines[:train_num])
-        val_lines.extend(cls_lines[train_num:])
-
-    return train_lines, val_lines
-
-
 def gen_train_val_data(train_lines, val_lines, text_col, label_col, feature_name):
     """
     从原始txt数据合成训练所需格式的数据
@@ -39,19 +20,23 @@ def cust_logging(log_file, str):
         f.write(str + '\n')
 
 
-def train_all_features():
+def train_all_features(file_path, start_field, num_fields):
     dl = DataLoader()
     ## 训练TextClassifier ############################################
     # 加载所有数据
-    lines = dl.load_data_lines(file_path='data/data_model_2049.txt', num_fields=23, skip_title=False, shuffle=False)
+    lines = dl.load_data_lines(file_path=file_path, num_fields=num_fields, skip_title=False, shuffle=False)
     cols, data_lines = lines[0], lines[1:]
     # 训练循环
-    for k in range(2, 23):
-        # 生成训练数据
+    # 生成训练数据
+    for k in range(start_field, num_fields):
         feature_name = cols[k]
         cust_logging(log_file, 'Training Feature: %s' % feature_name)
         logging.debug('Training Feature: %s' % feature_name)
-        train_lines, val_lines = split_data_by_cls_num(data_lines, k)
+        random.shuffle(data_lines)
+        train_lines, val_lines = dl.split_data_by_cls_num2(data_lines, k)
+        # train_num = int(len(data_lines) * 0.8)
+        # train_lines, val_lines = data_lines[:train_num], data_lines[train_num:]
+
         train_data, val_data = gen_train_val_data(train_lines, val_lines, 1, k, feature_name)
         print('train data size: %s, val data size: %s' % (len(train_data), len(val_data)))
 
@@ -61,7 +46,7 @@ def train_all_features():
                                 num_cls=3,
                                 model_name=feature_name)
 
-        model.load_train_val_data(train_data, val_data, batch_size=8)
+        model.load_train_val_data(train_data, val_data, label_dict={'0': 0, '1': 1, '2': 2}, batch_size=8)
         model.train(write_result_to_file=log_file, early_stopping_num=5)
 
     # 所有数据混合训练
@@ -124,8 +109,10 @@ def load_data_sheet(sheet):
 
 
 if __name__ == "__main__":
-    log_file = r'output/textclassify_train_20220722.txt'
-    train_all_features()
+    log_file = r'output/textclassify_train_20220726.txt'
+    train_all_features(r'data/data_model_2049_2.txt', start_field=4, num_fields=5)
+    train_all_features(r'data/data_model_2049_3.txt', start_field=2, num_fields=3)
+    train_all_features(r'data/data_model_2049_4.txt', start_field=2, num_fields=4)
     # predict_all_features()
 
     #

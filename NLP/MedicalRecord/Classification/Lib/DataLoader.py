@@ -55,6 +55,57 @@ class DataLoader:
         return cls_num_dict
 
 
+    def split_data_by_cls_num(self, lines, cls_col, train_split_ratio=0.8):
+        """
+        根据标签的样本数量来拆分训练和测试集
+        """
+        cls_num_dict = self.stat_cls_num(lines, cls_col)
+
+        train_lines, val_lines = [], []
+        for cls in cls_num_dict.keys():
+            train_num = round(cls_num_dict[cls] * train_split_ratio)
+            print('%s train num: %s' % (cls, train_num))
+            cls_lines = [line for line in lines if line[cls_col] == cls]
+            print(cls, len(cls_lines))
+            random.shuffle(cls_lines)
+            train_lines.extend(cls_lines[:train_num])
+            val_lines.extend(cls_lines[train_num:])
+
+        random.shuffle(train_lines)
+        random.shuffle(val_lines)
+
+        return train_lines, val_lines
+
+
+    def split_data_by_cls_num2(self, lines, cls_col, train_split_ratio=0.8):
+        """
+        根据标签的样本数量来拆分训练和测试集，保持数据平衡，选择中间量截断量大的数据
+        """
+        cls_num_dict = self.stat_cls_num(lines, cls_col)
+        nums = sorted([cls_num_dict[cls] for cls in cls_num_dict.keys()])
+        choose_num = int(nums[0])
+        choose_num = 30 if choose_num < 30 else choose_num
+        # choose_num = int(nums[0] * 1.5)
+
+
+        train_lines, val_lines = [], []
+        for cls in cls_num_dict.keys():
+            cls_lines = [line for line in lines if line[cls_col] == cls]
+            random.shuffle(cls_lines)
+            if len(cls_lines) > choose_num:
+                cls_lines = cls_lines[:choose_num]
+
+            train_num = round(len(cls_lines) * train_split_ratio)
+            print('%s total num: %s, train num: %s' % (cls, len(cls_lines), train_num))
+            train_lines.extend(cls_lines[:train_num])
+            val_lines.extend(cls_lines[train_num:])
+
+        random.shuffle(train_lines)
+        random.shuffle(val_lines)
+
+        return train_lines, val_lines
+
+
     def balance_class_sample_num(self, lines, cls_col, cls_num_dict, stratege='medium'):
         """
         平衡类别样本数。

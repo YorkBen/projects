@@ -20,7 +20,7 @@ model_name, hidden_size, BATCH_SIZE = "BertModels/medical-roberta-wwm", 768, 8
 
 # input_file, num_cls = r'data/processed2.txt', 2    # 急性阑尾炎
 # input_file, num_cls = r'data/train_data_20220424.txt', 3  # 恶心呕吐
-input_file, num_cls = r'data/data_model_2049.txt', 3
+input_file, num_cls = r'data/放射痛.txt', 3
 
 max_length = 500
 epochs = 100
@@ -212,6 +212,58 @@ def load_data():
     print('max sentence length: %s, mean sentence length: %s' % (max_sent_len, mean_sent_len // len(sentences)))
     return sentences, ['恶心呕吐'] * len(sentences), labels
 
+
+def load_data():
+    """
+    加载恶心呕吐的模型
+    """
+    lines = []
+    with open(input_file, "r") as f:
+        for idx, line in enumerate(f.readlines()):
+            if idx > 0:
+                lines.append(line)
+    random.shuffle(lines)
+    print('data rows: ', len(lines))
+    max_sent_len, mean_sent_len = 0, 0
+    sentences, labels = [], []
+    row_field_num = len(lines[0].split(','))
+    label_field_idx = 16
+    n_0, n_1, n_2 = 0, 0, 0
+    max_pos, mean_pos = 0, 0
+    for line in lines:
+        arr = line.strip().split(',')
+        if len(arr) != row_field_num:
+            print('illegal line: ' + line)
+        else:
+            sent_len = len(arr[1])
+            if sent_len > max_sent_len:
+                max_sent_len = sent_len
+            mean_sent_len = mean_sent_len + sent_len
+
+            if len(arr[1]) > 490:
+                pos1 = max(arr[1].find('恶心'), arr[1].find('呕吐'))
+                pos2 = max(arr[1].rfind('恶心'), arr[1].rfind('呕吐'))
+                if pos2 - pos1 < 490:
+                    sent = arr[1][max(pos1 - (pos2 - pos1) // 2, 0):490]
+                else:
+                    sent = arr[1][pos1:pos1+490]
+                print(sent)
+                sentences.append(sent)
+            else:
+                sentences.append(arr[1])
+
+            labels.append(int(arr[label_field_idx]))
+            if arr[label_field_idx] == "0":
+                n_0 = n_0 + 1
+            elif arr[label_field_idx] == "1":
+                n_1 = n_1 + 1
+            elif arr[label_field_idx] == "2":
+                n_2 = n_2 + 1
+    print('n0,n1,n2: %s,%s,%s' % (n_0, n_1, n_2))
+    print('max sentence length: %s, mean sentence length: %s' % (max_sent_len, mean_sent_len // len(sentences)))
+    return sentences, ['恶心呕吐'] * len(sentences), labels
+
+
 def load_all_feature_data():
     """
     所有特征的训练数据
@@ -312,20 +364,20 @@ if __name__ == "__main__":
     # train(datasets, device)
 
     # 使用模型预测
-    sentences_arr, keywords_arr, labels_arr, labels_cls_count_arr = load_all_feature_data()
-    model_names = ['9282', '7889', '9016', '9508', '9979', '9610', '8770', '9918', '9897', '8811',
-                    '8668', '9938', '8934', '9651', '9467', '9569', '9077', '8196', '9303', '9877',
-                    '9016', '9200', '9733', '9426', '9159']
-    for sentences, keywords, labels, model_name in zip(sentences_arr, keywords_arr, labels_arr, model_names):
-        datasets = DataToDataset(tokenizer, sentences, keywords, labels, max_length)
-        model_path = 'output/models/text/3_%s.pth' % model_name
-        print('loading model: %s' % model_path)
-        mymodel = torch.load(model_path)
-        mymodel.to(device)
-        data_loader = DataLoader(dataset=datasets, batch_size=BATCH_SIZE, shuffle=False, num_workers=1)
-        results = predict(mymodel, data_loader, device)
-        # 运行
-        # 结果输出
-        with open(r"output/textclassify_predict_20220513.txt", "a+") as f:
-            for s, k, l, r in zip(sentences, keywords, labels, results):
-                f.write('%s,%s,%s,%s\n' % (s, k, l, r))
+    # sentences_arr, keywords_arr, labels_arr, labels_cls_count_arr = load_all_feature_data()
+    # model_names = ['9282', '7889', '9016', '9508', '9979', '9610', '8770', '9918', '9897', '8811',
+    #                 '8668', '9938', '8934', '9651', '9467', '9569', '9077', '8196', '9303', '9877',
+    #                 '9016', '9200', '9733', '9426', '9159']
+    # for sentences, keywords, labels, model_name in zip(sentences_arr, keywords_arr, labels_arr, model_names):
+    #     datasets = DataToDataset(tokenizer, sentences, keywords, labels, max_length)
+    #     model_path = 'output/models/text/3_%s.pth' % model_name
+    #     print('loading model: %s' % model_path)
+    #     mymodel = torch.load(model_path)
+    #     mymodel.to(device)
+    #     data_loader = DataLoader(dataset=datasets, batch_size=BATCH_SIZE, shuffle=False, num_workers=1)
+    #     results = predict(mymodel, data_loader, device)
+    #     # 运行
+    #     # 结果输出
+    #     with open(r"output/textclassify_predict_20220513.txt", "a+") as f:
+    #         for s, k, l, r in zip(sentences, keywords, labels, results):
+    #             f.write('%s,%s,%s,%s\n' % (s, k, l, r))

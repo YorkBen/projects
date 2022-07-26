@@ -163,6 +163,7 @@ class FeatureDataToDataset(Dataset):
     def __getitem__(self,index):
         return self.features[index], self.labels[index]
 
+
 class MixDataToDataset(Dataset):
     """
     使用文本和特征以及标签数据

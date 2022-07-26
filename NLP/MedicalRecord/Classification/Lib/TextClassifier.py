@@ -89,7 +89,7 @@ class TextClassifier:
             logging.info("TextClassifier Using Device: CPU")
 
 
-    def load_data(self, texts, labels, texts_pair=None, is_training=True, train_ratio=0.8, batch_size=8):
+    def load_data(self, texts, labels, label_dict, texts_pair=None, is_training=True, train_ratio=0.8, batch_size=8):
         """
         加载数据：
             1. texts：文本数据
@@ -110,8 +110,8 @@ class TextClassifier:
         self.labels = labels
         # 标签转换未数字
         label_elem_list = list(set(labels))
-        self.label_num_dict = {e:int(i) for i,e in enumerate(label_elem_list)}
-        self.num_label_dict = {int(i):e for i,e in enumerate(label_elem_list)}
+        self.label_num_dict = label_dict
+        self.num_label_dict = {label_dict[k]:k for k in label_dict.keys()}
         labels = [self.label_num_dict[l] for l in labels]
 
         datasets = DataToDataset(self.tokenizer, texts, texts_pair, labels, self.max_txt_len)
@@ -126,7 +126,7 @@ class TextClassifier:
             logging.debug("Data For Predicting")
             self.predict_loader = DataLoader(dataset=datasets, batch_size=batch_size, shuffle=False, num_workers=1)
 
-    def load_train_val_data(self, train_data, val_data, batch_size=8):
+    def load_train_val_data(self, train_data, val_data, label_dict, batch_size=8):
         """
         加载数据：
             1. train_data：训练数据，(文本数据, 文本对, 分类)
@@ -140,10 +140,10 @@ class TextClassifier:
         logging.debug('Using Text Pair? -> %s' % 'Yes' if len(train_data[0]) == 3 else 'No')
 
         train_labels = [item[2] for item in train_data]
+        val_labels = [item[2] for item in val_data]
         # 标签转换数字
-        label_elem_list = list(set(train_labels))
-        self.label_num_dict = {e:int(i) for i,e in enumerate(label_elem_list)}
-        self.num_label_dict = {int(i):e for i,e in enumerate(label_elem_list)}
+        self.label_num_dict = label_dict
+        self.num_label_dict = {label_dict[k]:k for k in label_dict.keys()}
 
         # 训练数据
         train_texts = [item[0] for item in train_data]
@@ -277,6 +277,12 @@ class TextClassifier:
                 pred = pred.detach().cpu().numpy()
                 results.extend(np.argmax(pred, axis=1).flatten())
 
-        return results
+        print(self.num_label_dict)
+
+        results_ = []
+        for r in results:
+            results_.append(self.num_label_dict[r])
+
+        return results_
 
 #
