@@ -4,62 +4,8 @@ from openpyxl import Workbook
 import json
 import re
 
-
-# inner_neg
-inner_neg = '[^，；、。无未不]{,4}'
-inner_neg_l = '[^，；、。无未不]{,8}'
-inner = '[^，；、。]*?'
-regex_suspect = '((？)|[?]|(怀疑)|(待排)|(可能))'
-
-# 疾病对应的正则
-diease_regex = {
-    '急性阑尾炎': '阑尾' + inner_neg + '((炎)|(脓肿)|(穿孔))',
-    '急性胰腺炎': '胰腺' + inner_neg + '((炎)|(脓肿)|(穿孔))',
-    '肠梗阻': '肠梗阻',
-    '异位妊娠': '宫外孕',
-    '急性胆管炎': '胆管炎',
-    '急性胆囊炎': '胆囊炎',
-    '上尿路结石': '((肾)|(输尿管)|(膀胱))' + inner_neg + '结石',
-    '消化性溃疡穿孔': '穿孔'
-}
-
-# 疾病待排对应的正则
-diease_suspect_regex = {
-    '急性胆管炎': '胆管炎' + inner + '((？)|[?]|(怀疑)|(待排)|(可能)|(硬化性))'
-}
-
-
-def load_mrnos(file_path, with_head=True, sperator='	'):
-    """
-    输入：mrno	入院日期(20220101)
-    初始化病历数据
-    """
-    mrnos = []
-    with open(file_path, encoding="utf-8") as f:
-        for idx, line in enumerate(f.readlines()):
-            if idx == 0 and with_head or line.strip() == '':
-                continue
-
-            arr = line.strip().split(sperator)
-            mr_no, ry_date = arr[0], ''
-            if len(arr) == 2:
-                ry_date = arr[1]
-                if ry_date != '' and not re.match('[0-9]{8}', ry_date):
-                    print('%s:%s line illegal!' % (idx, line))
-                    exit()
-
-            mrnos.append(mr_no)
-
-    return mrnos
-
-
-def filter_json_values(json_data, mrnos):
-    results = []
-    for record in json_data:
-        if record['医保编号'] in mrnos:
-            results.append(record)
-
-    return results
+from Lib.MRRecordUtil import *
+from Lib.InspRule import InspRule
 
 
 def get_max_num(json_data):
@@ -177,33 +123,39 @@ def compare_sheet_data(sheet, diease, json_data):
 
 
 if __name__ == '__main__':
-    # postfix = '1432'
-    # postfix = '2724'
-    postfix = '1611'
-    # postfix = '231'
+    isp = InspRule()
+    data = load_sheet_arr_dict(r'data\腹痛\影像学正则测试数据.xlsx', 'Sheet1')
 
-    # 加载json数据
-    json_data = ''
-    with open(r'data/汇总结果_%s.json' % postfix) as f:
-        json_data = json.load(f, strict=False)
-    mrnos = load_mrnos(r'data/labeled_ind_1380.txt', with_head=False, sperator='	')
-    json_data = filter_json_values(json_data, mrnos)
+    for row in data:
+        result = isp.process(row['文本'])
+        for key in row.keys():
+            if key != '文本':
+                row[key] = result[key]
 
-    # # 写excel #####################
-    # workbook = load_workbook(r"data/result.xlsx")
-    wb = Workbook()
-    sheets = []
-    for idx, diease in enumerate(diease_regex.keys()):
-        sheets.append(wb.create_sheet(diease, idx))
+    write_sheet_arr_dict(data, r'data\腹痛\影像学正则测试数据_结果.xlsx', 'Sheet1')
 
-    _, _, num_cs, num_fs, _, _ = get_max_num(json_data)
-    for diease, sheet in zip(list(diease_regex.keys()), sheets):
-        write_sheet_header(sheet, num_cs, num_fs)
-        write_sheet_data(sheet, diease, json_data, num_cs, num_fs)
-
-    # # 保存文档
-    wb.save(r'data\r_dpi_%s.xlsx' % postfix)
-    wb.close()
+    # # 加载json数据
+    # json_data = ''
+    # with open(r'data/汇总结果_%s.json' % postfix) as f:
+    #     json_data = json.load(f, strict=False)
+    # mrnos = load_mrnos(r'data/labeled_ind_1380.txt', with_head=False, sperator='	')
+    # json_data = filter_json_values(json_data, mrnos)
+    #
+    # # # 写excel #####################
+    # # workbook = load_workbook(r"data/result.xlsx")
+    # wb = Workbook()
+    # sheets = []
+    # for idx, diease in enumerate(diease_regex.keys()):
+    #     sheets.append(wb.create_sheet(diease, idx))
+    #
+    # _, _, num_cs, num_fs, _, _ = get_max_num(json_data)
+    # for diease, sheet in zip(list(diease_regex.keys()), sheets):
+    #     write_sheet_header(sheet, num_cs, num_fs)
+    #     write_sheet_data(sheet, diease, json_data, num_cs, num_fs)
+    #
+    # # # 保存文档
+    # wb.save(r'data\r_dpi_%s.xlsx' % postfix)
+    # wb.close()
 
 
 

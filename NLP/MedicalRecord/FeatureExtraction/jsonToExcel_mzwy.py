@@ -167,4 +167,4 @@ if __name__ == '__main__':
         rn = rn + 1
 
     # # 保存文档
-    workbook.save(r"data/%s/r_%s.xlsx" % (data_type, postfix))
+    workbook.save(r"data/%s/mzwy_%s.xlsx" % (data_type, postfix))

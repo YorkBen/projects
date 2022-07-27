@@ -42,7 +42,7 @@ class Utils:
         """
         字符串匹配数字
         """
-        str = self.format_regex(str, re.compile(r'[0-9]*[一二三四五六七八九十]*'))
+        str = self.format_regex(str, re.compile(r'([0-9]*\.[0-9]*)|([一二三四五六七八九十]*)'))
         str = str.replace('一', '1').replace('二', '2').replace('三', '3').replace('四', '4')
         str = str.replace('五', '5').replace('六', '6').replace('七', '7').replace('八', '8')
         str = str.replace('九', '9')

@@ -30,7 +30,7 @@ def assemble_sss_str(record):
         if record[key].replace('有', '').strip() != '':
             result_str = result_str + record[key] + '。'
     result_str = result_str.replace(',', '，').replace('。。', '。')
-    
+
     return result_str
 
 
@@ -93,4 +93,4 @@ if __name__ == '__main__':
         sheet.cell(rn, 4).value = str_xbs
 
     # # 保存文档
-    workbook.save(r"data/%s/ft_%s.xlsx" % (data_type, postfix))
+    workbook.save(r"data/%s/jws_%s.xlsx" % (data_type, postfix))

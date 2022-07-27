@@ -2,6 +2,7 @@ import random
 from skmultilearn.adapt import MLkNN
 import numpy as np
 from scipy.sparse import csr_matrix, lil_matrix
+from sklearn.metrics import accuracy_score
 
 def load_data_file(file_path, n_labels, separator='	', skip_head=True):
     """
@@ -45,4 +46,4 @@ if __name__ == '__main__':
     classifier = MLkNN(k=n_labels)
     classifier.fit(X_train, y_train)
     predictions = classifier.predict(X_test)
-    accuracy_score(y_test,predictions)
+    print(accuracy_score(y_test, predictions))

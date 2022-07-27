@@ -2,6 +2,7 @@
 影像学正则提取类
 """
 import re
+from Lib.RegexBase import RegexBase
 
 class InspRule(RegexBase):
     def __init__(self):
@@ -21,7 +22,7 @@ class InspRule(RegexBase):
 
         # 疾病待排对应的正则
         self.diease_suspect_regex = {
-            '急性胆管炎': '胆管炎' + inner + '((？)|[?]|(怀疑)|(待排)|(可能)|(硬化性))'
+            '急性胆管炎': '胆管炎' + self.inner + '((？)|[?]|(怀疑)|(待排)|(可能)|(硬化性))'
         }
 
 
@@ -33,13 +34,18 @@ class InspRule(RegexBase):
         result = {diease: (0, '', '') for diease in self.diease_regex.keys()}
 
         for diease in self.diease_regex.keys():
-            if re.search(self.diease_regex[diease], str):
-                match_txt = re.search(self.diease_regex[diease], str).group(0)
-                result[diease] = (1, match_txt, str)
-                if diease in self.diease_suspect_regex and re.search(self.diease_suspect_regex[diease], str):
-                    match_txt = re.search(self.diease_suspect_regex[diease], str).group(0)
-                elif re.search(self.diease_regex[diease] + inner + regex_suspect, str):
-                    match_txt = re.search(self.diease_regex[diease] + inner + regex_suspect, str).group(0)
-                result[diease] = (3, match_txt, str)
+            rt, match1, match2 = self.search_by_regex(str, self.diease_regex[diease],
+                            suspregex=self.diease_suspect_regex[diease] if diease in self.diease_suspect_regex else None)
+            #
+            # if re.search(self.diease_regex[diease], str):
+            #     match_txt = re.search(self.diease_regex[diease], str).group(0)
+            #     result[diease] = (1, match_txt, str)
+            #     if diease in self.diease_suspect_regex and re.search(self.diease_suspect_regex[diease], str):
+            #         match_txt = re.search(self.diease_suspect_regex[diease], str).group(0)
+            #         result[diease] = (3, match_txt, str)
+            #     elif re.search(self.diease_regex[diease] + self.inner + self.regex_suspect, str):
+            #         match_txt = re.search(self.diease_regex[diease] + self.inner + self.regex_suspect, str).group(0)
+            #         result[diease] = (3, match_txt, str)
+            result[diease] = (rt, match1.group(0) if match1 is not None else '', match2.group(0) if match2 is not None else '', str)
 
         return result

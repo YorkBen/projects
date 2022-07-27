@@ -11,7 +11,7 @@ from openpyxl.styles import Font, Border, Side, PatternFill, colors, Alignment
 sys.path.append('../../Classification')
 from Lib.TextClassifier import TextClassifier
 from RegexBase import RegexBase
-from MRRecordUtil import load_mrno
+from MRRecordUtil import load_mrno, filter_records, load_sheet_dict
 from Utils import Utils
 
 logging.basicConfig(level=logging.DEBUG)
@@ -60,18 +60,18 @@ class ClinicRule(RegexBase):
             {'id':'FBZJ1', 'name': '腹部肿瘤史', 'src': ['既往史', '手术外伤史'], 'regex':'腹部' + self.inner_neg + '肿?瘤', 'default': 0, 'type': 'model'},   # 模型
             {'id':'HLSJ1', 'name': '肿瘤化疗史', 'src': ['既往史', '手术外伤史'], 'regex':'化疗', 'default': 0, 'type': 'model'}, # 模型？
 
-            # {'id':'TJX1', 'name': '停经', 'src': ['现病史'], 'regex':'', 'type': 'model'},
+            # # {'id':'TJX1', 'name': '停经', 'src': ['现病史'], 'regex':'', 'type': 'model'},
 
             # {'id':'TYX1', 'name': '头晕', 'src': ['现病史'], 'regex':'头晕',  'default': 0},
             # {'id':'FZX1', 'name': '腹胀', 'src': ['现病史', '查体'], 'regex':'([腹饱]胀)|(胀[痛疼])|(腹' + self.inner_neg + '胀)',  'default': 0},
             # {'id':'EXOTX1', 'name': '恶心呕吐', 'src': ['现病史'], 'regex':'(恶心)|(呕吐)|呕|吐',  'default': 0},
-            # {'id':'TRFZX1', 'name': '突然发作', 'src': ['现病史'], 'regex':'(突发)|(突然)', 'default': 0},
+            # {'id':'TRFZX1', 'name': '突然发作', 'src': ['现病史'], 'regex':'(突发)|(突然)|(突感)', 'default': 0},
             # {'id':'JTX1', 'name': '绞痛', 'src': ['现病史'], 'regex':'绞痛', 'default': 0},
             # {'id':'HDX1', 'name': '黄疸', 'src': ['现病史'], 'regex':'(黄疸)|(黄染)|(发黄)', 'default': 0},
             # {'id':'ZLBX1', 'name': '坐立不安', 'src': ['现病史'], 'regex':'坐立不安', 'default': 0},
             #
             #
-            # {'id':'YWJ1', 'name': '异物摄入史', 'src': ['既往史', '现病史'], 'regex':''}, # 没有查询词
+            # {'id':'YWJ1', 'name': '异物摄入史', 'src': ['既往史', '现病史'], 'regex':'异物', 'default': 0},
             # {'id':'SLGJ1', 'name': '输卵管积水', 'src': ['现病史', '既往史'], 'regex':''}, # 0
             # {'id':'YNJ1', 'name': '饱餐、进食油腻食物史', 'src': ['现病史', '既往史'], 'regex':'(饱餐)|(油腻)|(油脂)', 'default': 0}, # 1
             # {'id':'JSJ1', 'name': '禁食', 'src': ['现病史', '既往史'], 'regex':'', 'default': 0}, # 0
@@ -92,7 +92,7 @@ class ClinicRule(RegexBase):
             # {'id':'JTLJ1', 'name': '畸胎瘤', 'src': ['既往史'], 'regex':'', 'default': 0}, # 1 现病史？
             # {'id':'WBSLJ1', 'name': '胃泌素瘤', 'src': ['既往史'], 'regex':'(胃泌素瘤)|(卓-艾综合征)|(Z-E综合征)', 'default': 0}, # 0 现病史？
             # {'id':'LCPJ1', 'name': '卵巢旁囊肿', 'src': ['既往史'], 'regex':'', 'default': 0}, # 0
-            # {'id':'DJSJ1', 'name': '胆结石', 'src': ['既往史', '现病史'], 'regex':'(胆结石)|(胆管结石)|(胆总管结石)|(胆囊结石)|(胆石症)', 'default': 0}, # 现病史 ? 没有现病史130，有了34
+            # {'id':'DJSJ1', 'name': '胆结石', 'src': ['既往史'], 'regex':'(胆结石)|(胆管结石)|(胆总管结石)|(胆囊结石)|(胆石症)', 'default': 0}, # 现病史 ? 没有现病史130，有了34
             # {'id':'MSLY1', 'name': '美沙拉明、速尿、氯沙坦、6-巯基嘌呤或硫唑嘌呤、异烟肼、袢利尿剂和去羟肌苷使用史',
             #     'src': ['既往史'], 'regex':'(美沙拉明)|(速尿)|(呋塞米)|(氯沙坦)|(科素亚)|(洛沙坦)|(罗沙藤)|(6-巯基嘌呤)|(乐疾宁)|(巯嘌呤)|(巯基嘌呤)|(硫唑嘌呤)|(依木兰)|(异烟肼)|(雷米封)|(袢利尿剂)|(去羟肌苷)'
             #     , 'default': 0}, # 3
@@ -111,7 +111,7 @@ class ClinicRule(RegexBase):
             #     'regex':'(非甾体抗炎药)|(阿司匹林)|(布洛芬)|(对乙酰氨基酚)|(吲哚美辛)|(萘普生)|(萘普酮)|(氯芬酸)|(尼美舒利)|(罗非昔布)|(塞来昔布)|(氯化钾)|(补达秀)',
             #     'default': 0}, # 7
             # {'id':'WYJJ1', 'name': '二乙基己烯雌酚', 'src': ['既往史'], 'regex':'二乙基己烯雌酚', 'default': 0}, # 0
-            # {'id':'GNJJ1', 'name': '宫内节育器使用(超过2年)', 'src': ['既往史'], 'regex':'(节育器)|(节育环)', 'default': 0},    # 0
+            # {'id':'GNJJ1', 'name': '宫内节育器使用(超过2年)', 'src': ['既往史', '手术外伤史'], 'regex':'(节育器)|(节育环)', 'default': 0},    # 0
             # {'id':'LGCJ1', 'name': '类固醇', 'src': ['既往史'], 'regex':'(大力补)|(康力龙)|(康复龙)|(睾酮)', 'default': 0},  # 0
             # {'id':'HBSJ1', 'name': '环丙沙星、三硅酸镁、磺胺药物、氨苯蝶啶、茚地那韦、愈创甘油醚、麻黄碱、袢利尿剂（呋塞米）、碳酸酐酶抑制剂、泻药（开塞露）、阿昔洛韦、环利尿剂、乙酰唑胺、茶碱、糖皮质激素（泼尼松）、噻嗪、水杨酸、丙磺舒、别嘌呤醇服用史',
             #     'src': ['既往史'], 'regex':'(环丙沙星)|(三硅酸镁)|(磺胺)|(苯磺胺)|(氨苯蝶啶)|(茚地那韦)|(愈创甘油醚)|(麻黄碱)|(托拉塞米)|(布美他尼)|(呋塞米)|(乙酰唑胺)|(碳酸酐酶抑制剂)|(泻药)|(开塞露)|(阿昔洛韦)|(环利尿剂)|(乙酰唑胺)|(茶碱)|(泼尼松)|(甲泼尼松龙)|(倍他米松)|(氢化可的松)|(可的松)|(地塞米松)|(噻嗪)|(氢氯噻嗪)|(阿司匹林)|(水杨酸)|(丙磺舒)|(别嘌呤醇)',
@@ -135,17 +135,17 @@ class ClinicRule(RegexBase):
             #
             #
             # {'id':'NMYWJ1', 'name': '子宫内膜异位症', 'src': ['既往史', '手术外伤史'], 'regex':'((子宫内膜异位)|(内异症))', 'default': 0},
-            # {'id':'SQJ1', 'name': '疝气或疝气修复史', 'src': ['既往史', '手术外伤史'], 'regex':'[^食管裂孔]{4}疝', 'default': 0}, # 3
+            # {'id':'SQJ1', 'name': '疝气或疝气修复史', 'src': ['既往史', '手术外伤史'], 'regex':'[^食管裂孔外膈]{,4}疝', 'default': 0}, # 3
             # {'id':'LWYJ1', 'name': '阑尾炎', 'src': ['既往史', '手术外伤史'], 'regex':'((阑尾炎)|(阑尾脓肿))', 'default': 0}, # 不带切除3
-            # {'id':'SLRJ1', 'name': '输卵管手术史', 'src': ['既往史', '手术外伤史'], 'regex':'输卵管' + self.inner_neg + '((手?术)|(结扎))', 'default': 0},
+            # {'id':'SLRJ1', 'name': '输卵管手术史', 'src': ['既往史', '手术外伤史'], 'regex':'((输卵管)|(附件))' + self.inner_neg + '((手?术)|(结扎)|(切除))', 'default': 0},
             # {'id':'WRDJ1', 'name': '胃绕道手术史、减肥手术史', 'src': ['既往史', '手术外伤史'], 'regex':'(胃绕道)|(减肥手术)|(缩胃)|(胃缩)', 'default': 0}, #全是2
             # {'id':'DCZJ1', 'name': '短肠综合征', 'src': ['既往史', '手术外伤史'], 'regex':'短肠综合征', 'default': 0}, # 0
             #
-            # {'id':'RSSJ1', 'name': '既往异位妊娠史', 'src': ['既往史', '手术外伤史'], 'regex':'异位妊娠', 'default': 0},
+            # {'id':'RSSJ1', 'name': '既往异位妊娠史', 'src': ['既往史', '手术外伤史'], 'regex':'(((间质部)|(疤痕)|(切口)|(宫角)|(异位)|(输卵管)|(卵巢)|(瘢痕))处?妊娠)|(宫外孕)', 'default': 0},
             #
             # {'id':'BZFS1', 'name': '板状腹', 'src': ['查体', '专科情况（体检）'], 'regex':'(板状腹)|(腹肌紧张)|(腹肌强直)|(腹壁紧张)|(腹壁强直)'},
             #
-            # {'id':'LWYJJ1', 'name': '阑尾炎家族史阳性', 'src': ['家族史'], 'regex':'(阑尾炎)|(阑尾脓肿)', 'default': 0}, # 全是2
+            # {'id':'LWYJJ1', 'name': '阑尾炎家族史阳性', 'src': ['家族史'], 'regex':'(阑尾炎)|(阑尾脓肿)|(阑尾)', 'default': 0}, # 全是2
             # {'id':'NJJ1', 'name': '尿石症家族史', 'src': ['家族史'], 'regex':'(肾结石)|(肾小结石)|(肾多发小结石)|(肾点状结石)|(输尿管结石)|(输尿管上段结石)', 'default': 0}, # 5
             #
             # {'id':'FYTS1', 'name': '下腹压痛', 'src': ['查体'], 'regex':'[下全]腹' + self.inner_neg + '压痛', 'negregex': '([下全]腹' + self.inner + '(无|(未见)|(未及))' + self.inner + '压痛)|(上腹' + self.inner + '压痛)'},
@@ -158,8 +158,8 @@ class ClinicRule(RegexBase):
             #
             # {'id':'KZGYT1', 'name': '腹部叩诊鼓音', 'src': ['体格检查', '查体'], 'regex':'(腹部)?(叩诊)?' + self.inner_neg + '鼓音'},
             # {'id':'CYXSS1', 'name': '肠鸣音消失', 'src': ['体格检查', '查体'], 'regex':'肠鸣音消失'},
-            # {'id':'CYKT1', 'name': '肠鸣音亢进（病程早期）', 'src': ['体格检查', '查体'], 'regex':'肠鸣音亢进'},
-            # {'id':'CYRT1', 'name': '肠鸣音减弱（病程晚期）', 'src': ['体格检查', '查体'], 'regex':'肠鸣音.?[弱低]'},
+            # {'id':'CYKT1', 'name': '肠鸣音亢进（病程早期）', 'src': ['体格检查', '查体'], 'regex':'肠鸣?音亢进'},
+            # {'id':'CYRT1', 'name': '肠鸣音减弱（病程晚期）', 'src': ['体格检查', '查体'], 'regex':'肠鸣?音.?[弱低]'},
             #
             # {'id':'HMT1', 'name': '昏迷', 'src': ['体格检查', '专科情况（体检）', '查体'],
             #    'regex':'(昏迷)|(意识不清)|(呼之不应)|(意识丧失)|(随意运动消失)|(对外界的刺激的反应迟钝或丧失)|(瞳孔散大)|(对光反射消失)|(双侧瞳孔不等大)|(神经反射消失)', 'default': 0},
@@ -171,31 +171,14 @@ class ClinicRule(RegexBase):
             # {'id':'ZDDNT1', 'name': '肿大胆囊', 'src': ['体格检查'], 'regex':'上腹' + self.inner_neg + '肿块', 'default': 0}, #
             # {'id':'FJT1', 'name': '附件肿块', 'src': ['体格检查'], 'regex':'(上腹' + self.inner_neg + '肿块)|(附件' + self.inner_neg + '触及' + self.inner_neg + '[肿包]块)|(附件' + self.inner_neg + '增[粗厚])', 'default': 0},
             #
-            # {'id':'XJG1', 'name': '酗酒', 'src': ['个人史'], 'regex':'酗酒'},
-            # {'id':'XYGS1', 'name': '吸烟', 'src': ['个人史'], 'regex':'吸烟'},
+            # {'id':'XJG1', 'name': '酗酒', 'src': ['个人史'], 'regex':'酗酒', 'default': 0},
+            # {'id':'XYGS1', 'name': '吸烟', 'src': ['个人史'], 'regex':'吸烟', 'default': 0},
             #
             # {'id':'NL35', 'name': '年龄35岁及以上', 'src': ['年龄'], 'regex':''},
             #
-            # {'id':'LCJ1', 'name': '既往流产（包括人工流产）', 'src': ['婚育史'], 'regex':'流产'},
-            {'id':'BYHJ1', 'name': '不孕(风险随不孕时间的延长而增加)', 'src': ['婚育史'], 'regex':'不孕'}
+            # {'id':'LCJ1', 'name': '既往流产（包括人工流产）', 'src': ['婚育史'], 'regex':'流产', 'default': 0},
+            {'id':'BYHJ1', 'name': '不孕(风险随不孕时间的延长而增加)', 'src': ['婚育史', '既往史', '现病史'], 'regex':'不孕'}
         ]
-
-
-    def filter_records_by_mrnos(self, records, mrnos):
-        """
-        根据mrno过滤records
-        """
-        if mrnos is None:
-            mrnos = [record["医保编号"] for record in records]
-
-        results = {key:None for key in mrnos}
-        for record in records:
-            if record["医保编号"] in results:
-                results[record["医保编号"]] = record
-
-        results_ = [results[key] for key in results]
-
-        return mrnos, results_
 
 
     def load_data(self, json_file, labeled_file):
@@ -207,11 +190,12 @@ class ClinicRule(RegexBase):
             json_data = json.load(f, strict=False)
 
         if labeled_file is not None:
-            mr_nos = load_mrno(labeled_file, with_head=False)
+            keys = load_keys(labeled_file, with_head=False, separator='	')
+            json_data = filter_records(json_data, keys)
         else:
-            mr_nos = None
+            keys = [(record["医保编号"], record["入院日期"]) for record in json_data]
 
-        return self.filter_records_by_mrnos(json_data, mr_nos)
+        return keys, json_data
 
 
     def get_txt_from_records(self, records, src):
@@ -285,9 +269,9 @@ class ClinicRule(RegexBase):
                 # 正则查找
                 regex = feature['regex'] if feature['regex'] != '' else feature['name']
                 negregex = feature['negregex'] if 'negregex' in feature else None
-                r_regex, match1_regex, match2_regex = self.search_by_regex(txt, regex, negregex, feature['default'] if 'default' in feature else 0)
-                match1_regex = match1_regex if match1_regex == '' or match1_regex is None else match1_regex.group(0)
-                match2_regex = match2_regex if match2_regex == '' or match2_regex is None else match2_regex.group(0)
+                r_regex, match1_regex, match2_regex = self.search_by_regex(txt, regex, negregex, default=feature['default'] if 'default' in feature else 0)
+                match1_regex = '' if match1_regex is None else match1_regex.group(0)
+                match2_regex = '' if match2_regex is None else match2_regex.group(0)
 
                 if r_regex == 0 or r_regex == 1 or r_strc == -1:
                     results.append([r_regex, match1_regex, match2_regex, txt, 0])
@@ -404,19 +388,15 @@ class ClinicRule(RegexBase):
                     return 0, text
         elif name == '吸烟':
             text = record['入院记录']['个人史']['吸烟史']
-            if text.replace('-', '') == '':
-                return 2, text
+            if '无' in text or text.replace('-', '') == '':
+                return 0, text
             elif record['入院记录']['个人史']['戒烟时间'] != '':
                 return 1, text
-            elif '无' in text:
-                return 0, text
             else:
                 return 1, text
         elif name == '酗酒':
             text = record['入院记录']['个人史']['饮酒史']
-            if text.replace('-', '') == '':
-                return 2, text
-            elif '无' in text:
+            if '无' in text or text.replace('-', '') == '':
                 return 0, text
             else:
                 return 1, text
@@ -434,7 +414,7 @@ class ClinicRule(RegexBase):
             num1 = self.utils.format_num(record['入院记录']['婚育史']['自然流产'])
             num2 = self.utils.format_num(record['入院记录']['婚育史']['人工流产'])
             if num1 == '' and num2 == '' and record['入院记录']['婚育史']['产'] == '':
-                return 2, '%s，%s' % (num1, num2)
+                return 0, '%s，%s' % (num1, num2)
             else:
                 num1 = int(num1) if num1 != '' else 0
                 num2 = int(num2) if num2 != '' else 0
@@ -444,7 +424,7 @@ class ClinicRule(RegexBase):
                     return 0, '%s，%s' % (num1, num2)
         elif name == '不孕(风险随不孕时间的延长而增加)':
             if '未婚' in record['入院记录']['婚育史']['婚育史']:
-                return 2, record['入院记录']['婚育史']['婚育史']
+                return 0, record['入院记录']['婚育史']['婚育史']
             else:
                 has_num = False
                 if self.utils.format_num(record['入院记录']['婚育史']['妊娠'], default='0') != '0':
@@ -475,67 +455,12 @@ class ClinicRule(RegexBase):
                         # 数据空的认为缺失
                         if int(age) - int(mar_age) > 1 and self.utils.format_num(record['入院记录']['婚育史']['产']) != '':
                             return 1, '结婚年龄：%s，年龄：%s' % (record['入院记录']['婚育史']['结婚年龄'], record['入院记录']['年龄'])
-                    return 2, '结婚年龄：%s，年龄：%s' % (record['入院记录']['婚育史']['结婚年龄'], record['入院记录']['年龄'])
+                    return 0, '结婚年龄：%s，年龄：%s' % (record['入院记录']['婚育史']['结婚年龄'], record['入院记录']['年龄'])
         else:
             return None, ''
 
 
-    def search_by_regex(self, text, regex, negregex, default):
-        pos_match, pneg_match, neg_match, rt1, rt2 = None, None, None, 2, 2
-        for t in self.split_text(text):
-            match1 = re.search(regex, t)
-            pos_match = match1
-            if match1:
-                regex2 = '[^,，；;！]*(' + regex + ')[^,，；;！]*'
-                match11 = re.search(regex2, t)
-                t_ = t[match11.span()[0]:match11.span()[1]]
 
-                # 否定
-                match1 = re.search(regex, t_)
-                mt1_sp2 = match1.span()[1]
-                match2 = re.search(r"(无[^痛])|(不[^详全])|未|(否认)", t_)
-                match3 = re.search(r"(不明显)|(阴性)|(排除)|([(（][-—][)）])", t_)
-                if match2 and match2.span()[1] < mt1_sp2 and not '诱因' in t_[:mt1_sp2]:
-                    pneg_match, rt1 = match2, 0
-                elif match3 and match3.span()[0] >= mt1_sp2:
-                    pneg_match, rt1 = match3, 0
-                else:
-                    rt1 = 1
-
-                # # 待排、可能
-                # match4 = re.search("(待排)|(可能)|[?]|？", t_)
-                # if match4 and match4.span()[0] >= mt1_sp2 and (match4.span()[0] - mt1_sp2) <= 2:
-                #     pneg_match, rt1 = match4, 3
-
-                break
-
-        if negregex is not None:
-            for t in self.split_text(text):
-                match1 = re.search(negregex, t)
-                if match1:
-                    neg_match, rt2 = match1, 0
-                    break
-
-        if pos_match is not None and neg_match is not None:
-            if pos_match.span()[1] - pos_match.span()[0] <= neg_match.span()[1] - neg_match.span()[0]:
-                return rt1, pos_match, pneg_match
-            else:
-                return rt2, neg_match, ''
-        elif pos_match is not None:
-            return rt1, pos_match, pneg_match
-        elif neg_match is not None:
-            return rt2, neg_match, ''
-        elif default is not None:
-            return default, '', ''
-        else:
-            return 2, '', ''
-
-
-    def split_text(self, text):
-        # text = text.replace('，间断', ' 间断').replace('，持续', ' 持续').replace('，阵发', ' 阵发')
-        # text = text.replace('，呈', ' 呈').replace('，为', ' 为')
-        # text = text.replace('，', '。')
-        return text.split('。')
 
 
     def write_to_excel(self, results, file_path, debug):
@@ -579,10 +504,10 @@ class ClinicRule(RegexBase):
     def process(self, json_file, labeled_file=None, debug=True):
         """
         处理主程序
-        预测结果：{'医保编号': mrnos, '特征1': [(结果, 正匹配, 负匹配, 查找文本, 是否和人工标记相同的标志位)]}
+        预测结果：{'医保编号': [], '入院日期': [], '特征1': [(结果, 正匹配, 负匹配, 查找文本, 是否和人工标记相同的标志位)]}
         """
-        mrnos, records = self.load_data(json_file, labeled_file)
-        results = {'医保编号': mrnos}
+        keys, records = self.load_data(json_file, labeled_file)
+        results = {'医保编号': [mrno for mrno, _ in keys], '入院日期': [r_date for _, r_date in keys]}
         for feature in self.features:
             print('processing feature: %s,  type: %s' % (feature['name'], feature['type'] if 'type' in feature else 'regex'))
             # 模型
@@ -595,41 +520,6 @@ class ClinicRule(RegexBase):
                 results[feature['id']] = f_results
 
             self.write_to_excel(results, r'../data/%s/f_%s.xlsx' % (self.type, self.postfix), debug=debug)
-
-        return results
-
-
-    ##################################
-    # 调试部分
-    ##################################
-    def load_manlabeled_sheet(workbook_path, sheet_name):
-        """
-        加载人工标记数据表格
-        workbook_path: excel路径，第一列是医保编号，其它列是特征标记
-        sheet_name：表单名
-        """
-        # workbook_path = r"data/高发病率腹痛疾病特征标注2022.6.23.xlsx"
-        # sheet_name = "前500个疾病特征标注"
-        workbook = load_workbook(workbook_path)
-        sheet = workbook[sheet_name]
-
-        results, cols = {}, []
-        # 写入列名
-        for j in range(1, sheet.max_column + 1):
-            if sheet.cell(1, j).value is None:
-                break
-            cols.append(sheet.cell(1, j).value)
-
-        # 写入行名，及数据
-        for i in range(2, sheet.max_row + 1):
-            if sheet.cell(i, 1).value is None:
-                break
-
-            mrno = sheet.cell(i, 1).value
-            results[mrno] = {}
-            for j in range(1, len(cols) + 1):
-                val = int(sheet.cell(i, j+1).value) if sheet.cell(i, j+1).value is not None else 0
-                results[mrno][cols[j]] = val
 
         return results
 
@@ -681,7 +571,14 @@ if __name__ == '__main__':
     postfix='2118'
     cr = ClinicRule(type=type, postfix=postfix)
     results = cr.process(r'../data/腹痛/汇总结果_%s.json' % postfix, r'../data/腹痛/labeled_ind_%s.txt' % postfix)
-    # manlabeled_data = cr.load_manlabeled_sheet()
+    # manlabeled_data = load_sheet_dict()
+    # for key1 in manlabeled_data.keys():
+    #     for key2 in manlabeled_data[key1].keys():
+    #         if manlabeled_data[key1][key2] == '':
+    #             manlabeled_data[key1][key2] = 0
+    #         else:
+    #             manlabeled_data[key1][key2] = int(manlabeled_data[key1][key2])
+
     # results = cr.stat_and_tag_results(results, manlabeled_data)
     # cr.write_to_excel(results, r'../data/%s/f_%s.xlsx' % (type, postfix), debug=True)
 
