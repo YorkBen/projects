@@ -34,6 +34,22 @@ class RegexBase:
         return rmatch, rt
 
 
+    def check_neg_word(self, text, word):
+        """
+        检查text中是否有否定词，word为主体词, text为文本片段。
+        """
+        pos_match = re.search(word, text)
+        mt1_sp2 = pos_match.span()[1]
+        match2 = re.search(r"(无[^痛])|(不[^详全])|未|(否认)", text)
+        match3 = re.search(r"(不明显)|(阴性)|(排除)|(((未见)|无)(明显)?异常)|([(（][-—][)）])", text)
+        if match2 and match2.span()[1] < mt1_sp2 and not '诱因' in text[:mt1_sp2]:
+            return True, match2
+        elif match3 and match3.span()[0] >= mt1_sp2:
+            return True, match3
+        else:
+            return False, None
+
+
     def search_by_regex(self, text, regex, negregex=None, suspregex=None, default=2):
         # 正匹配正则
         pos_match, pneg_match, psusp_match, rt1 = None, None, None, default
@@ -44,16 +60,22 @@ class RegexBase:
                 t_ = t[match1.span()[0]:match1.span()[1]]
 
                 # 否定
-                pos_match = re.search(regex, t_)
-                mt1_sp2 = pos_match.span()[1]
-                match2 = re.search(r"(无[^痛])|(不[^详全])|未|(否认)", t_)
-                match3 = re.search(r"(不明显)|(阴性)|(排除)|(((未见)|无)(明显)?异常)|([(（][-—][)）])", t_)
-                if match2 and match2.span()[1] < mt1_sp2 and not '诱因' in t_[:mt1_sp2]:
-                    pneg_match, rt1 = match2, 0
-                elif match3 and match3.span()[0] >= mt1_sp2:
-                    pneg_match, rt1 = match3, 0
+                bNeg, bNeg_match = self.check_neg_word(t_, regex)
+                if bNeg:
+                    pneg_match, rt1 = bNeg_match, 0
                 else:
                     rt1 = 1
+                #####被上面代码取代
+                # pos_match = re.search(regex, t_)
+                # mt1_sp2 = pos_match.span()[1]
+                # match2 = re.search(r"(无[^痛])|(不[^详全])|未|(否认)", t_)
+                # match3 = re.search(r"(不明显)|(阴性)|(排除)|(((未见)|无)(明显)?异常)|([(（][-—][)）])", t_)
+                # if match2 and match2.span()[1] < mt1_sp2 and not '诱因' in t_[:mt1_sp2]:
+                #
+                # elif match3 and match3.span()[0] >= mt1_sp2:
+                #     pneg_match, rt1 = match3, 0
+                # else:
+                #     rt1 = 1
 
                 # 待排、可能
                 match4 = re.search(self.regex_suspect, t_)
