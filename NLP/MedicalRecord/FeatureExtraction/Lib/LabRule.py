@@ -128,7 +128,7 @@ class LabRule(RegexBase):
         """
         处理结构化实验室数据。
         输入：
-            组套名称, 标本, 项目, 检验值, 单位, 参考值范围：血常规.hsCRP.SAA, 全血, C反应蛋白, 5.92, mg/L, 0-10
+            [组套名称, 标本, 项目, 检验值, 单位, 参考值范围]，示例：[血常规.hsCRP.SAA, 全血, C反应蛋白, 5.92, mg/L, 0-10]
             输入为一个病历号对应的所有实验室数据。
         输出：
             所有特征提取结果
@@ -145,10 +145,10 @@ class LabRule(RegexBase):
                         val = float(str_val)
                         if rule_type == 'gt' and val > rule_val or \
                             rule_type == 'lt' and val < rule_val:
-                            rule_results[id] = 1
+                            rule_results[rule_id] = 1
                         else:
-                            if rule_results[id] != 1:
-                                rule_results[id] = 0
+                            if rule_results[rule_id] != 1:
+                                rule_results[rule_id] = 0
 
 
         return rule_results

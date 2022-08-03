@@ -42,7 +42,7 @@ class Utils:
         """
         字符串匹配数字
         """
-        str = self.format_regex(str, r'([0-9]*(\.)?[0-9]*)|([一二三四五六七八九十]{2,})')
+        str = self.format_regex(str, r'([0-9]+(\.)?[0-9]*)|([一二三四五六七八九十]{2,})')
         str = str.replace('一', '1').replace('二', '2').replace('三', '3').replace('四', '4')
         str = str.replace('五', '5').replace('六', '6').replace('七', '7').replace('八', '8')
         str = str.replace('九', '9')
@@ -65,7 +65,7 @@ class Utils:
         """
         解析字符串中的日期，并做标准化输出
         """
-        r = re.search(r'(20[0-9]{2})[年\./\-]([01]?[0-9])[月\./\-]?([0123]?[0-9])?', str, re.I)
+        r = re.search(r'(20[0-9]{2})[年\./\-]([01]?[0-9])[月\./\-]?(([0123]?[0-9])|[底初末中上下旬]{1,3})?', str, re.I)
         if r:
             return self.format_date_output(r[1], r[2], r[3])
         else:
@@ -239,15 +239,35 @@ class Utils:
 
 
     def format_date_output(self, d1, d2, d3):
-        if d1 is None:
-            d1 = '2021'
-        result = d1
-        result = result + '0' if len(d2) == 1 else result + ''
-        result = result + d2
-        if d3 is None:
+        # d1
+        now = str(datetime.datetime.now())
+        if d1:
+            result = d1
+        else:
+            if int(now[5:7]) > 6:
+                result = now[:4]
+            else:
+                result = str(int(now[:4]) + 1)
+
+        # d2
+        result = result + '0' + d2 if len(d2) == 1 else result + d2
+
+        # d3
+        if '中上' in d3:
+            d3 = '10'
+        elif '中下' in d3:
+            d3 = '20'
+        elif '初' in d3 or '上旬' in d3:
+            d3 = '05'
+        elif '中' in d3:
             d3 = '15'
-        result = result + '0' if len(d3) == 1 else result + ''
-        result = result + d3
+        elif '末' in d3 or '下旬' in d3:
+            d3 = '25'
+        else:
+            d3 = self.format_num(d3)
+            d3 = '15' if d3 == '' else d3
+
+        result = result + '0' + d3 if len(d3) == 1 else result + d3
 
         return result
 

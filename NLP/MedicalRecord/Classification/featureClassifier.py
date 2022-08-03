@@ -19,7 +19,7 @@ torch.cuda.empty_cache()
 # input_file, num_cls = r'data\data_no_8.csv', 8      # 急性 + 慢性 去掉GA18
 # input_file, num_cls = r'data\data_no_6.csv', 6    # 急性阑尾炎
 max_length = 500
-epochs = 100
+epochs = 500
 # feature_size = 29
 hidden_size1 = 512
 hidden_size2 = 512
@@ -37,7 +37,9 @@ class FeatureClassficationModel(torch.nn.Module):
         self.batchnm1 = torch.nn.BatchNorm1d(512)
         self.dense2 = torch.nn.Linear(512, 256)
         self.batchnm2 = torch.nn.BatchNorm1d(256)
-        self.dense3 = torch.nn.Linear(256, num_cls)
+        self.dense3 = torch.nn.Linear(256, 128)
+        self.batchnm3 = torch.nn.BatchNorm1d(128)
+        self.dense4 = torch.nn.Linear(128, num_cls)
         self.dropout = torch.nn.Dropout(0.5)
 
     def forward(self, x):
@@ -50,6 +52,10 @@ class FeatureClassficationModel(torch.nn.Module):
         x = F.relu(x)
         x = self.dropout(x)
         x = self.dense3(x)
+        x = self.batchnm3(x)
+        x = F.relu(x)
+        x = self.dropout(x)
+        x = self.dense4(x)
         return x
 
 
@@ -165,16 +171,17 @@ def inference(datasets, sentences, features, labels):
             f.write('%s	%s	%s\n' % (sentence, id_map[label], id_map[r]))
 
 
-def load_data(file_path):
+def load_data(file_path, num_fields, separator, skip_title, cls_col, start_feature_col, end_feature_col):
     dl = CustDataLoader()
-    lines = dl.load_data_lines(file_path, num_fields=122, skip_title=False, shuffle=True)
-    train_lines, val_lines = dl.split_data_by_cls_num(lines, 1)
-    train_X = [[int(e)  for e in l[2:]] for l in train_lines]
-    train_y = [int(l[1]) for l in train_lines]
-    val_X = [[int(e)  for e in l[2:]] for l in val_lines]
-    val_y = [int(l[1]) for l in val_lines]
+    lines = dl.load_data_lines(file_path, num_fields=num_fields, separator=separator, skip_title=skip_title, shuffle=True)
+    train_lines, val_lines = dl.split_data_by_cls_num(lines, cls_col)
+    train_X = [[int(e) for e in l[start_feature_col:end_feature_col+1]] for l in train_lines]
+    train_y = [int(l[cls_col]) for l in train_lines]
+    val_X = [[int(e) for e in l[start_feature_col:end_feature_col+1]] for l in val_lines]
+    val_y = [int(l[cls_col])for l in val_lines]
+    val_id = [l[0:2] for l in val_lines]
 
-    return train_X, train_y, val_X, val_y
+    return train_X, train_y, val_X, val_y, val_id
 
 
 if __name__ == "__main__":
@@ -182,8 +189,10 @@ if __name__ == "__main__":
     # sentences, features, labels, feature_size = load_data(id_map = id_map, input_file=r'data/train_data_20220424.txt')
     # sentences, features, labels = load_data_one_id(id = idc11_id)
     # input_ids, attention_mask = text_tokenize(sentences)
-    train_X, train_y, val_X, val_y = load_data(r'data\train_data_202207.txt')
-    model_folder, model_name = r'featureClassify', '20220724'
+    train_X, train_y, val_X, val_y, val_id = load_data(r'data/疾病诊断拟合_全特征.txt', num_fields=171, separator='	',
+        skip_title=True, cls_col=2, start_feature_col=3, end_feature_col=170)
+
+    model_folder, model_name = r'featureClassify', '20220803'
     num_cls, num_features = len(list(set(train_y))), len(train_X[0])
     print('num cls: %s, num_features: %s' % (num_cls, num_features))
 

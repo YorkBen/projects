@@ -24,7 +24,7 @@ class DataLoader:
                     if len(arr) == num_fields:
                         lines.append(arr)
                     else:
-                        logging.warning('Skipping Illegal Line: %s!' % line)
+                        logging.warning('Line Length: %s, Skipping Illegal Line: %s!' % (len(arr), line))
                 else:
                     lines.append(line.strip())
 
@@ -33,6 +33,10 @@ class DataLoader:
             random.shuffle(lines)
 
         logging.debug('%s Lines Loaded!' % len(lines))
+        for l in lines:
+            if l[0] == '10032535':
+                print(l[2])
+
         return lines
 
 
@@ -63,10 +67,11 @@ class DataLoader:
 
         train_lines, val_lines = [], []
         for cls in cls_num_dict.keys():
+            # if cls_num_dict[cls] < 200:
+            #     continue
             train_num = round(cls_num_dict[cls] * train_split_ratio)
-            print('%s train num: %s' % (cls, train_num))
             cls_lines = [line for line in lines if line[cls_col] == cls]
-            print(cls, len(cls_lines))
+            print('%s, total num: %s, train num: %s' % (cls, len(cls_lines), train_num))
             random.shuffle(cls_lines)
             train_lines.extend(cls_lines[:train_num])
             val_lines.extend(cls_lines[train_num:])
@@ -79,7 +84,7 @@ class DataLoader:
 
     def split_data_by_cls_num2(self, lines, cls_col, train_split_ratio=0.8):
         """
-        根据标签的样本数量来拆分训练和测试集，保持数据平衡，选择中间量截断量大的数据
+        根据标签的样本数量来拆分训练和测试集，保持数据平衡，选择最小量截断量大的数据
         """
         cls_num_dict = self.stat_cls_num(lines, cls_col)
         nums = sorted([cls_num_dict[cls] for cls in cls_num_dict.keys()])

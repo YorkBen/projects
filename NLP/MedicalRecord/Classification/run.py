@@ -20,7 +20,7 @@ def cust_logging(log_file, str):
         f.write(str + '\n')
 
 
-def train_all_features(file_path, start_field, num_fields):
+def train_all_features(file_path, start_field, num_fields, log_file):
     dl = DataLoader()
     ## 训练TextClassifier ############################################
     # 加载所有数据
@@ -109,10 +109,12 @@ def load_data_sheet(sheet):
 
 
 if __name__ == "__main__":
-    log_file = r'output/textclassify_train_20220726.txt'
-    train_all_features(r'data/data_model_2049_2.txt', start_field=4, num_fields=5)
-    train_all_features(r'data/data_model_2049_3.txt', start_field=2, num_fields=3)
-    train_all_features(r'data/data_model_2049_4.txt', start_field=2, num_fields=4)
+    train_all_features(r'data\data_model_gen_5.txt', start_field=2, num_fields=3, log_file=r'output/textclassify_train_20220729.txt')
+#     log_file = r'output/textclassify_train_20220729.txt'
+#     train_all_features(r'data/data_model_2049.txt', start_field=2, num_fields=23, log_file=log_file)
+    # train_all_features(r'data/data_model_2049_2.txt', start_field=2, num_fields=5)
+    # train_all_features(r'data/data_model_2049_3.txt', start_field=2, num_fields=3)
+    # train_all_features(r'data/data_model_2049_4.txt', start_field=2, num_fields=4)
     # predict_all_features()
 
     #

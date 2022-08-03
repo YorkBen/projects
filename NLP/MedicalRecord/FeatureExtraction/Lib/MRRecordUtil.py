@@ -17,7 +17,7 @@ def load_mrno(file_path, with_head=True, separator='	'):
 
 def load_keys(file_path, with_head=True, separator='	'):
     """
-    提取mrnos和入院日期，文件的第一个字段是mrnos，第二个字段是入院日期
+    提取mrnos和入院日期，文件的第一个字段是mrnos，第二个字段是入院时间
     """
     results = []
     with open(file_path, encoding="utf-8") as f:
@@ -25,7 +25,7 @@ def load_keys(file_path, with_head=True, separator='	'):
             if idx == 0 and with_head or line.strip() == '':
                 continue
 
-            arr = line.strip().split(sperator)
+            arr = line.strip().split(separator)
             mr_no, ry_date = arr[0], ''
             if len(arr) == 2:
                 ry_date = arr[1]
@@ -43,12 +43,11 @@ def filter_records(json_data, keys):
     根据医保编号和入院日期过滤json数据
     keys：set((mrno, 入院日期)) 或者 set(mrno) 或者None
     """
-    keys = set(list(keys))
-    results = []
+    results = [None for i in range(len(keys))]
     for record in json_data:
-        if (record['医保编号'], record['入院日期']) in keys \
-            or (record['医保编号'], '') in keys:
-            results.append(record)
+        key = '%s_%s' % (record['医保编号'], record['入院时间'])
+        if key in keys:
+            results[keys.index(key)] = record
 
     return results
 
@@ -120,7 +119,7 @@ def load_sheet_arr_dict(workbook_path, sheet_name):
 
 
 
-def write_sheet_arr_dict(data, workbook_path, sheet_name):
+def write_sheet_arr_dict(data, workbook_path, sheet_name, debug=True):
     """
     写入数据表格。数据格式：生成字典数组：[{key_col1: val1, key_col2: val2...}]。
     字典的key作为表头，每行写一行数据。如果数据有几个字段，每个表头之间需要间隔相应的字段。字段依次写入相邻列中。
@@ -138,7 +137,7 @@ def write_sheet_arr_dict(data, workbook_path, sheet_name):
         sheet.cell(1, cn).value = col
         # 根据col的值类型，来添加列间距
         val = data[0][col]
-        if isinstance(val, list) or isinstance(val, tuple):
+        if debug and (isinstance(val, list) or isinstance(val, tuple)):
             for e in val:
                 cn = cn + 1
         else:
@@ -150,12 +149,15 @@ def write_sheet_arr_dict(data, workbook_path, sheet_name):
         for col in cols:
             # 根据col的值类型，来添加列间距
             val = row[col]
-            if isinstance(val, list) or isinstance(val, tuple):
+            if debug and (isinstance(val, list) or isinstance(val, tuple)):
                 for e in val:
                     sheet.cell(rn, cn).value = e
                     cn = cn + 1
             else:
-                sheet.cell(rn, cn).value = val
+                if isinstance(val, list) or isinstance(val, tuple):
+                    sheet.cell(rn, cn).value = val[0]
+                else:
+                    sheet.cell(rn, cn).value = val
                 cn = cn + 1
 
     wb.save(workbook_path)
