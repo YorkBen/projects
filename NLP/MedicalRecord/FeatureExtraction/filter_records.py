@@ -1,5 +1,7 @@
-import re
 import json
+import re
+import os
+import argparse
 
 def load_keys(file_path, with_head=True, separator='	'):
     """
@@ -27,12 +29,12 @@ def load_keys(file_path, with_head=True, separator='	'):
 def filter_records(json_data, keys):
     """
     根据医保编号和入院日期过滤json数据
-    keys：set((mrno, 入院日期)) 或者 set(mrno) 或者None
+    keys：[(mrno, 入院日期)] 或者 [mrno] 或者None
     """
-    keys = set(list(keys))
-    results = []
+    keys = list(keys)
+    results = [{} for key in keys]
     for record in json_data:
-        if record['入院记录'] == '':
+        if '入院记录' not in record or record['入院记录'] == '':
             continue
         key = '%s_%s' % (record['医保编号'], record['入院记录']['入院时间'])
         if key in keys:
@@ -70,7 +72,7 @@ def filter_records(json_data, keys):
             for k1 in ['婚育史', '结婚年龄', '妊娠', '产', '自然生产', '手术生产', '自然流产', '人工流产', '早产', '死产', '引产', '配偶健康状况']:
                 hys[k1] = '未知' if hys[k1] == '' else hys[k1]
 
-            results.append(record)
+            results[keys.index(key)] = record
 
     return results
 
@@ -83,11 +85,28 @@ def write_result(file_path, data):
         f.write(json.dumps(data, indent=1, separators=(',', ':'), ensure_ascii=False))
 
 
-keys = load_keys(r'data/人机大赛/labeled_ind_192.txt', with_head=False)
-keys = ['%s_%s' % (e[0], e[1]) for e in keys]
-# 加载json数据
-json_data = ''
-with open(r'data/人机大赛/汇总结果_231.json') as f:
-    json_data = json.load(f, strict=False)
-    json_data = filter_records(json_data, keys)
-    write_result(r'data/人机大赛/汇总结果_192.json', json_data)
+if __name__ == '__main__':
+    # 参数
+    parser = argparse.ArgumentParser(description='Select Data With MR_NOs')
+    parser.add_argument('-p', type=str, default='2409', help='postfix num')
+    parser.add_argument('-t', type=str, default='腹痛', help='数据类型')
+    args = parser.parse_args()
+
+    postfix = args.p
+    data_type = args.t
+    if not os.path.exists('data/%s' % data_type):
+        print('data type: %s not exists' % data_type)
+        exit()
+    print("postfix: %s, data_type: %s" % (data_type, postfix))
+    if not os.path.exists('data/%s/labeled_ind_%s.txt' % (data_type, postfix)):
+        print('mrnos file: data/%s/labeled_ind_%s.txt not exists!' % (data_type, postfix))
+        exit()
+
+    keys = load_keys(r'data/%s/labeled_ind_%s.txt' % (data_type, postfix), with_head=False)
+    keys = ['%s_%s' % (e[0], e[1]) for e in keys]
+    # 加载json数据
+    json_data = ''
+    with open(r'data/%s/汇总结果_%s.json' % (data_type, postfix)) as f:
+        json_data = json.load(f, strict=False)
+        json_data = filter_records(json_data, keys)
+        write_result(r'data/%s/汇总结果_%s_1.json' % (data_type, postfix), json_data)

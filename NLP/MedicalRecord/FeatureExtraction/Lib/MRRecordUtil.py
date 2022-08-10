@@ -12,7 +12,7 @@ def load_mrno(file_path, with_head=True, separator='	'):
                 continue
             mr_no.append(line.strip().split(separator)[0])
 
-    return set(mr_no)
+    return mr_no
 
 
 def load_keys(file_path, with_head=True, separator='	'):
@@ -41,11 +41,17 @@ def load_keys(file_path, with_head=True, separator='	'):
 def filter_records(json_data, keys):
     """
     根据医保编号和入院日期过滤json数据
-    keys：set((mrno, 入院日期)) 或者 set(mrno) 或者None
+    keys：[(mrno, 入院日期)] 或者 [mrno] 或者None
     """
     results = [None for i in range(len(keys))]
     for record in json_data:
-        key = '%s_%s' % (record['医保编号'], record['入院时间'])
+        if record['入院时间'] != '':
+            key = '%s_%s' % (record['医保编号'], record['入院时间'])
+        elif record['入院记录']['入院时间'] != '':
+            key = '%s_%s' % (record['医保编号'], record['入院记录']['入院时间'])
+        else:
+            key = '%s' % record['医保编号']
+
         if key in keys:
             results[keys.index(key)] = record
 

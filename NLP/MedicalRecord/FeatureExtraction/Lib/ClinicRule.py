@@ -5,6 +5,8 @@ import sys
 import json
 import re
 import logging
+import os
+import argparse
 from openpyxl import load_workbook, Workbook
 from openpyxl.styles import Font, Border, Side, PatternFill, colors, Alignment
 
@@ -578,7 +580,7 @@ class ClinicRule(RegexBase):
                 f_results = self.predict_by_regex(records, feature)
                 results[feature['id']] = f_results
 
-        self.write_to_excel(results, r'../data/%s/f_%s.xlsx' % (self.type, self.postfix), debug=debug)
+        self.write_to_excel(results, r'../data/%s/临床特征_%s.xlsx' % (self.type, self.postfix), debug=debug)
 
         return results
 
@@ -626,11 +628,25 @@ class ClinicRule(RegexBase):
 
 
 if __name__ == '__main__':
-    type='腹痛'
-    postfix='3456'
-    cr = ClinicRule(type=type, postfix=postfix)
+    # 参数
+    parser = argparse.ArgumentParser(description='Select Data With MR_NOs')
+    parser.add_argument('-p', type=str, default='3456', help='postfix num')
+    parser.add_argument('-t', type=str, default='腹痛', help='数据类型')
+    args = parser.parse_args()
+
+    postfix = args.p
+    data_type = args.t
+    if not os.path.exists('../data/%s' % data_type):
+        print('data type: %s not exists' % data_type)
+        exit()
+    print("postfix: %s, data_type: %s" % (data_type, postfix))
+    if not os.path.exists('../data/%s/labeled_ind_%s.txt' % (data_type, postfix)):
+        print('mrnos file: ../data/%s/labeled_ind_%s.txt not exists!' % (data_type, postfix))
+        exit()
+
+    cr = ClinicRule(type=data_type, postfix=postfix)
     # results = cr.process(r'../data/腹痛/汇总结果_%s.json' % postfix, r'../data/腹痛/labeled_ind_%s.txt' % postfix)
-    results = cr.process(r'../data/腹痛/汇总结果_4335.json', r'../data/腹痛/labeled_ind_%s.txt' % postfix, debug=False)
+    results = cr.process(r'../data/%s/汇总结果_%s.json' % (data_type, postfix), r'../data/%s/labeled_ind_%s.txt' % (data_type, postfix), debug=False)
 
     # manlabeled_data = load_sheet_dict()
     # for key1 in manlabeled_data.keys():

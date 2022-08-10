@@ -27,8 +27,8 @@ def write_pred_result(val_id, val_y, prediction):
 
 if __name__ == "__main__":
     # # 全量数据，准确率：76% ~ 79%
-    train_X, train_y, val_X, val_y, val_id = load_data(r'data/疾病诊断拟合_全特征.txt', num_fields=171, separator='	',
-        skip_title=True, cls_col=2, start_feature_col=3, end_feature_col=170)
+    # train_X, train_y, val_X, val_y, val_id = load_data(r'data/疾病诊断拟合_全特征.txt', num_fields=171, separator='	',
+    #     skip_title=True, cls_col=2, start_feature_col=3, end_feature_col=170)
 
     # # 临床特征，非模型，无人工，准确率：47.25%
     # train_X, train_y, val_X, val_y, val_id = load_data(r'data/疾病诊断拟合_临床_非模型_无人工.txt', num_fields=93, separator='	',
@@ -38,6 +38,10 @@ if __name__ == "__main__":
     # train_X, train_y, val_X, val_y, val_id = load_data(r'data/疾病诊断拟合_临床.txt', num_fields=121, separator='	',
     #     skip_title=True, cls_col=2, start_feature_col=3, end_feature_col=120)
 
+    # # 临床特征 机器正则 + 模型人工标注，准确率：66.67%
+    # train_X, train_y, val_X, val_y, val_id = load_data(r'data/疾病诊断拟合_临床2.txt', num_fields=120, separator='	',
+    #     skip_title=True, cls_col=2, start_feature_col=3, end_feature_col=119)
+
     # # # 实验室特征，准确率：55.94%
     # train_X, train_y, val_X, val_y, val_id = load_data(r'data/疾病诊断拟合_实验室.txt', num_fields=21, separator='	',
     #     skip_title=True, cls_col=2, start_feature_col=3, end_feature_col=20)
@@ -45,6 +49,10 @@ if __name__ == "__main__":
     # # 影像学特征，准确率：67.39%
     # train_X, train_y, val_X, val_y, val_id = load_data(r'data/疾病诊断拟合_影像学.txt', num_fields=35, separator='	',
     #     skip_title=True, cls_col=2, start_feature_col=3, end_feature_col=34)
+
+    # # 临床特征 + 实验室，准确率：70.58%
+    train_X, train_y, val_X, val_y, val_id = load_data(r'data/疾病诊断拟合_临床+实验室.txt', num_fields=139, separator='	',
+        skip_title=True, cls_col=2, start_feature_col=3, end_feature_col=138)
 
 
     ss = StandardScaler()

@@ -47,6 +47,7 @@ def check_cs_part(part_str):
     else:
         return 10
 
+
 def check_ct_parts(part_str):
     """
     根据CT部位字符串，返回子列号，可能有多个
@@ -146,7 +147,6 @@ columns = [
     ['CT_胸部', 'CT_全腹', 'CT_上腹', 'CT_下腹', 'CT_泌尿', 'CT_盆腔', 'CT_颅脑', 'CT_其它'],
     ['MR_肝', 'MR_胆', 'MR_胰', 'MR_脾', 'MR_上腹', 'MR_下腹', 'MR_MRCP', 'MR_颅脑', 'MR_盆腔', 'MR_其它'],
     ['DR_胸部', 'DR_腹部', 'DR_其它'],
-    ['X线'],
     '病理',
     ['中性粒细胞%', '白细胞', '超敏C-反应蛋白', '降钙素原', '脂肪酶', '淀粉酶', 'β-绒毛膜促性腺激素', \
      '总胆红素', '天冬氨酸氨基转移酶', '丙氨酸氨基转移酶', '碱性磷酸酶', 'γ-谷氨酰转移酶', '血沉', '红细胞']
@@ -216,20 +216,26 @@ if __name__ == '__main__':
         if '超声' in item:
             for item_cs in item['超声']:
                 for item_cs_sj in item_cs['数据']:
+                    if item_cs_sj.replace(',', '').strip() == '':
+                        continue
                     arr = item_cs_sj.split(',')
                     if len(arr) == 3:
                         arr.append('')
+
+                    # 部位字符串
+                    part_str = arr[1] if arr[1].strip() != '' else arr[2].split('：')[0]
                     # 检查部位
-                    sub_cn = check_cs_part(arr[1])
-                    str_cs = '影像描述：%s\n影像结论：%s\n\n' % (arr[2], arr[3])
+                    sub_cn = check_cs_part(part_str)
+
+                    str_cs = '检查部位：%s\n检查所见：%s\n检查结论：%s\n\n' % (arr[1], arr[2], arr[3])
                     if check_cell_empty(sheet.cell(rn, cn + sub_cn).value):
                         sheet.cell(rn, cn + sub_cn).value = str_cs
-        cn = cn + len(columns[2])
+        cn = cn + len(columns[3])
 
         # 放射
-        fs_str_dict = {'CT': [], 'MR': [], 'DR': [], 'X线': []}
-        cn_start_ct, cn_start_mr = cn, cn + len(columns[3])
-        cn_start_dr, cn_start_xx = cn_start_mr + len(columns[4]), cn_start_mr + len(columns[4]) + len(columns[5])
+        fs_str_dict = {'CT': [], 'MR': [], 'DR': []}
+        cn_start_ct, cn_start_mr = cn, cn + len(columns[4])
+        cn_start_dr = cn_start_mr + len(columns[5])
         if '放射' in item:
             for item_fs in item['放射']:
                 for item_fs_sj in item_fs['数据']:
@@ -238,7 +244,7 @@ if __name__ == '__main__':
                         arr.append('')
                     type = arr[0].upper()
                     part = arr[1]
-                    str_fs = '影像表现：%s\n影像诊断：%s\n\n' % (arr[2], arr[3])
+                    str_fs = '检查部位：%s\n检查所见：%s\n检查结论：%s\n\n' % (arr[1], arr[2], arr[3])
                     if 'CT' in type:
                         sub_cn_arr = check_ct_parts(part)
                         for sub_cn in sub_cn_arr:
@@ -249,18 +255,13 @@ if __name__ == '__main__':
                         for sub_cn in sub_cn_arr:
                             if check_cell_empty(sheet.cell(rn, cn_start_mr + sub_cn).value):
                                 sheet.cell(rn, cn_start_mr + sub_cn).value = str_fs
-                    elif 'DR' in type or 'CR' in type:
+                    elif 'DR' in type or 'CR' in type or 'X线' in type:
                         sub_cn_arr = check_dr_parts(part)
                         for sub_cn in sub_cn_arr:
                             if check_cell_empty(sheet.cell(rn, cn_start_dr + sub_cn).value):
                                 sheet.cell(rn, cn_start_dr + sub_cn).value = str_fs
-                    elif 'X线' in type:
-                        sub_cn_arr = check_xx_parts(part)
-                        for sub_cn in sub_cn_arr:
-                            if check_cell_empty(sheet.cell(rn, cn_start_xx + sub_cn).value):
-                                sheet.cell(rn, cn_start_xx + sub_cn).value = str_fs
 
-        cn = cn_start_xx + len(columns[6])
+        cn = cn_start_dr + len(columns[6])
 
         # 病理
         str_bl = ''
@@ -284,7 +285,7 @@ if __name__ == '__main__':
                         if key not in str_dict:
                             str_dict[key] = ''
                         if str_dict[key] == '':
-                            str_dict[key] = ','.join(arr[-3:])
+                            str_dict[key] = ','.join(arr)
 
         for col in cols_jy:
             if col in str_dict:

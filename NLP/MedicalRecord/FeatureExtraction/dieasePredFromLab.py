@@ -131,4 +131,5 @@ if __name__ == '__main__':
         print('mrnos file: data/%s/labeled_ind_%s.txt not exists!' % (data_type, postfix))
         exit()
 
-    process_records(r'data/%s/labeled_ind_%s.txt' % (data_type, postfix), r'data/腹痛/汇总结果_4335.json', r'data/%s/实验室正则结果_%s.xlsx' % (data_type, postfix))
+    process_records(r'data/%s/labeled_ind_%s.txt' % (data_type, postfix), r'data/%s/汇总结果_%s.json' % (data_type, postfix),
+                        r'data/%s/实验室正则结果_%s.xlsx' % (data_type, postfix))

@@ -110,6 +110,26 @@ class DataLoader:
 
         return train_lines, val_lines
 
+    def split_n_folds(self, lines, cls_col, split_num):
+        """
+        根据标签的样本数量来拆分数据集为n等份
+        """
+        cls_num_dict = self.stat_cls_num(lines, cls_col)
+
+        data_lines = [[] for i in range(split_num)]
+        for cls in cls_num_dict.keys():
+            splits = [round(cls_num_dict[cls] / split_num * i) for i in range(split_num+1)]
+            cls_lines = [line for line in lines if line[cls_col] == cls]
+            print('%s, splits: %s' % (cls, str(splits)))
+            random.shuffle(cls_lines)
+            for i in range(split_num):
+                data_lines[i].extend(cls_lines[splits[i]:splits[i+1]])
+
+        for i in range(split_num):
+            random.shuffle(data_lines[i])
+
+        return data_lines
+
 
     def balance_class_sample_num(self, lines, cls_col, cls_num_dict, stratege='medium'):
         """

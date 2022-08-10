@@ -114,6 +114,7 @@ def process_records(key_file, json_file, out_path):
     results = []
     for item in json_data:
         text_arr_dict = {'超声': [], 'CT': [], 'MR': [], 'DR': []}
+        
         # 超声
         if '超声' in item:
             for item_cs in item['超声']:
@@ -180,7 +181,7 @@ if __name__ == '__main__':
         print('mrnos file: data/%s/labeled_ind_%s.txt not exists!' % (data_type, postfix))
         exit()
 
-    process_records(r'data/%s/labeled_ind_%s.txt' % (data_type, postfix), r'data/%s/汇总结果_4335.json' % data_type, r'data/%s/影像学正则结果_%s.xlsx' % (data_type, postfix))
+    process_records(r'data/%s/labeled_ind_%s.txt' % (data_type, postfix), r'data/%s/汇总结果_%s.json' % (data_type, postfix), r'data/%s/影像学正则结果_%s.xlsx' % (data_type, postfix))
 
 
 

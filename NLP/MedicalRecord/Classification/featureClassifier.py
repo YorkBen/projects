@@ -35,11 +35,13 @@ class FeatureClassficationModel(torch.nn.Module):
         super(FeatureClassficationModel, self).__init__()
         self.dense1 = torch.nn.Linear(feature_size, 512)
         self.batchnm1 = torch.nn.BatchNorm1d(512)
-        self.dense2 = torch.nn.Linear(512, 256)
-        self.batchnm2 = torch.nn.BatchNorm1d(256)
-        self.dense3 = torch.nn.Linear(256, 128)
-        self.batchnm3 = torch.nn.BatchNorm1d(128)
-        self.dense4 = torch.nn.Linear(128, num_cls)
+        self.dense2 = torch.nn.Linear(512, 512)
+        self.batchnm2 = torch.nn.BatchNorm1d(512)
+        self.dense3 = torch.nn.Linear(512, 256)
+        self.batchnm3 = torch.nn.BatchNorm1d(256)
+        self.dense4 = torch.nn.Linear(256, 128)
+        self.batchnm4 = torch.nn.BatchNorm1d(128)
+        self.dense5 = torch.nn.Linear(128, num_cls)
         self.dropout = torch.nn.Dropout(0.5)
 
     def forward(self, x):
@@ -47,15 +49,23 @@ class FeatureClassficationModel(torch.nn.Module):
         x = self.batchnm1(x)
         x = F.relu(x)
         x = self.dropout(x)
+
         x = self.dense2(x)
         x = self.batchnm2(x)
         x = F.relu(x)
         x = self.dropout(x)
+
         x = self.dense3(x)
         x = self.batchnm3(x)
         x = F.relu(x)
         x = self.dropout(x)
+
         x = self.dense4(x)
+        x = self.batchnm4(x)
+        x = F.relu(x)
+        x = self.dropout(x)
+
+        x = self.dense5(x)
         return x
 
 
@@ -143,7 +153,7 @@ def train(train_datasets, val_datasets=None, feature_size=100):
                 torch.save(mymodel, best_modelname)
         else:
             no_improve_num = no_improve_num + 1
-            if no_improve_num > 5:
+            if no_improve_num > 10:
                 print("no improve more than: %s, exit training. best accuracy: %f" % (no_improve_num, best_acc1))
                 exit()
 
