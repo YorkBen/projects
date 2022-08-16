@@ -70,7 +70,7 @@ pretrain_batch_size=128
 num_train_epochs=30
 training_args = TrainingArguments(
     output_dir='./outputs/', overwrite_output_dir=True, num_train_epochs=num_train_epochs, learning_rate=6e-5,
-    per_device_train_batch_size=pretrain_batch_size,save_total_limit=10)# save_steps=10000
+    per_device_train_batch_size=pretrain_batch_size, save_total_limit=10)# save_steps=10000
 # 通过Trainer接口训练模型
 trainer = Trainer(model=model, args=training_args, data_collator=data_collator, train_dataset=train_dataset)
 
