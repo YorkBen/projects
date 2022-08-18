@@ -8,30 +8,12 @@ import sys
 
 sys.path.append('../Lib')
 
-from MRRecordUtil import load_keys, filter_records, load_sheet_dict
-
-
-def load_data(json_file, labeled_file):
-    """
-    加载json和mrnos，并根据mrnos过滤json
-    """
-    json_data = ''
-    with open(json_file, encoding='utf-8') as f:
-        json_data = json.load(f, strict=False)
-
-    if labeled_file is not None:
-        keys = load_keys(labeled_file, with_head=False, separator='	')
-        keys = ['%s_%s' % (e[0], e[1]) for e in keys]
-        json_data = filter_records(json_data, keys)
-    else:
-        keys = ['%s_%s' % (record["医保编号"], record["入院时间"]) for record in json_data]
-    return keys, json_data
+from MRRecordUtil import load_data, load_sheet_dict
 
 def item_to_str(item):
     s = str(item)
     s = s.replace('{', '').replace('}', '').replace('\'', '').replace('"', '')
     return s
-
 
 if __name__ == '__main__':
     # 参数
@@ -58,28 +40,43 @@ if __name__ == '__main__':
             print(key)
             continue
 
+        separator = '\n\n' # '\t\t\t'
+        ### 拼接成多行文本
         text = ''
         if '入院记录' in item:
-            text = text + '\t\t\t' + item['入院记录']['主诉']
-            text = text + '\t\t\t' + item['入院记录']['现病史']
-            text = text + '\t\t\t' + item_to_str(item['入院记录']['既往史'])
-            text = text + '\t\t\t' + item_to_str(item['入院记录']['手术外伤史'])
-            text = text + '\t\t\t' + item_to_str(item['入院记录']['药物过敏史'])
-            text = text + '\t\t\t' + item_to_str(item['入院记录']['个人史'])
-            text = text + '\t\t\t' + item_to_str(item['入院记录']['婚育史'])
-            text = text + '\t\t\t' + item_to_str(item['入院记录']['月经史'])
-            text = text + '\t\t\t' + item_to_str(item['入院记录']['家族史'])
-            text = text + '\t\t\t' + item_to_str(item['入院记录']['体格检查'])
-            text = text + '\t\t\t' + item_to_str(item['入院记录']['专科情况（体检）'])
+            text = text + separator + item['入院记录']['主诉']
+            text = text + separator + item['入院记录']['现病史']
+            text = text + separator + item_to_str(item['入院记录']['既往史'])
+            text = text + separator + item_to_str(item['入院记录']['手术外伤史'])
+            text = text + separator + item_to_str(item['入院记录']['药物过敏史'])
+            text = text + separator + item_to_str(item['入院记录']['个人史'])
+            text = text + separator + item_to_str(item['入院记录']['婚育史'])
+            text = text + separator + item_to_str(item['入院记录']['月经史'])
+            text = text + separator + item_to_str(item['入院记录']['家族史'])
+            text = text + separator + item_to_str(item['入院记录']['体格检查'])
+            text = text + separator + item_to_str(item['入院记录']['专科情况（体检）'])
 
         for key in ['超声', '放射']:
             if key in item:
                 for item_cs in item[key]:
                     for line in item_cs["数据"]:
-                        text = text + '\t\t\t' + line
+                        text = text + separator + line
 
-        texts.append(text)
+        texts.append({
+            "data": {
+                "text": text
+            }
+        })
 
-    with open(r'data\ner_text.txt', 'w', encoding='utf-8') as f:
-        for r in texts:
-            f.write('%s\n' % r)
+    if separator == '\t\t\t':
+        # 写文本行
+        with open(r'data\ner_text.txt', 'w', encoding='utf-8') as f:
+            for r in texts:
+                f.write('%s\n' % r)
+    elif separator == '\n\n':
+        # 写json
+        with open(r'data\ner_text.json', "w") as f:
+            f.write(json.dumps(texts, indent=1, separators=(',', ':'), ensure_ascii=False))
+
+#
+#

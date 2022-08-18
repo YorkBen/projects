@@ -1,9 +1,15 @@
 # pip install openpyxl
-from openpyxl import load_workbook
+# from openpyxl import load_workbook
+import xlwt
 import json
 import re
 import os
+import sys
 import argparse
+
+sys.path.append('../Lib')
+
+from MRRecordUtil import *
 
 def get_max_num(json_data):
     max_len, max_len2 = 0, 0
@@ -14,11 +20,19 @@ def get_max_num(json_data):
             max_len2 = len(item['实验室数据'])
     return max_len, max_len2
 
-def get_json_value(item, key):
-    if key not in item:
-        return ''
-    else:
-        return str(item[key])
+def get_json_value(item, key_arr):
+    if isinstance(key_arr, str):
+        key_arr = [key_arr]
+
+    cur_item = item
+    for key in key_arr:
+        if key not in cur_item:
+            return ''
+        else:
+            cur_item = cur_item[key]
+
+    return str(cur_item)
+    # return json.dumps(cur_item, indent=1, separators=(',', ':'), ensure_ascii=False)
 
 def check_cs_part(part_str):
     """
@@ -128,30 +142,107 @@ def check_xx_parts(part_str):
 
     return sub_inds
 
-def check_cell_empty(value):
-    if value is None:
-        return True
-    elif value == 'None':
-        return True
-    elif value == '':
-        return True
-    return False
+
+def generate_cs_data(item):
+    """
+    从病历中按照columns的超声类型，生成对应的数据
+    """
+    cs_resstr_arr = ['' for k in range(len(columns['超声']))]
+    # 生成各个超声检查的值
+    if '超声' in item:
+        for item_cs in item['超声']:
+            for item_cs_sj in item_cs['数据']:
+                if item_cs_sj.replace(',', '').strip() == '':
+                    continue
+                arr = item_cs_sj.split(',')
+                if len(arr) == 3:
+                    arr.append('')
+
+                # 部位字符串
+                part_str = arr[1] if arr[1].strip() != '' else arr[2].split('：')[0]
+                # 检查部位
+                sub_cn = check_cs_part(part_str)
+
+                str_cs = '检查部位：%s\n检查所见：%s\n检查结论：%s\n\n' % (arr[1], arr[2], arr[3])
+                cs_resstr_arr[sub_cn] = str_cs if cs_resstr_arr[sub_cn] == '' else cs_resstr_arr[sub_cn]
+
+    return cs_resstr_arr
 
 
-columns = [
-    '医保编号',
-    ['患者姓名', '性别', '年龄', '入院时间', '主诉', '现病史', '既往史', '手术外伤史', '输血史', '药物过敏史', \
-     '个人史', '婚育史', '月经史', '家族史', '体格检查', '专科情况（体检）', '病史小结'],
-    '出院诊断',
-    ['超声_腹股沟', '超声_泌尿', '超声_心脏', '超声_前列腺', '超声_肝胆', '超声_胸水', '超声_腹水', '超声_腹部包块', '超声_腹部大血管', '超声_阑尾及肠管探查', '超声_腹部', '超声_妇科', '超声_其它'],
-    ['CT_胸部', 'CT_全腹', 'CT_上腹', 'CT_下腹', 'CT_泌尿', 'CT_盆腔', 'CT_颅脑', 'CT_其它'],
-    ['MR_肝胆&MRCP', 'MR_胰', 'MR_脾', 'MR_上腹', 'MR_下腹', 'MR_颅脑', 'MR_盆腔', 'MR_其它'],
-    ['DR_胸部', 'DR_腹部', 'DR_其它'],
-    '病理',
-    ['中性粒细胞%', '白细胞', '超敏C-反应蛋白', '降钙素原', '脂肪酶', '淀粉酶', 'β-绒毛膜促性腺激素', \
-     '总胆红素', '天冬氨酸氨基转移酶', '丙氨酸氨基转移酶', '碱性磷酸酶', 'γ-谷氨酰转移酶', '血沉', '红细胞']
+def generate_fs_data(item):
+    """
+    从病历中按照columns['CT', 'MR', 'DR']生成对应的数据
+    """
+    ct_resstr_arr = ['' for k in range(len(columns['CT']))]
+    mr_resstr_arr = ['' for k in range(len(columns['MR']))]
+    dr_resstr_arr = ['' for k in range(len(columns['DR']))]
+    if '放射' in item:
+        for item_fs in item['放射']:
+            for item_fs_sj in item_fs['数据']:
+                arr = item_fs_sj.split(',')
+                if len(arr) == 3:
+                    arr.append('')
+                type, part = arr[0].upper(), arr[1]
+                str_fs = '检查部位：%s\n检查所见：%s\n检查结论：%s\n\n' % (arr[1], arr[2], arr[3])
+                if 'CT' in type:
+                    for sub_cn in check_ct_parts(part):
+                        ct_resstr_arr[sub_cn] = str_fs if ct_resstr_arr[sub_cn] == '' else ct_resstr_arr[sub_cn]
+                elif 'MR' in type:
+                    for sub_cn in check_mr_parts(part):
+                        mr_resstr_arr[sub_cn] = str_fs if mr_resstr_arr[sub_cn] == '' else mr_resstr_arr[sub_cn]
+                elif 'DR' in type or 'CR' in type or 'X线' in type:
+                    for sub_cn in check_dr_parts(part):
+                        dr_resstr_arr[sub_cn] = str_fs if dr_resstr_arr[sub_cn] == '' else dr_resstr_arr[sub_cn]
+
+    return ct_resstr_arr, mr_resstr_arr, dr_resstr_arr
+
+
+def generate_bl_data(item):
+    """
+    生成病理数据
+    """
+    str_bl = ''
+    if '病理' in item:
+        for item_bl in item['病理']:
+            for item_bl_sj in item_bl['数据']:
+                arr = item_bl_sj.split(',')
+                str_bl = str_bl + '检查所见：%s\n诊断意见：%s\n\n' % (arr[0], arr[1])
+
+    return str_bl
+
+
+def generate_lab_data(item):
+    """
+    生成实验室数据
+    """
+    lab_resstr_arr = ['' for k in range(len(columns['实验室']))]
+    if '检验' in item:
+        for item_jy in item['检验']:
+            for item_jy_sj in item_jy['数据']:
+                arr = item_jy_sj.split(',')
+                key = arr[2]
+                if key not in columns['实验室']:
+                    continue
+                else:
+                    idx = columns['实验室'].index(key)
+                    lab_resstr_arr[idx] = item_jy_sj if lab_resstr_arr[idx] == '' else lab_resstr_arr[idx]
+
+    return lab_resstr_arr
+
+columns = {
+    '医保编号': '医保编号',
+    '入院记录': ['患者姓名', '性别', '年龄', '入院时间', '主诉', '现病史', '既往史', '手术外伤史', '输血史', '药物过敏史', \
+                    '个人史', '婚育史', '月经史', '家族史', '体格检查', '专科情况（体检）', '病史小结'],
+    '出院诊断': '出院诊断',
+    '超声': ['超声_腹股沟', '超声_泌尿', '超声_心脏', '超声_前列腺', '超声_肝胆', '超声_胸水', '超声_腹水', '超声_腹部包块', '超声_腹部大血管', '超声_阑尾及肠管探查', '超声_腹部', '超声_妇科', '超声_其它'],
+    'CT': ['CT_胸部', 'CT_全腹', 'CT_上腹', 'CT_下腹', 'CT_泌尿', 'CT_盆腔', 'CT_颅脑', 'CT_其它'],
+    'MR': ['MR_肝胆&MRCP', 'MR_胰', 'MR_脾', 'MR_上腹', 'MR_下腹', 'MR_颅脑', 'MR_盆腔', 'MR_其它'],
+    'DR': ['DR_胸部', 'DR_腹部', 'DR_其它'],
+    '病理': '病理',
+    '实验室': ['中性粒细胞%', '白细胞', '超敏C-反应蛋白', '降钙素原', '脂肪酶', '淀粉酶', 'β-绒毛膜促性腺激素', \
+                '总胆红素', '天冬氨酸氨基转移酶', '丙氨酸氨基转移酶', '碱性磷酸酶', 'γ-谷氨酰转移酶', '血沉', '红细胞']
      # ,'辅助检查_外院'
-]
+}
 
 
 if __name__ == '__main__':
@@ -163,138 +254,43 @@ if __name__ == '__main__':
 
     postfix = args.p
     data_type = args.t
-    if not os.path.exists('data/%s' % data_type):
+    if not os.path.exists('../data/%s' % data_type):
         print('data type: %s not exists' % data_type)
         exit()
     print("postfix: %s, data_type: %s" % (data_type, postfix))
-    if not os.path.exists('data/%s/labeled_ind_%s.txt' % (data_type, postfix)):
-        print('mrnos file: data/%s/labeled_ind_%s.txt not exists!' % (data_type, postfix))
+    if not os.path.exists('../data/%s/labeled_ind_%s.txt' % (data_type, postfix)):
+        print('mrnos file: ../data/%s/labeled_ind_%s.txt not exists!' % (data_type, postfix))
         exit()
 
     ## 加载json数据 ############
-    json_data = ''
-    with open(r'data/%s/汇总结果_%s.json' % (data_type, postfix)) as f:
-        json_data = json.load(f, strict=False)
+    keys, json_data = load_data(r'../data/%s/汇总结果_%s.json' % (data_type, postfix), '../data/%s/labeled_ind_%s.txt' % (data_type, postfix))
 
     ## 写excel ############
-    workbook = load_workbook(r"data/result.xlsx")
-    sheet = workbook["Sheet1"]
+    # workbook = load_workbook(r"data/result.xlsx")
+    # sheet = workbook["Sheet1"]
+    workbook = xlwt.Workbook()
+    sheet = workbook.add_sheet("Sheet1")
 
     ## 写表头 #############
-    ind = 1
-    for col in columns:
-        if isinstance(col, list):
-            for col2 in col:
-                sheet.cell(1, ind).value = col2
-                ind = ind + 1
-        else:
-            sheet.cell(1, ind).value = col
-            ind = ind + 1
+    write_sheet_row(sheet, 0, columns)
 
     ## 写内容 #############
     for ind, item in enumerate(json_data):
-        rn = ind + 2
-        # 医保编号
-        sheet.cell(rn, 1).value = get_json_value(item, '医保编号')
-
-        # 入院记录
-        cn = 2
-        for col in columns[1]:
-            if '入院记录' in item:
-                if col == '患者姓名':
-                    sheet.cell(rn, cn).value = get_json_value(item['入院记录']['病史小结'], col)
-                else:
-                    sheet.cell(rn, cn).value = get_json_value(item['入院记录'], col)
-            cn = cn + 1
-
-        # 出院诊断
-        if '出院记录' in item:
-            sheet.cell(rn, cn).value = get_json_value(item['出院记录'], '出院诊断')
-        cn = cn + 1
-
-        # 超声
-        if '超声' in item:
-            for item_cs in item['超声']:
-                for item_cs_sj in item_cs['数据']:
-                    if item_cs_sj.replace(',', '').strip() == '':
-                        continue
-                    arr = item_cs_sj.split(',')
-                    if len(arr) == 3:
-                        arr.append('')
-
-                    # 部位字符串
-                    part_str = arr[1] if arr[1].strip() != '' else arr[2].split('：')[0]
-                    # 检查部位
-                    sub_cn = check_cs_part(part_str)
-
-                    str_cs = '检查部位：%s\n检查所见：%s\n检查结论：%s\n\n' % (arr[1], arr[2], arr[3])
-                    if check_cell_empty(sheet.cell(rn, cn + sub_cn).value):
-                        sheet.cell(rn, cn + sub_cn).value = str_cs
-        cn = cn + len(columns[3])
-
-        # 放射
-        fs_str_dict = {'CT': [], 'MR': [], 'DR': []}
-        cn_start_ct, cn_start_mr = cn, cn + len(columns[4])
-        cn_start_dr = cn_start_mr + len(columns[5])
-        if '放射' in item:
-            for item_fs in item['放射']:
-                for item_fs_sj in item_fs['数据']:
-                    arr = item_fs_sj.split(',')
-                    if len(arr) == 3:
-                        arr.append('')
-                    type = arr[0].upper()
-                    part = arr[1]
-                    str_fs = '检查部位：%s\n检查所见：%s\n检查结论：%s\n\n' % (arr[1], arr[2], arr[3])
-                    if 'CT' in type:
-                        sub_cn_arr = check_ct_parts(part)
-                        for sub_cn in sub_cn_arr:
-                            if check_cell_empty(sheet.cell(rn, cn_start_ct + sub_cn).value):
-                                sheet.cell(rn, cn_start_ct + sub_cn).value = str_fs
-                    elif 'MR' in type:
-                        sub_cn_arr = check_mr_parts(part)
-                        for sub_cn in sub_cn_arr:
-                            if check_cell_empty(sheet.cell(rn, cn_start_mr + sub_cn).value):
-                                sheet.cell(rn, cn_start_mr + sub_cn).value = str_fs
-                    elif 'DR' in type or 'CR' in type or 'X线' in type:
-                        sub_cn_arr = check_dr_parts(part)
-                        for sub_cn in sub_cn_arr:
-                            if check_cell_empty(sheet.cell(rn, cn_start_dr + sub_cn).value):
-                                sheet.cell(rn, cn_start_dr + sub_cn).value = str_fs
-
-        cn = cn_start_dr + len(columns[6])
-
-        # 病理
-        str_bl = ''
-        if '病理' in item:
-            for item_bl in item['病理']:
-                for item_bl_sj in item_bl['数据']:
-                    arr = item_bl_sj.split(',')
-                    str_bl = str_bl + '检查所见：%s\n诊断意见：%s\n\n' % (arr[0], arr[1])
-        sheet.cell(rn, cn).value = str_bl
-        cn = cn + 1
-
-        # 检验
-        str_dict, cols_jy = {}, columns[8]
-        cols_jy_set = set(cols_jy)
-        if '检验' in item:
-            for item_jy in item['检验']:
-                for item_jy_sj in item_jy['数据']:
-                    arr = item_jy_sj.split(',')
-                    key = arr[2]
-                    if key in cols_jy_set:
-                        if key not in str_dict:
-                            str_dict[key] = ''
-                        if str_dict[key] == '':
-                            str_dict[key] = ','.join(arr)
-
-        for col in cols_jy:
-            if col in str_dict:
-                sheet.cell(rn, cn).value = str_dict[col]
-            cn = cn + 1
-
-        # # 外院
-        # if re.search('(医院)|(外院)', item['入院记录']['现病史']):
-        #     sheet.cell(rn, cn).value = 1
+        ct_arr, mr_arr, dr_arr = generate_fs_data(item)
+        row_data = {
+            '医保编号': get_json_value(item, '医保编号'),
+            '入院记录': [get_json_value(item, ['入院记录', '病史小结', '患者姓名'])] + [get_json_value(item, ['入院记录', col]) for col in columns['入院记录'][1:]],
+            '出院诊断': get_json_value(item, ['出院记录', '出院诊断']),
+            '超声': generate_cs_data(item),
+            'CT': ct_arr,
+            'MR': mr_arr,
+            'DR': dr_arr,
+            '病理': generate_bl_data(item),
+            '实验室': generate_lab_data(item)
+        }
+        write_sheet_row(sheet, ind+1, row_data)
 
 
     workbook.save(r'data/%s/split_%s.xlsx' % (data_type, postfix))
+
+    print('saving file to data/%s/split_%s.xlsx' % (data_type, postfix))

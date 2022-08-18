@@ -88,27 +88,30 @@ def load_sheet_dict(workbook_path, sheet_name):
     sheet_name：表单名
     val_type: str, int
     """
-    # workbook_path = r"data/高发病率腹痛疾病特征标注2022.6.23.xlsx"
-    # sheet_name = "前500个疾病特征标注"
-    workbook = load_workbook(workbook_path)
-    sheet = workbook[sheet_name]
+    # workbook = load_workbook()
+    # sheet = workbook[sheet_name]
+
+    workbook = xlrd.open_workbook(workbook_path)
+    # sheets = workbook.sheet_names()  # 获取工作簿中的所有表格
+    sheet = workbook.sheet_by_name(sheet_name)
 
     results, cols = {}, []
     # 写入列名
-    for j in range(1, sheet.max_column + 1):
-        if sheet.cell(1, j).value is None:
+    rn = 0
+    for j in range(0, sheet.ncols):
+        if sheet.cell_value(rn, j) is None:
             break
-        cols.append(sheet.cell(1, j).value)
+        cols.append(sheet.cell_value(rn, j))
 
     # 写入行名，及数据
-    for i in range(2, sheet.max_row + 1):
-        if sheet.cell(i, 1).value is None:
+    for rn in range(1, sheet.nrows):
+        if sheet.cell_value(rn, 0) is None:
             break
 
-        mrno = sheet.cell(i, 1).value
+        mrno = sheet.cell_value(rn, 0)
         results[mrno] = {}
         for j in range(1, len(cols) + 1):
-            val = sheet.cell(i, j+1).value if sheet.cell(i, j+1).value is not None else ''
+            val = sheet.cell_value(rn, j+1) if sheet.cell_value(rn, j+1) is not None else ''
             results[mrno][cols[j]] = val
 
     return results
@@ -121,64 +124,31 @@ def load_sheet_arr_dict(workbook_path, sheet_name):
     workbook_path: excel路径
     sheet_name：表单名
     """
-    # workbook_path = r"data/高发病率腹痛疾病特征标注2022.6.23.xlsx"
-    # sheet_name = "前500个疾病特征标注"
-    workbook = load_workbook(workbook_path)
-    sheet = workbook[sheet_name]
+    # workbook = load_workbook(workbook_path)
+    # sheet = workbook[sheet_name]
+    workbook = xlrd.open_workbook(workbook_path)
+    sheet = workbook.sheet_by_name(sheet_name)
 
     results, cols = [], []
     # 写入列名
-    for j in range(1, sheet.max_column + 1):
-        if sheet.cell(1, j).value is None:
+    rn = 0
+    for cn in range(0, sheet.ncols):
+        if sheet.cell_value(rn, cn) is None:
             break
-        cols.append(sheet.cell(1, j).value)
+        cols.append(sheet.cell_value(rn, cn))
 
     # 写入行名，及数据
-    for i in range(2, sheet.max_row + 1):
-        if sheet.cell(i, 1).value is None:
+    for rn in range(1, sheet.nrows):
+        if sheet.cell_value(rn, 0) is None:
             break
 
         row = {}
-        for idx, col in enumerate(cols):
-            row[col] = sheet.cell(i, idx+1).value if sheet.cell(i, idx+1).value is not None else ''
+        for cn, col in enumerate(cols):
+            row[col] = sheet.cell_value(rn, cn) if sheet.cell_value(rn, cn) is not None else ''
         results.append(row)
 
     return results
 
-
-def write_sheet_row(sheet, rn, row_data):
-    """
-    数据按照字典的形式组织，写入。
-    """
-    cn = 0
-    for key, col in row_data.items():
-        if isinstance(col, list) or isinstance(col, tuple):
-            for elem in col:
-                # sheet.cell(1, ind).value = col2
-                sheet.write(rn, cn, elem.strip())
-                cn = cn + 1
-        else:
-            # sheet.cell(1, ind).value = col
-            sheet.write(rn, cn, col.strip())
-            cn = cn + 1
-
-
-def generate_columns_by_dict(data_dict, expand=True):
-    """
-    使用数据字典，生成对应的列。
-    expand: True，扩展列名，如果字典值是字符串，则列名为key；如果字典值是数组，则列名为等长key数组
-            False，列名均为key
-    """
-    columns = {}
-    for key, val in data_dict.items():
-        if expand and (isinstance(val, list) or isinstance(val, tuple)):
-            columns[key] = []
-            for e in val:
-                columns[key].append(key)
-        else:
-            columns[key] = key
-
-    return columns
 
 
 def write_sheet_arr_dict(data, workbook_path, sheet_name, debug=True):
@@ -188,27 +158,42 @@ def write_sheet_arr_dict(data, workbook_path, sheet_name, debug=True):
     workbook_path: excel路径
     sheet_name：表单名
     """
-    print('Debug Mode Opened!' if debug else 'Debug Mode Closed!')
-    workbook = xlwt.Workbook()
-    sheet = workbook.add_sheet(sheet_name)
+    wb = Workbook()
+    sheet = wb.create_sheet(sheet_name, 0)
 
     cols = list(data[0].keys())
 
     # 写表头
-    write_sheet_row(sheet, 0, generate_columns_by_dict(data[0], expand=debug))
+    cn = 1
+    for col in cols:
+        sheet.cell(1, cn).value = col
+        # 根据col的值类型，来添加列间距
+        val = data[0][col]
+        if debug and (isinstance(val, list) or isinstance(val, tuple)):
+            for e in val:
+                cn = cn + 1
+        else:
+            cn = cn + 1
 
     # 写数据
-    for rn, row_data in enumerate(data):
-        if not debug:
-            row_data_ = {}
-            for key, val in row_data:
-                row_data_[key] = val[0] if (isinstance(val, list) or isinstance(val, tuple)) else val
-            row_data = row_data_
+    for r_idx, row in enumerate(data):
+        rn, cn = r_idx + 2, 1
+        for col in cols:
+            # 根据col的值类型，来添加列间距
+            val = row[col]
+            if debug and (isinstance(val, list) or isinstance(val, tuple)):
+                for e in val:
+                    sheet.cell(rn, cn).value = e
+                    cn = cn + 1
+            else:
+                if isinstance(val, list) or isinstance(val, tuple):
+                    sheet.cell(rn, cn).value = val[0]
+                else:
+                    sheet.cell(rn, cn).value = val
+                cn = cn + 1
 
-        write_sheet_row(sheet, rn+1, row_data)
-
-    workbook.save(workbook_path)
-    print('save file: %s' % workbook_path)
+    wb.save(workbook_path)
+    wb.close()
 
 
 def write_sheet_dict(data, workbook_path, sheet_name):

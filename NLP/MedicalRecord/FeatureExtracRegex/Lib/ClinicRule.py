@@ -13,7 +13,7 @@ from openpyxl.styles import Font, Border, Side, PatternFill, colors, Alignment
 sys.path.append('../FeatureExtracModel')
 sys.path.append('../Lib')
 from Lib.RegexBase import RegexBase
-from MRRecordUtil import load_keys, filter_records, load_sheet_dict
+from MRRecordUtil import load_sheet_dict, load_data
 from RegexUtil import RegexUtil
 
 logging.basicConfig(level=logging.DEBUG)
@@ -184,6 +184,8 @@ class ClinicRule(RegexBase):
             {'id':'BYHJ1', 'name': '不孕(风险随不孕时间的延长而增加)', 'src': ['婚育史', '既往史', '现病史'], 'regex':'不孕'}
         ]
 
+        self.proc_features = None
+
 
     def set_proc_features(self, feature_ids):
         """
@@ -196,23 +198,6 @@ class ClinicRule(RegexBase):
                 features.append(f)
 
         self.proc_features = features
-
-
-    def load_data(self, json_file, labeled_file):
-        """
-        加载json和mrnos，并根据mrnos过滤json
-        """
-        json_data = ''
-        with open(json_file, encoding='utf-8') as f:
-            json_data = json.load(f, strict=False)
-
-        if labeled_file is not None:
-            keys = load_keys(labeled_file, with_head=False, separator='	')
-            keys = ['%s_%s' % (e[0], e[1]) for e in keys]
-            json_data = filter_records(json_data, keys)
-        else:
-            keys = ['%s_%s' % (record["医保编号"], record["入院时间"]) for record in json_data]
-        return keys, json_data
 
 
     def get_txt_from_records(self, records, src):
@@ -236,7 +221,6 @@ class ClinicRule(RegexBase):
                     text = text + str(record['首次病程']['诊断依据']) + '。'
                 elif '入院记录' in record and key in record['入院记录']:
                     text = text + str(record['入院记录'][key]) + '。'
-
 
             results.append(text)
 
@@ -580,7 +564,7 @@ class ClinicRule(RegexBase):
         处理主程序
         预测结果：{'医保编号': [], '入院日期': [], '特征1': [(结果, 正匹配, 负匹配, 查找文本, 是否和人工标记相同的标志位)]}
         """
-        keys, records = self.load_data(json_file, labeled_file)
+        keys, records = load_data(json_file, labeled_file)
         results = {'医保编号': [s.split('_')[0] for s in keys], '入院日期': [s.split('_')[1] for s in keys]}
         for feature in (self.proc_features if self.proc_features else self.features):
             print('processing feature: %s,  type: %s' % (feature['name'], feature['type'] if 'type' in feature else 'regex'))

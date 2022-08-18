@@ -97,19 +97,11 @@ def get_mzwy_texts(item):
 #
 #     return same_ct, total_ct
 
-def process_records(key_file, json_file, out_path):
+def process_records(key_file, json_file, out_path, debug=False):
     """
     处理记录数据
     """
-    keys = load_keys(key_file, with_head=False)
-    keys = [e[0] + '_' + e[1] for e in keys]
-
-    json_data = ''
-    with open(json_file, encoding='utf-8') as f:
-        json_data = json.load(f, strict=False)
-
-    json_data = filter_records(json_data, keys)
-    print(len(list(keys)), len(json_data))
+    keys, json_data = load_data(json_file, key_file)
 
     regex_dict = {'超声': '(超声)|(彩超)|(B超)', 'CT': '(CT)|(平扫)', 'MR': '(MR)|(DWI)', 'DR': '(X线)|(DR)|(钡餐)|(侧位)|(床旁片)|(平片)|(斜位)|(胸部正)|(正侧位)|(正位)'}
 
@@ -118,29 +110,29 @@ def process_records(key_file, json_file, out_path):
     for item in json_data:
         text_arr_dict = {'超声': [], 'CT': [], 'MR': [], 'DR': []}
 
-        # # 超声
-        # if '超声' in item:
-        #     for item_cs in item['超声']:
-        #         for item_cs_sj in item_cs['数据']:
-        #             arr = item_cs_sj.split(',')
-        #             if arr[2] != '':
-        #                 text = arr[2] + arr[3] if len(arr) > 3 else arr[2]
-        #                 text_arr_dict['超声'].extend(isp.split_text(text))
-        #
-        # # 放射
-        # if '放射' in item:
-        #     for item_fs in item['放射']:
-        #         for item_fs_sj in item_fs['数据']:
-        #             arr = item_fs_sj.split(',')
-        #             if arr[2] != '':
-        #                 type = arr[0].upper()
-        #                 text = arr[2] + arr[3] if len(arr) > 3 else arr[2]
-        #                 if 'CT' in type:
-        #                     text_arr_dict['CT'].extend(isp.split_text(text))
-        #                 elif 'MR' in type:
-        #                     text_arr_dict['MR'].extend(isp.split_text(text))
-        #                 elif 'DR' in type or 'CR' in type or 'X线' in type:
-        #                     text_arr_dict['DR'].extend(isp.split_text(text))
+        # 超声
+        if '超声' in item:
+            for item_cs in item['超声']:
+                for item_cs_sj in item_cs['数据']:
+                    arr = item_cs_sj.split(',')
+                    if arr[2] != '':
+                        text = arr[2] + arr[3] if len(arr) > 3 else arr[2]
+                        text_arr_dict['超声'].extend(isp.split_text(text))
+
+        # 放射
+        if '放射' in item:
+            for item_fs in item['放射']:
+                for item_fs_sj in item_fs['数据']:
+                    arr = item_fs_sj.split(',')
+                    if arr[2] != '':
+                        type = arr[0].upper()
+                        text = arr[2] + arr[3] if len(arr) > 3 else arr[2]
+                        if 'CT' in type:
+                            text_arr_dict['CT'].extend(isp.split_text(text))
+                        elif 'MR' in type:
+                            text_arr_dict['MR'].extend(isp.split_text(text))
+                        elif 'DR' in type or 'CR' in type or 'X线' in type:
+                            text_arr_dict['DR'].extend(isp.split_text(text))
 
         # 门诊外院
         texts = get_mzwy_texts(item)
@@ -159,7 +151,7 @@ def process_records(key_file, json_file, out_path):
             # 影像正则处理
             key_result = isp.merge_results_arr(isp.process_arr(text_arr_dict[key]))
             for key2 in key_result.keys():
-                result['%s_%s' % (key, key2)] = key_result[key2]
+                result['%s_%s' % (key, key2)] = key_result[key2] if debug else key_result[key2][0]
 
         results.append(result)
 
@@ -186,7 +178,8 @@ if __name__ == '__main__':
 
     process_records(r'../data/%s/labeled_ind_%s.txt' % (data_type, postfix),
                     r'../data/%s/汇总结果_%s.json' % (data_type, postfix),
-                    r'data/%s/影像学正则结果_%s.xlsx' % (data_type, postfix))
+                    r'data/%s/影像学正则结果_%s.xlsx' % (data_type, postfix),
+                    debug=True)
 
 
 

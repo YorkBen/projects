@@ -32,11 +32,11 @@ if __name__ == '__main__':
     cr = ClinicRule(type=data_type, postfix=postfix)
 
     # 设置要提取的特征，如果是所有特征，则注释该行
-    cr.set_proc_features(['MFST1', 'TYX1'])
+    # cr.set_proc_features(['MFST1', 'TYX1'])
     # results = cr.process(r'../data/腹痛/汇总结果_%s.json' % postfix, r'../data/腹痛/labeled_ind_%s.txt' % postfix)
     results = cr.process(json_file=r'../data/%s/汇总结果_%s.json' % (data_type, postfix),
                          result_file=r'data/%s/临床特征_%s.xlsx' % (data_type, postfix),
-                         labeled_file=r'../data/%s/labeled_ind_%s.txt' % (data_type, postfix), debug=False)
+                         labeled_file=r'../data/%s/labeled_ind_%s.txt' % (data_type, postfix), debug=True)
 
     # manlabeled_data = load_sheet_dict()
     # for key1 in manlabeled_data.keys():

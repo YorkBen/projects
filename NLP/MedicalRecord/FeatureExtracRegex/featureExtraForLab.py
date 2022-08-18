@@ -75,19 +75,11 @@ def process_texts():
     write_sheet_arr_dict(results, r'data\腹痛\实验室数据正则测试_结果.xlsx', 'Sheet1')
 
 
-def process_records(key_file, json_file, out_path):
+def process_records(key_file, json_file, out_path, debug):
     """
     处理记录数据
     """
-    keys = load_keys(key_file, with_head=False)
-    keys = [e[0] + '_' + e[1] for e in keys]
-
-    json_data = ''
-    with open(json_file, encoding='utf-8') as f:
-        json_data = json.load(f, strict=False)
-
-    json_data = filter_records(json_data, keys)
-    print('Key个数：%s, Json数据个数：%s' % (len(list(keys)), len(json_data)))
+    keys, json_data = load_data(json_file, key_file)
 
     lr = LabRule()
     results = []
@@ -109,10 +101,10 @@ def process_records(key_file, json_file, out_path):
 
         # 门诊外院
         texts = get_mzwy_texts(item)
-        r_dict_2 = lr.get_rule_label_results(lr.process_texts(texts, debug=True))
+        r_dict_2 = lr.get_rule_label_results(lr.process_texts(texts, debug=debug))
 
         results.append(merge_result_dict(r_dict_1, r_dict_2))
-        results.append(r_dict_2)
+        # results.append(r_dict_2)
 
     write_sheet_arr_dict(results, out_path, 'Sheet1')
     print('Total Count: %s, Illegal Count: %s' % (total_ct, illegal_ct))
@@ -137,4 +129,5 @@ if __name__ == '__main__':
 
     process_records(r'../data/%s/labeled_ind_%s.txt' % (data_type, postfix),
                         r'../data/%s/汇总结果_%s.json' % (data_type, postfix),
-                        r'data/%s/实验室正则结果_%s.xlsx' % (data_type, postfix))
+                        r'data/%s/实验室正则结果_%s.xlsx' % (data_type, postfix),
+                        debug=True)
