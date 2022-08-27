@@ -2,6 +2,12 @@ import json
 import re
 import os
 import argparse
+import sys
+
+sys.path.append('../Lib')
+
+from MRRecordUtil import *
+
 
 def load_keys(file_path, with_head=True, separator='	'):
     """
@@ -34,6 +40,12 @@ def filter_records(json_data, keys):
     keys = list(keys)
     results = [{} for key in keys]
     for record in json_data:
+        if get_json_value(record, ['入院时间']) == '':
+            if get_json_value(record, ['入院记录', '入院时间']) != '':
+                record['入院时间'] = get_json_value(record, ['入院记录', '入院时间'])
+            elif get_json_value(record, ['出院记录', '入院时间']) != '':
+                record['入院时间'] = get_json_value(record, ['出院记录', '入院时间'])
+
         if '入院记录' not in record or record['入院记录'] == '':
             continue
         key = '%s_%s' % (record['医保编号'], record['入院记录']['入院时间'])
@@ -86,6 +98,9 @@ def write_result(file_path, data):
 
 
 if __name__ == '__main__':
+    """
+    p1的汇总结果.json  + p2的labeled_ind.txt   ->  p2的汇总结果.json
+    """
     # 参数
     parser = argparse.ArgumentParser(description='Select Data With MR_NOs')
     parser.add_argument('-p1', type=str, default='2409', help='postfix num')
@@ -96,19 +111,19 @@ if __name__ == '__main__':
     postfix1 = args.p1
     postfix2 = args.p2
     data_type = args.t
-    if not os.path.exists('data/%s' % data_type):
+    if not os.path.exists('../data/%s' % data_type):
         print('data type: %s not exists' % data_type)
         exit()
     print("postfix1: %s, postfix2: %s, data_type: %s" % (postfix1, postfix2, data_type))
-    if not os.path.exists('data/%s/labeled_ind_%s.txt' % (data_type, postfix1)):
-        print('mrnos file: data/%s/labeled_ind_%s.txt not exists!' % (data_type, postfix1))
+    if not os.path.exists('../data/%s/labeled_ind_%s.txt' % (data_type, postfix2)):
+        print('mrnos file: ../data/%s/labeled_ind_%s.txt not exists!' % (data_type, postfix2))
         exit()
 
-    keys = load_keys(r'data/%s/labeled_ind_%s.txt' % (data_type, postfix1), with_head=False)
+    keys = load_keys(r'../data/%s/labeled_ind_%s.txt' % (data_type, postfix2), with_head=False)
     keys = ['%s_%s' % (e[0], e[1]) for e in keys]
     # 加载json数据
     json_data = ''
-    with open(r'data/%s/汇总结果_%s.json' % (data_type, postfix2)) as f:
+    with open(r'../data/%s/汇总结果_%s.json' % (data_type, postfix1)) as f:
         json_data = json.load(f, strict=False)
         json_data = filter_records(json_data, keys)
-        write_result(r'data/%s/汇总结果_%s.json' % (data_type, postfix1), json_data)
+        write_result(r'../data/%s/汇总结果_%s.json' % (data_type, postfix2), json_data)

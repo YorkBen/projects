@@ -12,42 +12,6 @@ sys.path.append('../Lib')
 from MRRecordUtil import *
 from Lib.InspRule import InspRule
 
-def get_json_value(item, key):
-    if key not in item:
-        return ''
-    else:
-        return str(item[key])
-
-def load_regex():
-    lines = []
-    for filename in ['放射', '超声']:
-        with open(r'data/regex/%s.txt' % filename) as f:
-            for l in f.readlines():
-                lines.append(l.strip())
-
-    return '((' + ')|('.join(lines) + '))'
-
-
-def get_mzwy_texts(item):
-    """
-    获取门诊外院中包含实验室数据的文本，以。分割，返回句子数组
-    """
-    s1 = get_json_value(item['入院记录'], '门诊及院外重要辅助检查') if '入院记录' in item else ''
-    s2 = get_json_value(item['入院记录']['病史小结'], '辅助检查') if '入院记录' in item and '病史小结' in item['入院记录'] else ''
-    s3 = get_json_value(item['首次病程']['病例特点'], '辅助检查') if '首次病程' in item else ''
-    s4 = get_json_value(item['出院记录']['入院情况'], '辅助检查') if '出院记录' in item else ''
-    s5 = get_json_value(item['入院记录'], '现病史') if '入院记录' in item else ''
-
-    isp = InspRule()
-    regex = load_regex()
-    texts = []
-    for s in [s1, s2, s3, s4, s5]:
-        for t in isp.split_text(s):
-            if re.search(regex, t):
-                texts.append(t)
-
-    return texts
-
 # def compare_sheet_data(sheet, diease, json_data):
 #     cn_starts = [2, 7]
 #     rn = 2
@@ -97,13 +61,13 @@ def get_mzwy_texts(item):
 #
 #     return same_ct, total_ct
 
-def process_records(key_file, json_file, out_path, debug=False):
+def process_records(key_file, json_file, out_path, debug=0):
     """
     处理记录数据
     """
     keys, json_data = load_data(json_file, key_file)
 
-    regex_dict = {'超声': '(超声)|(彩超)|(B超)', 'CT': '(CT)|(平扫)', 'MR': '(MR)|(DWI)', 'DR': '(X线)|(DR)|(钡餐)|(侧位)|(床旁片)|(平片)|(斜位)|(胸部正)|(正侧位)|(正位)'}
+    # regex_dict = {'超声': '(超声)|(彩超)|(B超)', 'CT': 'CT', 'MR': '(MR)|(DWI)', 'DR': '(X线)|(DR)|(钡餐)|(侧位)|(床旁片)|(平片)|(斜位)|(胸部正)|(正侧位)|(正位)'}
 
     isp = InspRule()
     results = []
@@ -135,12 +99,17 @@ def process_records(key_file, json_file, out_path, debug=False):
                             text_arr_dict['DR'].extend(isp.split_text(text))
 
         # 门诊外院
-        texts = get_mzwy_texts(item)
-        for text in texts:
-            for key in text_arr_dict.keys():
-                if re.search(regex_dict[key], text):
-                    text_arr_dict[key].append(text)
-                    break
+        text_arr_dict2 = get_mzwy_texts(item, r'../FeatureExtracRegex/data/regex', ['超声', 'CT', 'MR', 'DR'])
+        for key, val in text_arr_dict2.items():
+            text_arr_dict[key].extend(val)
+
+        # for text in get_mzwy_texts(item):
+        #     for subtext in isp.split_text_by_regex_dict(text, regex_dict):
+        #         for key in text_arr_dict.keys():
+        #             if re.search(regex_dict[key], subtext, re.I):
+        #                 text_arr_dict[key].append(subtext)
+        #                 break
+        # print(text_arr_dict['DR'])
 
         # 按Key处理，'超声'_'急性阑尾炎'
         result = {}
@@ -153,10 +122,18 @@ def process_records(key_file, json_file, out_path, debug=False):
             for key2 in key_result.keys():
                 result['%s_%s' % (key, key2)] = key_result[key2] if debug else key_result[key2][0]
 
+        ## for debug
+        # for text in text_arr_dict['MR']:
+        #     print(text)
+        # print('')
+        # print(result['MR_急性胆囊炎'])
+        # print(result['DR_急性胰腺炎'])
+        # print('')
+
         results.append(result)
 
-
-    write_sheet_arr_dict(results, out_path, 'Sheet1', debug=True)
+    if debug != 'label':
+        write_sheet_arr_dict(results, out_path, 'Sheet1', debug=(debug==1))
 
 
 if __name__ == '__main__':
@@ -164,6 +141,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Select Data With MR_NOs')
     parser.add_argument('-p', type=str, default='3456', help='postfix num')
     parser.add_argument('-t', type=str, default='腹痛', help='数据类型')
+    parser.add_argument('-d', type=str, default='0', help='调试类型') # 0，1， label  label的时候是人工调试，不输出excel，只打印信息；1是excel输出调试信息，0是excel不输出调试信息
     args = parser.parse_args()
 
     postfix = args.p
@@ -175,55 +153,10 @@ if __name__ == '__main__':
     if not os.path.exists('../data/%s/labeled_ind_%s.txt' % (data_type, postfix)):
         print('mrnos file: ../data/%s/labeled_ind_%s.txt not exists!' % (data_type, postfix))
         exit()
+    debug_type = args.d
+    labeled_file = r'../data/%s/labeled_ind_%s.txt' % (data_type, postfix) if debug_type != 'label' else r'../data/%s/labeled_ind_%s_debug.txt' % (data_type, postfix)
 
-    process_records(r'../data/%s/labeled_ind_%s.txt' % (data_type, postfix),
-                    r'../data/%s/汇总结果_%s.json' % (data_type, postfix),
-                    r'data/%s/影像学正则结果_%s.xlsx' % (data_type, postfix),
-                    debug=True)
-
-
-
-
-    # isp = InspRule()
-    # data = load_sheet_arr_dict(r'data\腹痛\影像学正则测试数据.xlsx', 'Sheet1')
-    #
-    # for row in data:
-    #     result = isp.process(row['文本'])
-    #     for key in row.keys():
-    #         if key != '文本':
-    #             row[key] = result[key]
-    #
-    # write_sheet_arr_dict(data, r'data\腹痛\影像学正则测试数据_结果.xlsx', 'Sheet1')
-
-    # # 加载json数据
-    # json_data = ''
-    # with open(r'data/汇总结果_%s.json' % postfix) as f:
-    #     json_data = json.load(f, strict=False)
-    # mrnos = load_mrnos(r'data/labeled_ind_1380.txt', with_head=False, sperator='	')
-    # json_data = filter_json_values(json_data, mrnos)
-    #
-    # # # 写excel #####################
-    # # workbook = load_workbook(r"data/result.xlsx")
-    # wb = Workbook()
-    # sheets = []
-    # for idx, diease in enumerate(diease_regex.keys()):
-    #     sheets.append(wb.create_sheet(diease, idx))
-    #
-    # _, _, num_cs, num_fs, _, _ = get_max_num(json_data)
-    # for diease, sheet in zip(list(diease_regex.keys()), sheets):
-    #     write_sheet_header(sheet, num_cs, num_fs)
-    #     write_sheet_data(sheet, diease, json_data, num_cs, num_fs)
-    #
-    # # # 保存文档
-    # wb.save(r'data\r_dpi_%s.xlsx' % postfix)
-    # wb.close()
-
-
-
-    # # 统计结果
-    # workbook = load_workbook(r"C:\Users\Administrator\Desktop\训练集病例影像学.xlsx")
-    # sheets = []
-    # for idx, diease in enumerate(diease_regex.keys()):
-    #     print(diease)
-    #     same_ct, total_ct = compare_sheet_data(workbook[diease], diease, json_data)
-    #     print(same_ct, total_ct, same_ct / total_ct)
+    process_records(key_file=labeled_file,
+                    json_file=r'../data/%s/汇总结果_%s.json' % (data_type, postfix),
+                    out_path=r'data/%s/影像学正则结果_%s.xlsx' % (data_type, postfix),
+                    debug=debug_type)

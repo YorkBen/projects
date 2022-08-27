@@ -38,19 +38,40 @@ class RegexUtil:
         elif type != "":
             return self.format_regex(str, type)
 
-    def format_num(self, str, default=''):
+
+    def replace_chinese_num(self, str):
         """
-        字符串匹配数字
+        将中文数字替换为数字
         """
-        str = self.format_regex(str, r'([0-9]+(\.)?[0-9]*)|([一二三四五六七八九十]{2,})')
         str = str.replace('一', '1').replace('二', '2').replace('三', '3').replace('四', '4')
         str = str.replace('五', '5').replace('六', '6').replace('七', '7').replace('八', '8')
         str = str.replace('九', '9')
+        return str
 
-        if str == '':
+
+    def format_num(self, str, default='', forl='first'):
+        """
+        字符串匹配数字
+        forl：返回第一个还是最后一个
+        """
+        str = self.replace_chinese_num(str)
+        arr = re.findall(r'[0-9]+[.]?[0-9]*', str)
+
+        if len(arr) == 0:
             return default
-        else:
-            return str
+        elif forl == 'first':
+            return arr[0]
+        elif forl == 'last':
+            return arr[-1]
+
+
+    def format_nums(self, str):
+        """
+        字符串找出所有数字
+        """
+        str = self.replace_chinese_num(str)
+        return re.findall(r'[0-9]+[.]?[0-9]*', str)
+
 
     def format_age(self, str):
         """

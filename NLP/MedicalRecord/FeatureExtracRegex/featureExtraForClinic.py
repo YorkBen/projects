@@ -17,6 +17,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Select Data With MR_NOs')
     parser.add_argument('-p', type=str, default='3456', help='postfix num')
     parser.add_argument('-t', type=str, default='腹痛', help='数据类型')
+    parser.add_argument('-d', type=str, default='0', help='调试类型')
     args = parser.parse_args()
 
     postfix = args.p
@@ -28,16 +29,21 @@ if __name__ == '__main__':
     if not os.path.exists('../data/%s/labeled_ind_%s.txt' % (data_type, postfix)):
         print('mrnos file: ../data/%s/labeled_ind_%s.txt not exists!' % (data_type, postfix))
         exit()
+    debug_type = args.d
+    debug = (debug_type != '0')
+    labeled_file = r'../data/%s/labeled_ind_%s.txt' % (data_type, postfix) if debug_type != 'label' else r'../data/%s/labeled_ind_%s_debug.txt' % (data_type, postfix)
+
 
     cr = ClinicRule(type=data_type, postfix=postfix)
 
     # 设置要提取的特征，如果是所有特征，则注释该行
-    # cr.set_proc_features(['MFST1', 'TYX1'])
+    # cr.set_proc_features(['DGZYJ1'])
     # results = cr.process(r'../data/腹痛/汇总结果_%s.json' % postfix, r'../data/腹痛/labeled_ind_%s.txt' % postfix)
     results = cr.process(json_file=r'../data/%s/汇总结果_%s.json' % (data_type, postfix),
                          result_file=r'data/%s/临床特征_%s.xlsx' % (data_type, postfix),
-                         labeled_file=r'../data/%s/labeled_ind_%s.txt' % (data_type, postfix), debug=True)
+                         labeled_file=labeled_file, debug=True)
 
+    write_sheet_dict(results, r'data/%s/临床特征_%s.xlsx' % (data_type, postfix), 'Sheet1', debug=debug)
     # manlabeled_data = load_sheet_dict()
     # for key1 in manlabeled_data.keys():
     #     for key2 in manlabeled_data[key1].keys():

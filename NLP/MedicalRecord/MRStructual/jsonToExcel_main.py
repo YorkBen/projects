@@ -20,18 +20,6 @@ def get_max_num(json_data):
             max_len2 = len(item['实验室数据'])
     return max_len, max_len2
 
-def get_json_value(item, key_arr):
-    if isinstance(key_arr, str):
-        key_arr = [key_arr]
-
-    cur_item = item
-    for key in key_arr:
-        if key not in cur_item:
-            return ''
-        else:
-            cur_item = cur_item[key]
-
-    return str(cur_item)
     # return json.dumps(cur_item, indent=1, separators=(',', ':'), ensure_ascii=False)
 
 def check_cs_part(part_str):
@@ -60,7 +48,7 @@ def check_cs_part(part_str):
         return 9
     elif re.search('(腹[^水])', part_str):
         return 10
-    elif re.search('((附件)|(阴道))', part_str):
+    elif re.search('((附件)|(阴道)|(妇科))', part_str):
         return 11
     else:
         return 12
@@ -220,12 +208,24 @@ def generate_lab_data(item):
         for item_jy in item['检验']:
             for item_jy_sj in item_jy['数据']:
                 arr = item_jy_sj.split(',')
-                key = arr[2]
+                if len(arr) < 2:
+                    continue
+
+                sample, key = arr[1], arr[2]
+                # 尿白细胞, 尿红细胞
+                if sample == '尿液':
+                    key = '尿' + key
+
+                if key == '超敏C-反应蛋白':
+                    key = 'C反应蛋白'
+                    item_jy_sj = item_jy_sj.replace('超敏C-反应蛋白', 'C反应蛋白')
+
                 if key not in columns['实验室']:
                     continue
                 else:
+                    append_str = item_jy['日期'] + ',' + item_jy_sj
                     idx = columns['实验室'].index(key)
-                    lab_resstr_arr[idx] = item_jy_sj if lab_resstr_arr[idx] == '' else lab_resstr_arr[idx]
+                    lab_resstr_arr[idx] = append_str if lab_resstr_arr[idx] == '' else lab_resstr_arr[idx] + '\n' + append_str
 
     return lab_resstr_arr
 
@@ -234,16 +234,16 @@ columns = {
     '入院记录': ['患者姓名', '性别', '年龄', '入院时间', '主诉', '现病史', '既往史', '手术外伤史', '输血史', '药物过敏史', \
                     '个人史', '婚育史', '月经史', '家族史', '体格检查', '专科情况（体检）', '病史小结'],
     '出院诊断': '出院诊断',
-    '超声': ['超声_腹股沟', '超声_泌尿', '超声_心脏', '超声_前列腺', '超声_肝胆', '超声_胸水', '超声_腹水', '超声_腹部包块', '超声_腹部大血管', '超声_阑尾及肠管探查', '超声_腹部', '超声_妇科', '超声_其它'],
+    '超声': ['超声_腹股沟', '超声_泌尿', '超声_心脏', '超声_前列腺', '超声_肝胆', '超声_胸水', '超声_腹水', '超声_腹部包块', '超声_腹部大血管', \
+                '超声_阑尾及肠管探查', '超声_腹部', '超声_妇科', '超声_其它'],
     'CT': ['CT_胸部', 'CT_全腹', 'CT_上腹', 'CT_下腹', 'CT_泌尿', 'CT_盆腔', 'CT_颅脑', 'CT_其它'],
     'MR': ['MR_肝胆&MRCP', 'MR_胰', 'MR_脾', 'MR_上腹', 'MR_下腹', 'MR_颅脑', 'MR_盆腔', 'MR_其它'],
     'DR': ['DR_胸部', 'DR_腹部', 'DR_其它'],
     '病理': '病理',
-    '实验室': ['中性粒细胞%', '白细胞', '超敏C-反应蛋白', '降钙素原', '脂肪酶', '淀粉酶', 'β-绒毛膜促性腺激素', \
-                '总胆红素', '天冬氨酸氨基转移酶', '丙氨酸氨基转移酶', '碱性磷酸酶', 'γ-谷氨酰转移酶', '血沉', '红细胞']
+    '实验室': ['中性粒细胞%', '白细胞', 'C反应蛋白', '降钙素原', '脂肪酶', '淀粉酶', 'β-绒毛膜促性腺激素', \
+                '总胆红素', '天冬氨酸氨基转移酶', '丙氨酸氨基转移酶', '碱性磷酸酶', 'γ-谷氨酰转移酶', '血沉', '红细胞', '尿白细胞', '尿红细胞']
      # ,'辅助检查_外院'
 }
-
 
 if __name__ == '__main__':
     # 参数
@@ -291,6 +291,6 @@ if __name__ == '__main__':
         write_sheet_row(sheet, ind+1, row_data)
 
 
-    workbook.save(r'data/%s/split_%s.xlsx' % (data_type, postfix))
+    workbook.save(r'data/%s/病历数据_%s.xlsx' % (data_type, postfix))
 
-    print('saving file to data/%s/split_%s.xlsx' % (data_type, postfix))
+    print('saving file to data/%s/病历数据_%s.xlsx' % (data_type, postfix))

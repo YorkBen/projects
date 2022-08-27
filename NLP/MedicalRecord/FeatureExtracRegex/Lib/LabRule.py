@@ -35,13 +35,14 @@ class LabRule(RegexBase):
             15: ('血清', 'β-绒毛膜促性腺激素', 'gt', 10),
             16: ('血清', '总胆红素', 'gt', 22),
             17: ('尿液', '红细胞', 'gt', 28),
-            18: ('尿液', '白细胞', 'gt', 17)
+            18: ('尿液', '白细胞', 'gt', 17),
+            19: ('血清', 'C反应蛋白', 'gt', 5)
         }
 
         self.rule_str_regex = {
-            1: '(WBC[^；、，。]{,10})|(白细胞[^；、，。酶]{,10})',
-            2: '(WBC[^；、，。]{,10})|(白细胞[^；、，。酶]{,10})',
-            3: '(WBC[^；、，。]{,10})|(白细胞[^；、，。酶]{,10})',
+            1: '((([^尿液粪便腹水胸水手工分少]{100})|([^潜]血[^尿液粪便腹水胸手工少]{,100}))(((WBC)|(白细胞))[^；、，。酶]{,10}))',
+            2: '((([^尿液粪便腹水胸水手工分少]{100})|([^潜]血[^尿液粪便腹水胸手工少]{,100}))(((WBC)|(白细胞))[^；、，。酶]{,10}))',
+            3: '((([^尿液粪便腹水胸水手工分少]{100})|([^潜]血[^尿液粪便腹水胸手工少]{,100}))(((WBC)|(白细胞))[^；、，。酶]{,10}))',
             4: '(N[^a-df-tv-z]([^，,、；]{,10})%)|((中性粒(细胞)?(%|(百分(比|数|率|百)?)|(比(例|率)))?)([^计数浸润]{,10}))',
             5: '(C-?反应蛋白[^；、，。,]{3,10})|(CRP[^；、，。,+＋(东)细胞C蛋白酶]{3,10})',
             6: '(血沉[^；、，。,]{3,22})',
@@ -55,8 +56,9 @@ class LabRule(RegexBase):
             14: '(谷氨酰转移酶[^；、，。,]{3,22})|(GGT[^；、，。,+＋(东)细胞C蛋白酶电解质]{3,20})',
             15: '(绒毛膜促性腺激素[^；、，。,]{3,22})|(HCG[^；、，。,+＋(东)细胞C蛋白酶]{3,20})',
             16: '(总胆红素[^；、，。,]{3,22})|(TB(IL)?[^；、，。,+＋(东)细胞C蛋白酶]{3,20})',
-            17: '尿.*红细胞([^酶。]{2,10})',
-            18: '尿.*红细胞([^酶。]{2,10})'
+            17: '(((尿常规)|(尿沉渣))[^。]*?红细胞([^酶。]{2,10}))|(尿红细胞([^酶。]{2,10}))|(尿常规[^。]*?RBC)|(尿RBC)',
+            18: '(((尿常规)|(尿沉渣))[^。]*?白细胞([^酶。]{2,10}))|(尿白细胞([^酶。]{2,10}))|(尿常规[^。]*?WBC)|(尿WBC)',
+            19: '(C-?反应蛋白[^；、，。,]{3,10})|(CRP[^；、，。,+＋(东)细胞C蛋白酶]{3,10})'
             # 16: '(红细胞[^；、，。,单位浓度比积体积含量计数(]{3,22}个/L)'  # 此处是血液的，不是尿的
         }
 
@@ -77,15 +79,14 @@ class LabRule(RegexBase):
         }
 
         self.diease_rules = {
-            '急性阑尾炎': [4, 1, 5, 7, 8],
+            '急性阑尾炎': [4, 1, 5, 7, 8, 19],
             '急性胰腺炎': [9, 10],
             '异位妊娠': [15],
-            '急性胆管炎': [2, 3, 5, 16, 11, 12, 13, 14],
-            '急性胆囊炎': [1, 5, 6],
+            '急性胆管炎': [2, 3, 5, 16, 11, 12, 13, 14, 19],
+            '急性胆囊炎': [1, 5, 6, 19],
             '上尿路结石': [17],
             '急性肾盂肾炎': [18]
         }
-
 
     def get_diease_results(self, rule_results):
         """
@@ -141,7 +142,7 @@ class LabRule(RegexBase):
             {rule_id: 0,1,2}
         """
         # 按规则来计算
-        rule_results = {k:2 for k in self.rules.keys()}
+        rule_results = {k:(2, '', '', '') for k in self.rules.keys()}
         for _, item_bb, item_name, item_val, item_unit, item_rg in items:
             for rule_id in self.rules.keys():
                 rule_bb, rule_name, rule_type, rule_val = self.rules[rule_id]
@@ -151,10 +152,10 @@ class LabRule(RegexBase):
                         val = float(str_val)
                         if rule_type == 'gt' and val > rule_val or \
                             rule_type == 'lt' and val < rule_val:
-                            rule_results[rule_id] = 1
+                            rule_results[rule_id] = (1, '', '', str([item_bb, item_name, item_val, item_unit, item_rg]))
                         else:
-                            if rule_results[rule_id] != 1:
-                                rule_results[rule_id] = 0
+                            if rule_results[rule_id][0] != 1:
+                                rule_results[rule_id] = (0, '', '', str([item_bb, item_name, item_val, item_unit, item_rg]))
 
 
         return rule_results
@@ -209,6 +210,10 @@ class LabRule(RegexBase):
             {rule_id: 0,1,2}
         """
         for text in texts:
+            if self.debug:
+                print('')
+                print(text)
+                print('')
             for rule_id in self.rules.keys():
                 rule = self.rules[rule_id]
                 regex = self.rule_str_regex[rule_id]
@@ -218,19 +223,20 @@ class LabRule(RegexBase):
                     groups = match.groups()
                     for i in range(len(groups) - 1, -1, -1):
                         if groups[i]:
-                            val = re.search(self.rule_val_regex, groups[i])
+                            rule_val = re.search(self.rule_val_regex, groups[i])
                             if self.debug:
-                                print('group selected: %s, val: %s' % (groups[i], val))
-                            if val:
-                                rt, val, bNeg_match, text2 = self.assess_val(groups[i], val.group(0), rule)
+                                print('group selected: %s, rule_val: %s' % (groups[i], rule_val))
+                            if rule_val:
+                                rt, val, bNeg_match, text2 = self.assess_val(groups[i], rule_val.group(0), rule)
                                 if self.debug:
-                                    print('assesss value: %s' % rt)
+                                    print('assesss value: ', rt, val, bNeg_match, text2)
                                 rrt = rule_results[rule_id] if not debug else rule_results[rule_id][0]
                                 if rrt == 2 or rt == 1:
-                                    if debug:
-                                        rule_results[rule_id] = (rt, text2, bNeg_match.group(0) if bNeg_match else '', text)
-                                    else:
-                                        rule_results[rule_id] = rt
+                                    rule_results[rule_id] = (rt, text2, bNeg_match.group(0) if bNeg_match else '', text)
+                                    # if debug:
+                                    #     rule_results[rule_id] = (rt, text2, bNeg_match.group(0) if bNeg_match else '', text)
+                                    # else:
+                                    #     rule_results[rule_id] = rt
                                 break
                     break
 
@@ -254,10 +260,11 @@ class LabRule(RegexBase):
                     rt, val, bNeg_match, text2 = self.assess_val(match.group(0), match.group(1), None)
                     rrt = stack_results[stack] if not debug else stack_results[stack][0]
                     if rrt == 2 or rt == 1:
-                        if debug:
-                            stack_results[stack] = (rt, text2, bNeg_match.group(0) if bNeg_match else '', text)
-                        else:
-                            stack_results[stack] = rt
+                        stack_results[stack] = (rt, text2, bNeg_match.group(0) if bNeg_match else '', text)
+                        # if debug:
+                        #     stack_results[stack] = (rt, text2, bNeg_match.group(0) if bNeg_match else '', text)
+                        # else:
+                        #     stack_results[stack] = rt
                     break
 
         # 组套结果赋值给正则结果

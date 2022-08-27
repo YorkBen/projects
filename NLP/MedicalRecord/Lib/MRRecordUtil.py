@@ -2,6 +2,9 @@ import re
 import json
 import xlrd
 import xlwt
+import os
+from openpyxl import load_workbook
+from RegexBase import RegexBase
 
 def load_mrno(file_path, with_head=True, separator='	'):
     """
@@ -155,11 +158,11 @@ def write_sheet_row(sheet, rn, row_data):
         if isinstance(col, list) or isinstance(col, tuple):
             for elem in col:
                 # sheet.cell(1, ind).value = col2
-                sheet.write(rn, cn, elem.strip())
+                sheet.write(rn, cn, str(elem).strip())
                 cn = cn + 1
         else:
             # sheet.cell(1, ind).value = col
-            sheet.write(rn, cn, col.strip())
+            sheet.write(rn, cn, str(col).strip())
             cn = cn + 1
 
 
@@ -181,7 +184,7 @@ def generate_columns_by_dict(data_dict, expand=True):
     return columns
 
 
-def write_sheet_arr_dict(data, workbook_path, sheet_name, debug=True):
+def write_sheet_arr_dict(data, workbook_path, sheet_name="Sheet1", debug=True):
     """
     写入数据表格。数据格式：生成字典数组：[{key_col1: val1, key_col2: val2...}]。
     字典的key作为表头，每行写一行数据。如果数据有几个字段，每个表头之间需要间隔相应的字段。字段依次写入相邻列中。
@@ -201,7 +204,7 @@ def write_sheet_arr_dict(data, workbook_path, sheet_name, debug=True):
     for rn, row_data in enumerate(data):
         if not debug:
             row_data_ = {}
-            for key, val in row_data:
+            for key, val in row_data.items():
                 row_data_[key] = val[0] if (isinstance(val, list) or isinstance(val, tuple)) else val
             row_data = row_data_
 
@@ -211,10 +214,136 @@ def write_sheet_arr_dict(data, workbook_path, sheet_name, debug=True):
     print('save file: %s' % workbook_path)
 
 
-def write_sheet_dict(data, workbook_path, sheet_name):
+def write_sheet_col(sheet, start_cn, col_name, col_values, expand=True):
     """
+    写excel列。
+    start_cn：开始列号
+    col_name：列名，可以为值或者数组。写在第一行
+    col_values：列的值，可能为值类型或者列表类型。
+    expand：True，列表类型的值需要写在多列
+            False，列表类型的值只写第一列
+    返回值：结束列号。
     """
-    pass
+    if expand and (isinstance(col_values[0], list) or isinstance(col_values[0], tuple)):
+        col_num = len(col_values[0])
+        if not (isinstance(col_name, list) or isinstance(col_name, tuple)):
+            col_names = [col_name for i in range(col_num)]
+    else:
+        col_num = 1
+        if not (isinstance(col_name, list) or isinstance(col_name, tuple)):
+            col_names = [col_name]
+        else:
+            col_names = col_name
+
+        if (isinstance(col_values[0], list) or isinstance(col_values[0], tuple)):
+            col_values = [[col_value[0]] for col_value in col_values]
+        else:
+            col_values = [[col_value] for col_value in col_values]
+
+    # 写表头
+    for idx, col_name in enumerate(col_names):
+        sheet.write(0, start_cn+idx, str(col_name).strip())
+
+    # 写每行内容
+    for ridx, row in enumerate(col_values):
+        for cidx, col_val in enumerate(row):
+            sheet.write(ridx+1, start_cn+cidx, str(col_val).strip())
+
+    return col_num + start_cn
+
+
+def write_sheet_dict(data, workbook_path, sheet_name, debug=True):
+    """
+    将字典写入excel，数据为字典。
+    字典的值为数组，数组的每个元素可能为值或者列表。
+    如果是debug模式，则列表的列需要展开，否则写第一个元素。
+    """
+    workbook = xlwt.Workbook()
+    sheet = workbook.add_sheet(sheet_name)
+
+    start_cn, k = 0, 0
+    for key, val in data.items():
+        start_cn = write_sheet_col(sheet, start_cn, key, val, expand=debug)
+        if start_cn > 200:
+            sheet = workbook.add_sheet(sheet_name + str(k))
+            start_cn = 0
+            k = k + 1
+
+    workbook.save(workbook_path)
+    print('save file: %s' % workbook_path)
+
+
+def get_json_value(item, key_arr):
+    """
+    从病历字典数据中，根据key查询值，并转化为str返回。
+    key_arr：层级key，从外层到里层
+    """
+    if isinstance(key_arr, str):
+        key_arr = [key_arr]
+
+    cur_item = item
+    for key in key_arr:
+        if key not in cur_item:
+            return ''
+        else:
+            cur_item = cur_item[key]
+
+    return str(cur_item)
+
+
+def load_regex_from_txt(base_path, filenames):
+    regex_dict = {}
+    for filename in filenames:
+        lines = []
+        with open(r'%s/%s.txt' % (base_path, filename)) as f:
+            for l in f.readlines():
+                lines.append(l.strip())
+        regex_dict[filename] = '((' + ')|('.join(lines) + '))'
+
+    return regex_dict
+
+
+def get_mzwy_texts(item, regex_dir, keys):
+    """
+    获取门诊外院中包含实验室数据的文本，以。分割，返回句子数组
+    """
+    s1 = get_json_value(item, ['入院记录', '门诊及院外重要辅助检查'])
+    s2 = get_json_value(item, ['入院记录', '病史小结', '辅助检查'])
+    s3 = get_json_value(item, ['首次病程', '病例特点', '辅助检查'])
+    s4 = get_json_value(item, ['出院记录', '入院情况', '辅助检查'])
+    s5 = get_json_value(item, ['入院记录', '现病史'])
+
+    # regex_dir = r'../FeatureExtracRegex/data/regex'
+    filenames = [filename[:-4] for filename in os.listdir(regex_dir) if filename.endswith('.txt')]
+    regex_dict = load_regex_from_txt(regex_dir, filenames)
+
+    rb = RegexBase()
+
+    texts = []
+    for s in [s1, s2, s3, s4, s5]:
+        s = re.sub('((建议)|(必要时))' + rb.inner_neg_xx + '((检查)|(超声)|(CT)|(MRI))', '', s)
+        for t in rb.split_text(s):
+            # print(t)
+            sub_ts = rb.split_text_by_regex_dict(t, regex_dict, keys)
+            # print(sub_ts)
+            # print('')
+            texts.extend(sub_ts)
+
+    text_arr_dict = {key:[] for key in keys}
+    for subtext in texts:
+        for key in text_arr_dict.keys():
+            if re.search(regex_dict[key], subtext, re.I):
+                text_arr_dict[key].append(subtext)
+
+    # 去重
+    for key, arr in text_arr_dict.items():
+        text_arr_dict[key] = list(set(text_arr_dict[key]))
+        # print('')
+        # print(key)
+        # for t in text_arr_dict[key]:
+        #     print(t)
+
+    return text_arr_dict
 
 
 def process_mr(file_path, with_head=True, type_regex_and_outpath=[('出.*院记录', r"data/tmp/mr.txt")], mr_nos=None, num_fields=4):
