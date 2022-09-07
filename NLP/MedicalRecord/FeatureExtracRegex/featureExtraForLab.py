@@ -45,30 +45,33 @@ def process_records(key_file, json_file, out_path, debug):
     """
     keys, json_data = load_data(json_file, key_file)
 
-    lr = LabRule(debug=True)
+    lr = LabRule(debug=False)
     results = []
     total_ct, illegal_ct = 0, 0
     for item in json_data:
         items_arr = []
-        # 检验
-        # if '检验' in item:
-        #     for item_jy in item['检验']:
-        #         for item_jy_sj in item_jy['数据']:
-        #             arr = item_jy_sj.split(',')
-        #             if len(arr) == 6:
-        #                 items_arr.append(arr)
-        #             else:
-        #                 illegal_ct = illegal_ct + 1
-        #             total_ct = total_ct + 1
-        # r_dict_1 = lr.get_rule_label_results(lr.process_strc_items(items_arr))
+        ## 检验
+        if '检验' in item:
+            for item_jy in item['检验']:
+                for item_jy_sj in item_jy['数据']:
+                    arr = item_jy_sj.split(',')
+                    if len(arr) == 6:
+                        items_arr.append(arr)
+                    else:
+                        illegal_ct = illegal_ct + 1
+                    total_ct = total_ct + 1
+        r_dict_1 = lr.get_rule_label_results(lr.process_strc_items(items_arr))
         # print(items_arr)
         # print(r_dict_1['尿液_红细胞_大于_28'])
-        # 门诊外院
+
+        ## 门诊外院
         texts = get_mzwy_texts(item, r'../FeatureExtracRegex/data/regex', ['检验'])['检验']
-        for text in texts:
-            print(text)
+        # for text in texts:
+        #     print(text)
         r_dict_2 = lr.get_rule_label_results(lr.process_texts(texts, debug=debug))
-        print(r_dict_2['全血_白细胞_大于_9.5'])
+        # print(r_dict_2['全血_白细胞_大于_9.5'])
+
+
         # ## for debug
         # print(item['医保编号'])
         # print_keys = ['全血_白细胞_大于_10', '血清_总胆红素_大于_22']
@@ -78,8 +81,8 @@ def process_records(key_file, json_file, out_path, debug):
         #             print(key, dict_c[key])
 
 
-        # results.append(merge_result_dict(r_dict_1, r_dict_2))
-        results.append(r_dict_2)
+        results.append(merge_result_dict(r_dict_1, r_dict_2))
+        # results.append(r_dict_2)
 
     # print(results[0])
     write_sheet_arr_dict(results, out_path, 'Sheet1', debug=debug)

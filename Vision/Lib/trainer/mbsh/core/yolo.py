@@ -484,13 +484,16 @@ class YOLO(object):
                 else:
                     text_origin = np.array([x1, y1 + 1])
 
-                draw.rectangle(
-                    [tuple(text_origin), tuple(text_origin + label_size)],
-                    fill=self.colors[c])
-                draw.text(text_origin, label, fill=(0, 0, 0), font=font)
-
+                ######## modified by pengxiang 20220822 去掉文字
+                # draw.rectangle(
+                #     [tuple(text_origin), tuple(text_origin + label_size)],
+                #     fill=self.colors[c])
+                # draw.text(text_origin, label, fill=(0, 0, 0), font=font)
+                thickness = 2
                 for j in range(thickness):
-                    draw.rectangle([x1 + j, y1 + j, x2 - j, y2 - j], outline=self.colors[c])
+                    # draw.rectangle([x1 + j, y1 + j, x2 - j, y2 - j], outline=self.colors[c])
+                    ######## modified by pengxiang 20220822 修改成蓝色
+                    draw.rectangle([x1 + j, y1 + j, x2 - j, y2 - j], outline=(0, 0, 255))
 
             if one_box:
                 break

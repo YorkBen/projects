@@ -3,7 +3,6 @@ import json
 import xlrd
 import xlwt
 import os
-from openpyxl import load_workbook
 from RegexBase import RegexBase
 
 def load_mrno(file_path, with_head=True, separator='	'):
@@ -93,25 +92,28 @@ def load_sheet_dict(workbook_path, sheet_name):
     """
     # workbook_path = r"data/高发病率腹痛疾病特征标注2022.6.23.xlsx"
     # sheet_name = "前500个疾病特征标注"
-    workbook = load_workbook(workbook_path)
-    sheet = workbook[sheet_name]
+    # workbook = load_workbook(workbook_path)
+    # sheet = workbook[sheet_name]
+
+    workbook = xlrd.open_workbook(workbook_path)  # 打开工作簿
+    sheet = workbook.sheet_by_name(sheet_name)  # 获取工作簿中所有表格中的的第一个表格
 
     results, cols = {}, []
     # 写入列名
-    for j in range(1, sheet.max_column + 1):
-        if sheet.cell(1, j).value is None:
+    for j in range(0, sheet.ncols):
+        if sheet.cell_value(0, j) is None:
             break
-        cols.append(sheet.cell(1, j).value)
+        cols.append(sheet.cell_value(0, j))
 
     # 写入行名，及数据
-    for i in range(2, sheet.max_row + 1):
-        if sheet.cell(i, 1).value is None:
+    for i in range(1, sheet.nrows):
+        if sheet.cell_value(i, 0) is None:
             break
 
-        mrno = sheet.cell(i, 1).value
+        mrno = sheet.cell_value(i, 0)
         results[mrno] = {}
-        for j in range(1, len(cols) + 1):
-            val = sheet.cell(i, j+1).value if sheet.cell(i, j+1).value is not None else ''
+        for j in range(1, len(cols)):
+            val = sheet.cell_value(i, j) if sheet.cell_value(i, j) is not None else ''
             results[mrno][cols[j]] = val
 
     return results
@@ -126,24 +128,27 @@ def load_sheet_arr_dict(workbook_path, sheet_name):
     """
     # workbook_path = r"data/高发病率腹痛疾病特征标注2022.6.23.xlsx"
     # sheet_name = "前500个疾病特征标注"
-    workbook = load_workbook(workbook_path)
-    sheet = workbook[sheet_name]
+    # workbook = load_workbook(workbook_path)
+    # sheet = workbook[sheet_name]
+
+    workbook = xlrd.open_workbook(workbook_path)  # 打开工作簿
+    sheet = workbook.sheet_by_name(sheet_name)  # 获取工作簿中所有表格中的的第一个表格
 
     results, cols = [], []
     # 写入列名
-    for j in range(1, sheet.max_column + 1):
-        if sheet.cell(1, j).value is None:
+    for j in range(0, sheet.ncols):
+        if sheet.cell_value(0, j) is None:
             break
-        cols.append(sheet.cell(1, j).value)
+        cols.append(sheet.cell_value(0, j))
 
     # 写入行名，及数据
-    for i in range(2, sheet.max_row + 1):
-        if sheet.cell(i, 1).value is None:
+    for i in range(1, sheet.nrows):
+        if sheet.cell_value(i, 0) is None:
             break
 
         row = {}
         for idx, col in enumerate(cols):
-            row[col] = sheet.cell(i, idx+1).value if sheet.cell(i, idx+1).value is not None else ''
+            row[col] = sheet.cell_value(i, idx) if sheet.cell_value(i, idx) is not None else ''
         results.append(row)
 
     return results

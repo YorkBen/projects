@@ -141,8 +141,8 @@ class TextClassifier:
         logging.info('TextClassifier Loading Data...')
         logging.debug('Using Text Pair? -> %s' % 'Yes' if len(train_data[0]) == 3 else 'No')
 
-        train_labels = [item[2] for item in train_data]
-        val_labels = [item[2] for item in val_data]
+        train_labels = [item[-1] for item in train_data]
+        val_labels = [item[-1] for item in val_data]
         # 标签转换数字
         self.label_num_dict = label_dict
         self.num_label_dict = {label_dict[k]:k for k in label_dict.keys()}
@@ -157,7 +157,6 @@ class TextClassifier:
         # 测试数据
         val_texts = [item[0] for item in val_data]
         val_texts_pair = [item[1] for item in val_data] if len(val_data[0]) == 3 else None
-        val_labels = [item[2] for item in val_data]
         val_labels = [self.label_num_dict[l] for l in val_labels]
         val_dataset = DataToDataset(self.tokenizer, val_texts, val_texts_pair, val_labels, self.max_txt_len)
         self.val_loader = DataLoader(dataset=val_dataset, batch_size=batch_size, shuffle=True, num_workers=1)

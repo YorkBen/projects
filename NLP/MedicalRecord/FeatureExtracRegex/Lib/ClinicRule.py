@@ -32,154 +32,135 @@ class ClinicRule(RegexBase):
 
         # 疾病对应的正则
         self.features = [
-            # {'id':'FSTX1', 'name': '放射痛（右肩、肩胛和背部）', 'src': ['现病史'], 'type': 'model'},
-            # {'id':'SFTX1', 'name': '上腹痛', 'src': ['现病史'], , 'type': 'model'},
-            # {'id':'YSX1', 'name': '厌食', 'src': ['现病史'], 'type': 'model'},   # 饮食正常
-            # {'id':'FXX1', 'name': '腹泻', 'src': ['现病史'], 'type': 'model'},   # 大小便正常
-            # {'id':'PQTTX1', 'name': '盆腔疼痛', 'src': ['现病史'], 'type': 'model'},
-            # {'id':'BJQX1', 'name': '迅速波及全腹', 'src': ['现病史'], 'type': 'model'},
-            # {'id':'HBX1', 'name': '黑便', 'src': ['现病史'], 'type': 'model'},
-            # {'id':'YXFTX1', 'name': '右下腹疼痛', 'src': ['现病史'], 'type': 'model'},
-            # {'id':'ZYXTX1', 'name': '转移性右下腹疼痛', 'src': ['现病史'], 'type': 'model'},
-            # {'id':'ZFTX1', 'name': '中腹痛', 'src': ['现病史'], 'type': 'model'},
-            # {'id':'YSFTX1', 'name': '右上腹痛', 'src': ['现病史'], 'type': 'model'},
-            # {'id':'FSDFX1', 'name': '放射痛（放射到同侧半腹或背部）', 'src': ['现病史'], 'type': 'model'},
-            # {'id':'CXFTX1', 'name': '持续性腹痛', 'src': ['现病史'], 'type': 'model'},
-            # {'id':'YHJZX1', 'name': '仰卧加重，坐位缓解', 'src': ['现病史'], 'type': 'model'},
-            # {'id':'ZFXTX1', 'name': '阵发性疼痛', 'src': ['现病史'], 'type': 'model'},
-            # {'id':'JLFTX1', 'name': '剧烈腹痛', 'src': ['现病史'], 'type': 'model'},
-            # {'id':'TZPBX1', 'name': '停止排便排气', 'src': ['现病史'], 'type': 'model'},
-            # {'id':'YDLXX1', 'name': '阴道流血', 'src': ['现病史'], 'type': 'model'},
-            # {'id':'PNGBX1', 'name': '排尿改变', 'src': ['现病史'], 'type': 'model'},
-            # {'id':'FTSCFX1', 'name': '放射痛（侧腹、腹股沟、睾丸或大阴唇）', 'src': ['现病史'], 'type': 'model'},
-            # {'id':'YCFTX1', 'name': '腰、侧腹痛', 'src': ['现病史'], 'type': 'model'},
-            #
-            #
-            # # {'id':'XKT1', 'name': '失血性休克', 'src': ['体格检查'], 'regex':'', 'default': 0, 'type': 'model'}, #
-            # {'id':'MYXJ1', 'name': '自身免疫性疾病', 'src': ['既往史'], 'regex':'', 'default': 0, 'type': 'model'}, # 模型
-            # {'id':'YXZLJ1', 'name': '胰腺肿瘤、囊肿病史', 'src': ['既往史'], 'regex':'胰腺.*((肿瘤)|(囊肿))', 'default': 0, 'type': 'model'}, # 模型
-            # {'id':'JWSJ1', 'name': '既往生殖器感染', 'src': ['既往史'], 'regex':'', 'default': 0, 'type': 'model'}, # 模型?
-            # {'id':'FBSS1', 'name': '腹部手术史', 'src': ['既往史', '手术外伤史'], 'regex':'腹' + self.inner_neg + '手?术', 'default': 0, 'type': 'model'},    # 模型
-            # {'id':'FBZJ1', 'name': '腹部肿瘤史', 'src': ['既往史', '手术外伤史'], 'regex':'腹部' + self.inner_neg + '肿?瘤', 'default': 0, 'type': 'model'},   # 模型
-            # {'id':'HLSJ1', 'name': '肿瘤化疗史', 'src': ['既往史', '手术外伤史'], 'regex':'化疗', 'default': 0, 'type': 'model'}, # 模型？
-
-            {'id':'TJX1', 'name': '停经', 'src': ['现病史', '月经史'], 'regex': '停经', 'regex_yjzq':'[^末次]{2}月经.*?(周期)?(规律|则)?.*?((([0-9]-)?[0-9]/)?([1-9][0-9]-)?([1-9][0-9]))',
-                    'regex_lmp': '((末次月经)|(lmp))[^，。；,]*', 'regex_pmp': 'pmp', 'default': 2},
-
+            ### 临床表现
+            {'id':'FSTX1', 'name': '放射痛（右肩、肩胛和背部）', 'src': ['现病史'], 'type': 'model'},   # model
+            {'id':'SFTX1', 'name': '上腹痛', 'src': ['现病史'], 'type': 'model'},   # model
+            {'id':'YSX1', 'name': '厌食', 'src': ['现病史'], 'type': 'model'},   # model
+            {'id':'FXX1', 'name': '腹泻', 'src': ['现病史'], 'type': 'model'},   # model
             {'id':'TYX1', 'name': '头晕', 'src': ['现病史'], 'regex':'(头晕)|(晕倒)',  'default': 2},
-            {'id':'FZX1', 'name': '腹胀', 'src': ['现病史', '查体'], 'regex':'([腹饱]胀)|(胀[痛疼])|(腹' + self.inner_neg + '胀)',  'default': 2},
-            {'id':'EXOTX1', 'name': '恶心呕吐', 'src': ['现病史'], 'regex':'(恶心)|(呕吐)|呕|吐',  'default': 2},
+            {'id':'HDX1', 'name': '黄疸', 'src': ['现病史'], 'regex':'(黄疸)|(黄染)|(发黄)', 'default': 2},
+            {'id':'PQTTX1', 'name': '盆腔疼痛', 'src': ['现病史'], 'type': 'model'},   # model
+            {'id':'BJQX1', 'name': '迅速波及全腹', 'src': ['现病史'], 'type': 'model'},  # model
+            {'id':'ZLBX1', 'name': '坐立不安', 'src': ['现病史'], 'regex':'坐立不安', 'default': 2},
+            {'id':'HBX1', 'name': '黑便', 'src': ['现病史'], 'type': 'model'},  # model
+            {'id':'YXFTX1', 'name': '右下腹疼痛', 'src': ['现病史'], 'type': 'model'},  # model
+            {'id':'ZYXTX1', 'name': '转移性右下腹疼痛', 'src': ['现病史'], 'type': 'model'},  # model
+            {'id':'ZFTX1', 'name': '中腹痛', 'src': ['现病史'], 'type': 'model'},  # model
+            {'id':'YSFTX1', 'name': '右上腹痛', 'src': ['现病史'], 'type': 'model'},  # model
+            {'id':'FSDFX1', 'name': '放射痛（放射到同侧半腹或背部）', 'src': ['现病史'], 'type': 'model'},  # model
+            {'id':'CXFTX1', 'name': '持续性腹痛', 'src': ['现病史'], 'type': 'model'},  # model
+            {'id':'YHJZX1', 'name': '仰卧加重，坐位缓解', 'src': ['现病史'], 'type': 'model'},  # model
+            {'id':'ZFXTX1', 'name': '阵发性疼痛', 'src': ['现病史'], 'type': 'model'},  # model
             {'id':'TRFZX1', 'name': '突然发作', 'src': ['现病史'], 'regex':'(突发)|(突然)|(突感)|(突起)|(突生)', 'default': 2},
             {'id':'JTX1', 'name': '绞痛', 'src': ['现病史'], 'regex':'绞痛', 'default': 2},
-            {'id':'HDX1', 'name': '黄疸', 'src': ['现病史'], 'regex':'(黄疸)|(黄染)|(发黄)', 'default': 2},
-            {'id':'ZLBX1', 'name': '坐立不安', 'src': ['现病史'], 'regex':'坐立不安', 'default': 2},
+            {'id':'JLFTX1', 'name': '剧烈腹痛', 'src': ['现病史'], 'type': 'model'},  # model
+            {'id':'EXOTX1', 'name': '恶心呕吐', 'src': ['现病史'], 'regex':'(恶心)|(呕吐)|呕|吐',  'default': 2},
+            {'id':'FZX1', 'name': '腹胀', 'src': ['现病史', '查体'], 'regex':'([腹饱]胀)|(胀[痛疼])|(腹' + self.inner_neg + '胀)',  'default': 2},
+            {'id':'TZPBX1', 'name': '停止排便排气', 'src': ['现病史'], 'type': 'model'},  # model
+            {'id':'TJX1', 'name': '停经', 'src': ['现病史', '月经史'], 'regex': '停经', 'regex_yjzq':'[^末次]{2}月经.*?(周期)?(规律|则)?.*?((([0-9]-)?[0-9]/)?([1-9][0-9]-)?([1-9][0-9]))',
+                    'regex_lmp': '((末次月经)|(lmp))[^，。；,]*', 'regex_pmp': 'pmp', 'default': 2},
+            {'id':'YDLXX1', 'name': '阴道流血', 'src': ['现病史'], 'type': 'model'},  # model
+            {'id':'PNGBX1', 'name': '排尿改变', 'src': ['现病史'], 'type': 'model'},  # model
+            {'id':'FTSCFX1', 'name': '放射痛（侧腹、腹股沟、睾丸或大阴唇）', 'src': ['现病史'], 'type': 'model'},  # model
+            {'id':'YCFTX1', 'name': '腰、侧腹痛', 'src': ['现病史'], 'type': 'model'},  # model
+            {'id':'SEX', 'name': '性别', 'src': ['性别'], 'default': 1}, # 0 男，1 女
+            {'id':'AGE', 'name': '年龄', 'src': ['年龄'], 'default': 38.8}, # 38.8 中国人平均年龄
 
 
-            {'id':'YWJ1', 'name': '异物摄入史', 'src': ['既往史', '现病史'], 'regex':'异物', 'default': 0},
-            {'id':'SLGJ1', 'name': '输卵管积水', 'src': ['现病史', '既往史'], 'regex':''}, # 0
-            {'id':'YNJ1', 'name': '饱餐、进食油腻食物史', 'src': ['现病史', '既往史'], 'regex':'(饱餐)|(油腻)|(油脂)', 'default': 0}, # 1
-            {'id':'JSJ1', 'name': '禁食', 'src': ['现病史', '既往史'], 'regex':'', 'default': 0}, # 0
-            {'id':'CXCRJ1', 'name': 'CXCR1低表达', 'src': ['现病史', '既往史'], 'regex':'CXCR1' + self.inner_neg + '低'}, # 0
-            {'id':'ZZJJ1', 'name': '重症监护室（应激性溃疡）', 'src': ['现病史', '既往史'], 'regex':'应激性溃疡', 'default': 0}, # 0
-            {'id':'GYJ1', 'name': '高盐饮食', 'src': ['现病史', '既往史'], 'regex':'高盐'}, # 0
-            {'id':'GCJ1', 'name': '高草酸饮食', 'src': ['现病史', '既往史'], 'regex':'高草酸'}, # 0
-            {'id':'YSSJ1', 'name': '饮水较少', 'src': ['现病史', '既往史'], 'regex':'(饮水少)|(饮水较少)|(少饮水)'}, # 0
-            {'id':'XHDJ1', 'name': '消化道溃疡病史', 'src': ['现病史', '既往史'], 'regex':'(肠溃疡)|(十二指肠球部溃疡)|(胃溃疡)|(消化道溃疡)|(胃窦巨大溃疡)|(胃角巨大溃疡)', 'default': 0}, # 6
-            {'id':'YGXJ1', 'name': '超过一个性伴侣', 'src': ['现病史', '既往史'], 'regex':'(冶游)|(不洁性交)', 'default': 0},  # 0
-            {'id':'XBLJ1', 'name': '新的性伴侣', 'src': ['现病史', '既往史'], 'regex':'(冶游)|(不洁性交)', 'default': 0}, # 0
-            {'id':'DGJ1', 'name': '低钙饮食', 'src': ['现病史', '既往史'], 'regex':'低钙饮食', 'default': 0}, # 0
-
-            {'id':'HPJ1', 'name': 'Hp感染史', 'src': ['既往史'], 'regex':'(幽门螺旋杆菌感染)|(HP感染)|(HP（+）)|(HP阳性)', 'default': 0}, # 0 现病史？
-            {'id':'PQYJ1', 'name': '盆腔炎病史', 'src': ['既往史'], 'regex':'盆腔炎', 'default': 0}, # 0
-            {'id':'NLJ1', 'name': '尿路感染史', 'src': ['既往史'], 'regex':'(肾盂肾炎)|(肾炎)|(输尿管炎)|(膀胱炎)|(尿道炎)', 'default': 0}, # 0 现病史？
-            {'id':'NSZJ1', 'name': '尿石症病史', 'src': ['既往史'], 'regex':'((肾|(输尿管))镜?' + self.inner_neg + '(结|碎|取)石术?)', 'default': 0}, # 29
-            {'id':'JTLJ1', 'name': '畸胎瘤病史', 'src': ['现病史', '既往史'], 'regex': '畸胎瘤', 'default': 0}, # 1 现病史？
-            {'id':'WBSLJ1', 'name': '胃泌素瘤', 'src': ['既往史'], 'regex':'(胃泌素瘤)|(卓-艾综合征)|(Z-E综合征)', 'default': 0}, # 0 现病史？
-            {'id':'LCPJ1', 'name': '卵巢旁囊肿', 'src': ['既往史'], 'regex':'', 'default': 0}, # 0
-            {'id':'DJSJ1', 'name': '胆结石病史', 'src': ['既往史', '手术外伤史'], 'regex':'(胆' + self.inner_neg_x + '石)|(胆囊炎)', 'default': 0}, # 现病史 ? 没有现病史130，有了34
-            {'id':'MSLY1', 'name': '美沙拉明、速尿、氯沙坦、6-巯基嘌呤或硫唑嘌呤、异烟肼、袢利尿剂和去羟肌苷使用史',
-                'src': ['既往史'], 'regex':'(美沙拉明)|(速尿)|(呋塞米)|(氯沙坦)|(科素亚)|(洛沙坦)|(罗沙藤)|(6-巯基嘌呤)|(乐疾宁)|(巯嘌呤)|(巯基嘌呤)|(硫唑嘌呤)|(依木兰)|(异烟肼)|(雷米封)|(袢利尿剂)|(去羟肌苷)'
-                , 'default': 0}, # 3
-            {'id':'GGXZJ1', 'name': '高钙血症病史', 'src': ['既往史'], 'regex':'高钙血症', 'default': 0}, # 0
-            {'id':'GYSZJ1', 'name': '高甘油三酯血症病史', 'src': ['既往史'], 'regex':'(高脂血症?)|(高血脂症?)|(((甘油三酯)|(血脂)|(胆固醇))' + self.inner_neg + '高)', 'default': 0}, # 3
-            {'id':'BDJ1', 'name': '病毒(腮腺炎、柯萨奇病毒、巨细胞病毒、水痘、单纯疱疹病毒、HIV)、细菌(支原体、军团菌、钩端螺旋体、沙门氏菌)、寄生虫(弓形虫、隐孢子虫、蛔虫)和真菌(曲霉)',
-                'src': ['既往史'], 'regex':'(腮腺炎)|(柯萨奇病毒)|(巨细胞病毒)|(水痘)|(疱疹)|(HIV)|(人[类体]?免疫缺陷病毒)|(艾滋病)|(支原体)|(军团菌)|(钩端螺旋体)|(沙门氏菌)|(弓形虫)|(隐孢子虫)|(蛔虫)|(真菌)|(曲霉)'
-                , 'default': 0}, # 1
-            {'id':'JYTBJ1', 'name': 'PRSS1、SPINK1、CFTR、CASR、CTRC基因突变', 'src': ['既往史'], 'regex':'(PRSS1)|(SPINK1)|(CFTR)|(CASR)|(CTRC)', 'default': 0}, # 0
-
-            {'id':'YCBJ1', 'name': '炎症性肠病病史', 'src': ['既往史'], 'regex':'(炎症性肠病)|(溃疡性结肠炎)|(溃结)|(克罗恩)', 'default': 0},  # 0
-            {'id':'QSYJ1', 'name': '憩室炎病史', 'src': ['既往史'], 'regex':'憩室炎', 'default': 0}, # 5
-            {'id':'CXMJ1', 'name': '肠系膜缺血病史', 'src': ['既往史'], 'regex':'肠系膜' + self.inner_neg + '缺血', 'default': 0}, # 0
-            {'id':'GCGJ1', 'name': '钩虫感染病史', 'src': ['既往史'], 'regex':'钩虫', 'default': 0}, # 0
-            {'id':'FZTJ1', 'name': '非甾体抗炎药，氯化钾肠溶片使用史', 'src': ['既往史'],
-                'regex':'(非甾体抗炎药)|(阿司匹林)|(布洛芬)|(对乙酰氨基酚)|(吲哚美辛)|(萘普生)|(萘普酮)|(氯芬酸)|(尼美舒利)|(罗非昔布)|(塞来昔布)|(氯化钾)|(补达秀)',
-                'default': 0}, # 7
-            {'id':'WYJJ1', 'name': '二乙基己烯雌酚', 'src': ['既往史'], 'regex':'二乙基己烯雌酚', 'default': 0}, # 0
-            {'id':'GNJJ1', 'name': '宫内节育器使用(超过2年)', 'src': ['现病史', '既往史', '手术外伤史'], 'regex':'(节育器)|(节育环)', 'default': 0},    # 0
-            {'id':'LGCJ1', 'name': '类固醇', 'src': ['既往史'], 'regex':'(大力补)|(康力龙)|(康复龙)|(睾酮)', 'default': 0},  # 0
-            {'id':'HBSJ1', 'name': '环丙沙星、三硅酸镁、磺胺药物、氨苯蝶啶、茚地那韦、愈创甘油醚、麻黄碱、袢利尿剂（呋塞米）、碳酸酐酶抑制剂、泻药（开塞露）、阿昔洛韦、环利尿剂、乙酰唑胺、茶碱、糖皮质激素（泼尼松）、噻嗪、水杨酸、丙磺舒、别嘌呤醇服用史',
-                'src': ['既往史'], 'regex':'(环丙沙星)|(三硅酸镁)|(磺胺)|(苯磺胺)|(氨苯蝶啶)|(茚地那韦)|(愈创甘油醚)|(麻黄碱)|(托拉塞米)|(布美他尼)|(呋塞米)|(乙酰唑胺)|(碳酸酐酶抑制剂)|(泻药)|(开塞露)|(阿昔洛韦)|(环利尿剂)|(乙酰唑胺)|(茶碱)|(泼尼松)|(甲泼尼松龙)|(倍他米松)|(氢化可的松)|(可的松)|(地塞米松)|(噻嗪)|(氢氯噻嗪)|(阿司匹林)|(水杨酸)|(丙磺舒)|(别嘌呤醇)',
-                'default': 0}, # 26
-            {'id':'SJJJ1', 'name': '杀精剂接触史', 'src': ['既往史'], 'regex':'壬苯醇醚', 'default': 0}, # 1
-
-            {'id':'TNBJ1', 'name': '糖尿病病史', 'src': ['既往史'], 'regex':'糖尿病', 'default': 0}, # 20
-            {'id':'GXYJ1', 'name': '高血压病史', 'src': ['既往史'], 'regex':'高血压', 'default': 0}, # 29
-            {'id':'TFJ1', 'name': '痛风病史', 'src': ['既往史'], 'regex':'痛风', 'default': 0}, # 3
-            {'id':'FPJ1', 'name': '肥胖', 'src': ['既往史'], 'regex':'肥胖', 'default': 0}, # 0
-            {'id':'JJJ1', 'name': '结节病病史', 'src': ['既往史'], 'regex':'结节病?', 'default': 0}, # 0
-            {'id':'KLEJ1', 'name': '克罗恩病病史', 'src': ['既往史'], 'regex':'克罗恩病?', 'default': 0}, # 1
-            {'id':'JZPJ1', 'name': '原发性甲状旁腺功能亢进', 'src': ['既往史'], 'regex':'甲状旁腺功能亢进', 'default': 0}, # 2
-            {'id':'JKJ1', 'name': '甲亢病史', 'src': ['既往史'], 'regex':'(甲状腺功能亢进)|(甲亢)', 'default': 0}, # 10
-            {'id':'DFXJ1', 'name': '多发性骨髓瘤病史', 'src': ['既往史'], 'regex':'多发性骨髓瘤', 'default': 0}, # 0
-            {'id':'SXGJ1', 'name': '肾小管酸中毒病史', 'src': ['既往史'], 'regex':'肾小管酸中毒', 'default': 0}, # 0
-            {'id':'MXSJ1', 'name': '慢性肾病病史', 'src': ['既往史'], 'regex':'(尿毒症)|(肾衰)', 'default': 0}, # 13
-
-            {'id':'DGZYJ1', 'name': '内镜逆行胰胆管造影、EUS与FNA、主动脉手术胰腺切除术史', 'src': ['手术外伤史'],  'regex':'(胰腺)|(ERCP)', 'default': 0},
-
-            {'id':'NMYWJ1', 'name': '子宫内膜异位症病史', 'src': ['既往史', '手术外伤史'], 'regex':'((子宫内膜异位)|(内异症))', 'default': 0},
-            {'id':'SQJ1', 'name': '疝气或疝气修复史', 'src': ['既往史', '手术外伤史'], 'regex':'[^食管裂孔外膈]{,4}疝', 'default': 0}, # 3
-            {'id':'LWYJ1', 'name': '阑尾炎手术史', 'src': ['既往史', '手术外伤史'], 'regex':'(阑尾(炎|(阑尾脓肿)|(切除)))', 'default': 0}, # 不带切除3
-            {'id':'SLRJ1', 'name': '输卵管手术史', 'src': ['既往史', '手术外伤史'], 'regex':'((输卵管)|(附件))' + self.inner_neg + '((手?术)|(结扎)|(切除))', 'default': 0},
-            {'id':'WRDJ1', 'name': '胃绕道手术史、减肥手术史', 'src': ['既往史', '手术外伤史'], 'regex':'(胃绕道)|(减肥手术)|(缩胃)|(胃缩)', 'default': 0}, #全是2
-            {'id':'DCZJ1', 'name': '短肠综合征', 'src': ['既往史', '手术外伤史'], 'regex':'短肠综合征', 'default': 0}, # 0
-
-            {'id':'RSSJ1', 'name': '既往异位妊娠史', 'src': ['既往史', '手术外伤史'], 'regex':'(((间质部)|(疤痕)|(切口)|(宫角)|(异位)|(输卵管)|(卵巢)|(瘢痕))处?妊娠)|(宫外孕)', 'default': 0},
-
-            {'id':'BZFS1', 'name': '板状腹', 'src': ['查体'], 'regex':'(板状腹)|(腹肌紧张)|(腹肌强直)|(腹壁紧张)|(腹壁强直)'},
-
-            {'id':'LWYJJ1', 'name': '阑尾炎家族史阳性', 'src': ['家族史'], 'regex':'阑尾((炎)|(脓肿)|(切除))', 'default': 0}, # 全是2
-            {'id':'NJJ1', 'name': '尿石症家族史', 'src': ['家族史'], 'regex':'(肾结石)|(肾小结石)|(肾多发小结石)|(肾点状结石)|(输尿管结石)|(输尿管上段结石)', 'default': 0}, # 5
-
-            {'id':'FYTS1', 'name': '下腹压痛', 'src': ['查体'], 'regex':'(([下全]腹)|(脐下))' + self.inner_neg + '压痛', 'negregex': '([下全]腹' + self.inner + '(无|(未见)|(未及))' + self.inner + '压痛)|(上腹' + self.inner + '压痛)'},
-            {'id':'ZGYTS1', 'name': '子宫压痛', 'src': ['查体'], 'regex':'子宫' + self.inner_neg_xx3 + '压痛'}, #全是2
-            {'id':'FJTS1', 'name': '附件区压痛', 'src': ['查体'], 'regex':'(附件区?' + self.inner_neg_xx3 + '压痛)|(输卵管压痛)|(卵巢压痛)'}, #全是2
-            # {'id':'FJYTS1', 'name': '附件压痛', 'src': ['查体'], 'regex':'(附件区' + self.inner_neg + '压痛)|(输卵管压痛)|(卵巢压痛)'}, # 没用了？
-            {'id':'SZKTS1', 'name': '肾脏叩击痛', 'src': ['查体'], 'regex':'肾' + self.inner_neg + '叩击?痛', 'negregex': '肾' + self.inner + '(无|(未见)|(未及))' + self.inner + '叩击痛'},
-            {'id':'CDNZS1', 'name': '可能触到囊肿', 'src': ['查体'], 'regex':'触?[及到]' + self.inner_neg_x + '囊肿'}, # 全是2
-            {'id':'GJCJS1', 'name': '宫颈刺激', 'src': ['查体'], 'regex':'宫颈' + self.inner_neg3 + '((刺激)|(举痛)|(摇举痛))'},  # 全是2
-
-            {'id':'KZGYT1', 'name': '腹部叩诊鼓音', 'src': ['体格检查', '查体'], 'regex':'(腹部)?(叩诊)?' + self.inner_neg + '鼓音'},
-            {'id':'CYXSS1', 'name': '肠鸣音消失', 'src': ['体格检查', '查体'], 'regex':'肠鸣?音((消失)|(未及))'},
-            {'id':'CYKT1', 'name': '肠鸣音亢进（病程早期）', 'src': ['体格检查', '查体'], 'regex':'肠鸣?音((亢进)|(活跃))'},
-            {'id':'CYRT1', 'name': '肠鸣音减弱（病程晚期）', 'src': ['体格检查', '查体'], 'regex':'肠鸣?音.?[弱低]'},
-
-            {'id':'HMT1', 'name': '昏迷', 'src': ['体格检查', '查体'],
-               'regex':'(昏迷)|(意识不清)|(呼之不应)|(意识丧失)|(随意运动消失)|(对外界的刺激的反应迟钝或丧失)|(瞳孔散大)|(对光反射消失)|(双侧瞳孔不等大)|(神经反射消失)', 'default': 0},
-            {'id':'TWGT1', 'name': '体温升高', 'src': ['体格检查', '查体', '现病史'], 'regex':'体温' + self.inner_neg + '((3[89])|(4[01])|(37[.][6789]))'},
-            {'id':'MBKT1', 'name': '脉搏显著加快', 'src': ['体格检查'], 'regex':''},
-            {'id':'DXYT1', 'name': '低血压', 'src': ['体格检查'], 'regex':''},
-            {'id':'JJZT1', 'name': '反跳痛或肌紧张', 'src': ['体格检查', '现病史', '查体'], 'regex':'(反跳痛)|(肌紧张)|(腹' + self.inner_neg + '紧)|(腹肌抵触感)|(板状腹)|(腹强直)'},
-            {'id':'MFST1', 'name': '墨菲征Murphy征', 'src': ['体格检查', '查体'], 'regex':'((墨菲征)|(Murphys?征?：?’?))', 'negregex': '((墨菲征)|(Murphys?))' + self.inner + '阴性'},
-            {'id':'ZDDNT1', 'name': '肿大胆囊', 'src': ['体格检查'], 'regex':'上腹' + self.inner_neg + '肿块', 'default': 0}, #
-            {'id':'FJT1', 'name': '附件肿块', 'src': ['体格检查', '查体', '辅助检查'], 'regex':'(上腹' + self.inner_neg + '肿块)|(附件区?' + self.inner_neg_xx + '[肿包]块)|(附件' + self.inner_neg + '增[粗厚])', 'default': 0},
-
+            ### 病史特征
+            {'id':'LWYJJ1', 'name': '阑尾炎家族史阳性', 'src': ['家族史'], 'regex':'阑尾((炎)|(脓肿)|(切除))', 'default': 0},
+            {'id':'FBSS1', 'name': '腹部手术史', 'src': ['既往史', '手术外伤史'], 'regex':'腹' + self.inner_neg + '手?术', 'default': 0, 'type': 'model'},  # model
+            {'id':'DJSJ1', 'name': '胆结石病史', 'src': ['既往史', '手术外伤史'], 'regex':'(胆' + self.inner_neg_x + '石)|(胆囊炎)', 'default': 0},
             {'id':'XJG1', 'name': '酗酒', 'src': ['个人史', '既往史'], 'regex':'酗酒', 'default': 0},
-            {'id':'XYGS1', 'name': '吸烟', 'src': ['个人史', '既往史'], 'regex':'吸烟', 'default': 0},
-
-            {'id':'NL35', 'name': '年龄35岁及以上', 'src': ['年龄'], 'regex':''},
-
+            {'id':'MSLY1', 'name': '美沙拉明、速尿、氯沙坦、6-巯基嘌呤或硫唑嘌呤、异烟肼、袢利尿剂和去羟肌苷使用史', 'src': ['既往史'],  'regex':'(美沙拉明)|(速尿)|(呋塞米)|(氯沙坦)|(科素亚)|(洛沙坦)|(罗沙藤)|(6-巯基嘌呤)|(乐疾宁)|(巯嘌呤)|(巯基嘌呤)|(硫唑嘌呤)|(依木兰)|(异烟肼)|(雷米封)|(袢利尿剂)|(去羟肌苷)', 'default': 0},
+            {'id':'GGXZJ1', 'name': '高钙血症病史', 'src': ['既往史'], 'regex':'高钙血症', 'default': 0},
+            {'id':'GYSZJ1', 'name': '高甘油三酯血症病史', 'src': ['既往史'], 'regex':'(高脂血症?)|(高血脂症?)|(((甘油三酯)|(血脂)|(胆固醇))' + self.inner_neg + '高)', 'default': 0},
+            {'id':'BDJ1', 'name': '病毒(腮腺炎、柯萨奇病毒、巨细胞病毒、水痘、单纯疱疹病毒、HIV)、细菌(支原体、军团菌、钩端螺旋体、沙门氏菌)、寄生虫(弓形虫、隐孢子虫、蛔虫)和真菌(曲霉)', 'src': ['既往史'], 'regex':'(腮腺炎)|(柯萨奇病毒)|(巨细胞病毒)|(水痘)|(疱疹)|(HIV)|(人[类体]?免疫缺陷病毒)|(艾滋病)|(支原体)|(军团菌)|(钩端螺旋体)|(沙门氏菌)|(弓形虫)|(隐孢子虫)|(蛔虫)|(真菌)|(曲霉)', 'default': 0},
+            {'id':'JYTBJ1', 'name': 'PRSS1、SPINK1、CFTR、CASR、CTRC基因突变', 'src': ['既往史'], 'regex':'(PRSS1)|(SPINK1)|(CFTR)|(CASR)|(CTRC)', 'default': 0}, # 0
+            {'id':'MYXJ1', 'name': '自身免疫性疾病', 'src': ['既往史'], 'regex':'', 'default': 0, 'type': 'model'},   # model
+            {'id':'DGZYJ1', 'name': '内镜逆行胰胆管造影、EUS与FNA、主动脉手术胰腺切除术史', 'src': ['手术外伤史'],  'regex':'(胰腺)|(ERCP)', 'default': 0},
+            {'id':'YXZLJ1', 'name': '胰腺肿瘤、囊肿病史', 'src': ['既往史'], 'regex':'胰腺.*((肿瘤)|(囊肿))', 'default': 0, 'type': 'model'},   # model
+            {'id':'FBZJ1', 'name': '腹部肿瘤史', 'src': ['既往史', '手术外伤史'], 'regex':'腹部' + self.inner_neg + '肿?瘤', 'default': 0, 'type': 'model'},    # model
+            {'id':'SQJ1', 'name': '疝气或疝气修复史', 'src': ['既往史', '手术外伤史'], 'regex':'[^食管裂孔外膈]{,4}疝', 'default': 0},
+            {'id':'YCBJ1', 'name': '炎症性肠病病史', 'src': ['既往史'], 'regex':'(炎症性肠病)|(溃疡性结肠炎)|(溃结)|(克罗恩)', 'default': 0},
+            {'id':'NMYWJ1', 'name': '子宫内膜异位症病史', 'src': ['既往史', '手术外伤史'], 'regex':'((子宫内膜异位)|(内异症))', 'default': 0},
+            {'id':'QSYJ1', 'name': '憩室炎病史', 'src': ['既往史'], 'regex':'憩室炎', 'default': 0},
+            {'id':'LWYJ1', 'name': '阑尾炎手术史', 'src': ['既往史', '手术外伤史'], 'regex':'(阑尾(炎|(阑尾脓肿)|(切除)))', 'default': 0},
+            {'id':'CXMJ1', 'name': '肠系膜缺血病史', 'src': ['既往史'], 'regex':'肠系膜' + self.inner_neg + '缺血', 'default': 0},
+            {'id':'YWJ1', 'name': '异物摄入史', 'src': ['既往史', '现病史'], 'regex':'异物', 'default': 0},
+            {'id':'GCGJ1', 'name': '钩虫感染病史', 'src': ['既往史'], 'regex':'钩虫', 'default': 0},
+            {'id':'FZTJ1', 'name': '非甾体抗炎药，氯化钾肠溶片使用史', 'src': ['既往史'], 'regex':'(非甾体抗炎药)|(阿司匹林)|(布洛芬)|(对乙酰氨基酚)|(吲哚美辛)|(萘普生)|(萘普酮)|(氯芬酸)|(尼美舒利)|(罗非昔布)|(塞来昔布)|(氯化钾)|(补达秀)', 'default': 0},
+            {'id':'SLRJ1', 'name': '输卵管手术史', 'src': ['既往史', '手术外伤史'], 'regex':'((输卵管)|(附件))' + self.inner_neg + '((手?术)|(结扎)|(切除))', 'default': 0},
+            {'id':'BYHJ1', 'name': '不孕(风险随不孕时间的延长而增加)', 'src': ['婚育史', '既往史', '现病史'], 'regex':'不孕'},
+            {'id':'JWSJ1', 'name': '既往生殖器感染', 'src': ['既往史'], 'regex':'', 'default': 0, 'type': 'model'},   # model
             {'id':'LCJ1', 'name': '既往流产（包括人工流产）', 'src': ['婚育史'], 'regex':'流产', 'default': 0},
-            {'id':'BYHJ1', 'name': '不孕(风险随不孕时间的延长而增加)', 'src': ['婚育史', '既往史', '现病史'], 'regex':'不孕'}
+            {'id':'XYGS1', 'name': '吸烟', 'src': ['个人史', '既往史'], 'regex':'吸烟', 'default': 0},
+            {'id':'NL35', 'name': '年龄35岁及以上', 'src': ['年龄'], 'regex':''},
+            {'id':'GNJJ1', 'name': '宫内节育器使用(超过2年)', 'src': ['现病史', '既往史', '手术外伤史'], 'regex':'(节育器)|(节育环)', 'default': 0},
+            {'id':'RSSJ1', 'name': '既往异位妊娠史', 'src': ['既往史', '手术外伤史'], 'regex':'(((间质部)|(疤痕)|(切口)|(宫角)|(异位)|(输卵管)|(卵巢)|(瘢痕))处?妊娠)|(宫外孕)', 'default': 0},
+            {'id':'FPJ1', 'name': '肥胖', 'src': ['既往史'], 'regex':'肥胖', 'default': 0},
+            {'id':'SLGJ1', 'name': '输卵管积水', 'src': ['现病史', '既往史'], 'regex':''},
+            {'id':'SJJJ1', 'name': '杀精剂接触史', 'src': ['既往史'], 'regex':'壬苯醇醚', 'default': 0},
+            {'id':'YNJ1', 'name': '饱餐、进食油腻食物史', 'src': ['现病史', '既往史'], 'regex':'(饱餐)|(油腻)|(油脂)', 'default': 0},
+            {'id':'JJJ1', 'name': '结节病病史', 'src': ['既往史'], 'regex':'结节病?', 'default': 0},
+            {'id':'NLJ1', 'name': '尿路感染史', 'src': ['既往史'], 'regex':'(肾盂肾炎)|(肾炎)|(输尿管炎)|(膀胱炎)|(尿道炎)', 'default': 0},
+            {'id':'LCPJ1', 'name': '卵巢旁囊肿', 'src': ['既往史'], 'regex':'', 'default': 0},
+            {'id':'JSJ1', 'name': '禁食', 'src': ['现病史', '既往史'], 'regex':'', 'default': 0},
+            {'id':'WBSLJ1', 'name': '胃泌素瘤', 'src': ['既往史'], 'regex':'(胃泌素瘤)|(卓-艾综合征)|(Z-E综合征)', 'default': 0},
+            {'id':'CXCRJ1', 'name': 'CXCR1低表达', 'src': ['现病史', '既往史'], 'regex':'CXCR1' + self.inner_neg + '低', 'default': 0},
+            {'id':'JTLJ1', 'name': '畸胎瘤病史', 'src': ['现病史', '既往史'], 'regex': '畸胎瘤', 'default': 0},
+            {'id':'LGCJ1', 'name': '类固醇', 'src': ['既往史'], 'regex':'(大力补)|(康力龙)|(康复龙)|(睾酮)', 'default': 0},
+            {'id':'HBSJ1', 'name': '环丙沙星、三硅酸镁、磺胺药物、氨苯蝶啶、茚地那韦、愈创甘油醚、麻黄碱、袢利尿剂（呋塞米）、碳酸酐酶抑制剂、泻药（开塞露）、阿昔洛韦、环利尿剂、乙酰唑胺、茶碱、糖皮质激素（泼尼松）、噻嗪、水杨酸、丙磺舒、别嘌呤醇服用史', 'src': ['既往史'], 'regex':'(环丙沙星)|(三硅酸镁)|(磺胺)|(苯磺胺)|(氨苯蝶啶)|(茚地那韦)|(愈创甘油醚)|(麻黄碱)|(托拉塞米)|(布美他尼)|(呋塞米)|(乙酰唑胺)|(碳酸酐酶抑制剂)|(泻药)|(开塞露)|(阿昔洛韦)|(环利尿剂)|(乙酰唑胺)|(茶碱)|(泼尼松)|(甲泼尼松龙)|(倍他米松)|(氢化可的松)|(可的松)|(地塞米松)|(噻嗪)|(氢氯噻嗪)|(阿司匹林)|(水杨酸)|(丙磺舒)|(别嘌呤醇)', 'default': 0},
+            {'id':'ZZJJ1', 'name': '重症监护室（应激性溃疡）', 'src': ['现病史', '既往史'], 'regex':'应激性溃疡', 'default': 0},
+            {'id':'XHDJ1', 'name': '消化道溃疡病史', 'src': ['现病史', '既往史'], 'regex':'(肠溃疡)|(十二指肠球部溃疡)|(胃溃疡)|(消化道溃疡)|(胃窦巨大溃疡)|(胃角巨大溃疡)', 'default': 0},
+            {'id':'NJJ1', 'name': '尿石症家族史', 'src': ['家族史'], 'regex':'(肾结石)|(肾小结石)|(肾多发小结石)|(肾点状结石)|(输尿管结石)|(输尿管上段结石)', 'default': 0},
+            {'id':'NSZJ1', 'name': '尿石症病史', 'src': ['既往史'], 'regex':'((肾|(输尿管))镜?' + self.inner_neg + '(结|碎|取)石术?)', 'default': 0},
+            {'id':'TFJ1', 'name': '痛风病史', 'src': ['既往史'], 'regex':'痛风', 'default': 0},
+            {'id':'GXYJ1', 'name': '高血压病史', 'src': ['既往史'], 'regex':'高血压', 'default': 0},
+            {'id':'GYJ1', 'name': '高盐饮食', 'src': ['现病史', '既往史'], 'regex':'高盐', 'default': 0},
+            {'id':'GCJ1', 'name': '高草酸饮食', 'src': ['现病史', '既往史'], 'regex':'高草酸', 'default': 0},
+            # # {'id':'GDJ1', 'name': '高动物蛋白饮食', 'type': None} # None
+            {'id':'TNBJ1', 'name': '糖尿病病史', 'src': ['既往史'], 'regex':'糖尿病', 'default': 0},
+            {'id':'YSSJ1', 'name': '饮水较少', 'src': ['现病史', '既往史'], 'regex':'(饮水少)|(饮水较少)|(少饮水)', 'default': 0},
+            {'id':'YGXJ1', 'name': '超过一个性伴侣', 'src': ['现病史', '既往史'], 'regex':'(冶游)|(不洁性交)', 'default': 0},
+            {'id':'XBLJ1', 'name': '新的性伴侣', 'src': ['现病史', '既往史'], 'regex':'(冶游)|(不洁性交)', 'default': 0},
+            {'id':'DGJ1', 'name': '低钙饮食', 'src': ['现病史', '既往史'], 'regex':'低钙饮食', 'default': 0},
+            {'id':'HLSJ1', 'name': '肿瘤化疗史', 'src': ['既往史', '手术外伤史'], 'regex':'化疗', 'default': 0, 'type': 'model'},   # model
+            {'id':'HPJ1', 'name': 'Hp感染史', 'src': ['既往史'], 'regex':'(幽门螺旋杆菌感染)|(HP感染)|(HP（+）)|(HP阳性)', 'default': 0},
+            {'id':'PQYJ1', 'name': '盆腔炎病史', 'src': ['既往史'], 'regex':'盆腔炎', 'default': 0},
+            {'id':'KLEJ1', 'name': '克罗恩病病史', 'src': ['既往史'], 'regex':'克罗恩病?', 'default': 0},
+            {'id':'JZPJ1', 'name': '原发性甲状旁腺功能亢进', 'src': ['既往史'], 'regex':'甲状旁腺功能亢进', 'default': 0},
+            {'id':'JKJ1', 'name': '甲亢病史', 'src': ['既往史'], 'regex':'(甲状腺功能亢进)|(甲亢)', 'default': 0},
+            {'id':'WYJJ1', 'name': '二乙基己烯雌酚', 'src': ['既往史'], 'regex':'二乙基己烯雌酚', 'default': 0},
+            {'id':'DFXJ1', 'name': '多发性骨髓瘤病史', 'src': ['既往史'], 'regex':'多发性骨髓瘤', 'default': 0},
+            {'id':'SXGJ1', 'name': '肾小管酸中毒病史', 'src': ['既往史'], 'regex':'肾小管酸中毒', 'default': 0},
+            {'id':'DCZJ1', 'name': '短肠综合征', 'src': ['既往史', '手术外伤史'], 'regex':'短肠综合征', 'default': 0},
+            {'id':'WRDJ1', 'name': '胃绕道手术史、减肥手术史', 'src': ['既往史', '手术外伤史'], 'regex':'(胃绕道)|(减肥手术)|(缩胃)|(胃缩)', 'default': 0},
+            {'id':'MXSJ1', 'name': '慢性肾病病史', 'src': ['既往史'], 'regex':'(尿毒症)|(肾衰)', 'default': 0},
+
+            # # {'id':'XKT1', 'name': '失血性休克', 'src': ['体格检查'], 'regex':'', 'default': 0, 'type': 'model'},   # model
+
+            ### 体格检查
+            {'id':'FYTS1', 'name': '下腹压痛', 'src': ['查体'], 'regex':'(([下全]腹)|(脐下))' + self.inner_neg + '压痛', 'negregex': '([下全]腹' + self.inner + '(无|(未见)|(未及))' + self.inner + '压痛)|(上腹' + self.inner + '压痛)', 'default': 0},
+            {'id':'ZGYTS1', 'name': '子宫压痛', 'src': ['查体'], 'regex':'子宫' + self.inner_neg_xx3 + '压痛', 'default': 0}, #全是2
+            {'id':'FJTS1', 'name': '附件区压痛', 'src': ['查体'], 'regex':'(附件区?' + self.inner_neg_xx3 + '压痛)|(输卵管压痛)|(卵巢压痛)', 'default': 0}, #全是2
+            # {'id':'FJYTS1', 'name': '附件压痛', 'src': ['查体'], 'regex':'(附件区' + self.inner_neg + '压痛)|(输卵管压痛)|(卵巢压痛)'}, # 没用了？
+            {'id':'SZKTS1', 'name': '肾脏叩击痛', 'src': ['查体'], 'regex':'肾' + self.inner_neg + '叩击?痛', 'negregex': '肾' + self.inner + '(无|(未见)|(未及))' + self.inner + '叩击痛', 'default': 0},
+            {'id':'CDNZS1', 'name': '可能触到囊肿', 'src': ['查体'], 'regex':'触?[及到]' + self.inner_neg_x + '囊肿', 'default': 0}, # 全是2
+            {'id':'CYXSS1', 'name': '肠鸣音消失', 'src': ['体格检查', '查体'], 'regex':'肠鸣?音((消失)|(未及))', 'default': 0},
+            {'id':'GJCJS1', 'name': '宫颈刺激', 'src': ['查体'], 'regex':'宫颈' + self.inner_neg3 + '((刺激)|(举痛)|(摇举痛))', 'default': 0},  # 全是2
+            {'id':'BZFS1', 'name': '板状腹', 'src': ['查体'], 'regex':'(板状腹)|(腹肌紧张)|(腹肌强直)|(腹壁紧张)|(腹壁强直)', 'default': 0},
+            {'id':'ZDDNT1', 'name': '肿大胆囊', 'src': ['体格检查'], 'regex':'上腹' + self.inner_neg + '肿块', 'default': 0}, #
+            {'id':'KZGYT1', 'name': '腹部叩诊鼓音', 'src': ['体格检查', '查体'], 'regex':'(腹部)?(叩诊)?' + self.inner_neg + '鼓音', 'default': 0},
+            {'id':'CYKT1', 'name': '肠鸣音亢进（病程早期）', 'src': ['体格检查', '查体'], 'regex':'肠鸣?音((亢进)|(活跃))', 'default': 0},
+            {'id':'CYRT1', 'name': '肠鸣音减弱（病程晚期）', 'src': ['体格检查', '查体'], 'regex':'肠鸣?音.?[弱低]', 'default': 0},
+            {'id':'HMT1', 'name': '昏迷', 'src': ['体格检查', '查体'], 'regex':'(昏迷)|(意识不清)|(呼之不应)|(意识丧失)|(随意运动消失)|(对外界的刺激的反应迟钝或丧失)|(瞳孔散大)|(对光反射消失)|(双侧瞳孔不等大)|(神经反射消失)', 'default': 0},
+            {'id':'TWGT1', 'name': '体温升高', 'src': ['体格检查', '查体', '现病史'], 'regex':'体温' + self.inner_neg + '((3[89])|(4[01])|(37[.][6789]))', 'default': 0},
+            {'id':'MBKT1', 'name': '脉搏显著加快', 'src': ['体格检查'], 'regex':'', 'default': 0},
+            {'id':'DXYT1', 'name': '低血压', 'src': ['体格检查'], 'regex':'', 'default': 0},
+            {'id':'JJZT1', 'name': '反跳痛或肌紧张', 'src': ['体格检查', '现病史', '查体'], 'regex':'(反跳痛)|(肌紧张)|(腹' + self.inner_neg + '紧)|(腹肌抵触感)|(板状腹)|(腹强直)', 'default': 0},
+            {'id':'MFST1', 'name': '墨菲征Murphy征', 'src': ['体格检查', '查体'], 'regex':'((墨菲征)|(Murphys?征?：?’?))', 'negregex': '((墨菲征)|(Murphys?))' + self.inner + '阴性', 'default': 0},
+            {'id':'FJT1', 'name': '附件肿块', 'src': ['体格检查', '查体', '辅助检查'], 'regex':'(上腹' + self.inner_neg + '肿块)|(附件区?' + self.inner_neg_xx + '[肿包]块)|(附件' + self.inner_neg + '增[粗厚])', 'default': 0},
         ]
         self.feature_id_name_dict = {
             feature["id"]: feature["name"] for feature in self.features
@@ -209,7 +190,7 @@ class ClinicRule(RegexBase):
         for record in records:
             text = ''
             for key in src:
-                if key in ['体格检查', '个人史', '年龄', '婚育史', '月经史']:
+                if key in ['体格检查', '个人史', '年龄', '婚育史', '月经史', '性别', '年龄']:
                     # 此部分通过结构化数据来处理，不做文本处理
                     continue
                 elif key == '既往史':
@@ -564,6 +545,22 @@ class ClinicRule(RegexBase):
                             else:
                                 return 1, str_yjs
             return 2, str_yjs
+        elif name == '性别':
+            sex = record['入院记录']['性别']
+            if sex == '':
+                sex = record['入院记录']['病史小结']['性别']
+            if sex == '男':
+                return 0, sex
+            else:
+                return 1, sex
+        elif name == '年龄':
+            age = record['入院记录']['年龄']
+            if age == '':
+                age = record['入院记录']['病史小结']['年龄']
+            if age == '':
+                return 38.8, age
+            else:
+                return float(age), age
         else:
             return None, ''
 
@@ -621,10 +618,10 @@ class ClinicRule(RegexBase):
             print('processing feature: %s,  type: %s' % (feature['name'], feature['type'] if 'type' in feature else 'regex'))
             # 模型
             if 'type' in feature and feature['type'] == 'model':
-                txts = self.get_txt_from_records(records, feature['src'])
-                f_results = self.predict_by_model(txts, feature['name'])
+                # txts = self.get_txt_from_records(records, feature['src'])
+                # f_results = self.predict_by_model(txts, feature['name'])
                 # results[feature['id']] = f_results
-                results[feature['name']] = f_results
+                results[feature['name']] = ['', '', '', '']
             else:
                 f_results = self.predict_by_regex(records, feature)
                 # print(feature['name'], f_results)

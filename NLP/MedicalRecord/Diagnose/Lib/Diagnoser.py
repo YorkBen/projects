@@ -5,7 +5,7 @@ class Diagnoser:
     def __init__(self, scaler_path, mdl_path):
         self.scaler = pickle.load(open(scaler_path, 'rb'))
         self.model = joblib.load(mdl_path)
-        self.dieases = ["急性阑尾炎", "急性胰腺炎", "肠梗阻", "异位妊娠", "急性胆管炎", "急性胆囊炎", "上尿路结石", "卵巢囊肿破裂", "卵巢囊肿扭转", "消化道穿孔"]
+        self.dieases = ["急性阑尾炎", "急性胰腺炎", "肠梗阻", "异位妊娠", "急性胆管炎", "急性胆囊炎", "上尿路结石", "卵巢囊肿破裂/扭转", "消化道穿孔"]
 
 
     def sort_by_probs(self, probs, pred_num, dict_name_id):

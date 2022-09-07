@@ -6,12 +6,16 @@ from openpyxl import load_workbook, Workbook
 
 logging.basicConfig(level=logging.DEBUG)
 
-def gen_train_val_data(train_lines, val_lines, text_col, label_col, feature_name):
+def gen_train_val_data(train_lines, val_lines, text_col, label_col, feature_name, using_text_pair=True):
     """
     从原始txt数据合成训练所需格式的数据
     """
-    train_data = [(line[text_col], feature_name, line[label_col]) for line in train_lines]
-    val_data = [(line[text_col], feature_name, line[label_col]) for line in val_lines]
+    if using_text_pair:
+        train_data = [(line[text_col], feature_name, line[label_col]) for line in train_lines]
+        val_data = [(line[text_col], feature_name, line[label_col]) for line in val_lines]
+    else:
+        train_data = [(line[text_col], line[label_col]) for line in train_lines]
+        val_data = [(line[text_col], line[label_col]) for line in val_lines]
     return train_data, val_data
 
 
@@ -75,15 +79,16 @@ def train1(file_path, text_field, label_field, log_file):
     return model.train(write_result_to_file=log_file, early_stopping_num=5)
 
 
-def train(train_file_path, val_file_path, text_field, label_field, num_fields, feature_name, log_file, skip_title=False):
+def train(train_file_path, val_file_path, text_field, label_field, num_fields, feature_name, log_file, skip_title=False, using_text_pair=True):
     dl = DataLoader()
     train_lines = dl.load_data_lines(file_path=train_file_path, num_fields=num_fields, separator='	', skip_title=skip_title, shuffle=False)
     val_lines = dl.load_data_lines(file_path=val_file_path, num_fields=num_fields, separator='	', skip_title=skip_title, shuffle=False)
-    train_data, val_data = gen_train_val_data(train_lines, val_lines, text_col=text_field, label_col=label_field, feature_name=feature_name)
+    train_data, val_data = gen_train_val_data(train_lines, val_lines, text_col=text_field, label_col=label_field, feature_name=feature_name, using_text_pair=using_text_pair)
 
     # 初始化模型
     model = TextClassifier(model_save_path='output/models',
                             pre_model_path="../BertModels/medical-roberta-wwm",
+                            # pre_model_path="hfl/chinese-roberta-wwm-ext",
                             num_cls=3,
                             model_name=feature_name)
 

@@ -31,7 +31,7 @@ class InspRule(RegexBase):
             '急性阑尾炎': '慢性' + self.inner_neg + '阑尾炎' + '[^急性]',
             '急性胰腺炎': '慢性' + self.inner_neg + '胰腺炎' + '[^急性]',
             '急性胆管炎': '慢性' + self.inner_neg + '胆管炎' + '[^急性]',
-            '急性胆囊炎': '慢性' + self.inner_neg + '胆囊炎' + '[^急性]',
+            '急性胆囊炎': '慢性' + self.inner_neg + '胆囊炎' + '[^急性]'
         }
 
         self.excl_regex = {

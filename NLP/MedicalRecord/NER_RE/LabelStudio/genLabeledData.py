@@ -57,21 +57,21 @@ def label_line_by_regex(text, text_label_dict):
     return text_label_result
 
 
-def process_by_regex(json_file, input_file):
+def process_by_regex(text_label_dict, texts):
     """
     通过正则表达式来进行文本自动标记
     """
-    text_label_dict = load_nerlbl_from_manual(json_file)
     res_arr = []
-    with open(input_file) as f:
-        for line_no, text in enumerate(f.readlines()):
-            print('processing line: %s' % (line_no+1))
-            text = text.strip()
-            labels = label_line_by_regex(text, text_label_dict)
-            entities = []
-            for id, start, end, word, label in labels:
-                entities.append(assemble_ner_entity('%s_%s' % (line_no, id), start, end, word, label))
-            res_arr.append(assemble_ner_result(text, entities))
+    for line_no, text in enumerate(texts):
+        print('processing line: %s' % (line_no+1))
+        text = text.strip()
+        labels = label_line_by_regex(text, text_label_dict)
+        entities = []
+        for id, start, end, word, label in labels:
+            entities.append(assemble_ner_entity('%s_%s' % (line_no, id), start, end, word, label))
+        res_arr.append(assemble_ner_result(text, entities))
+
+    return res_arr
 
 
 def process_by_predict(json_file, input_file):
@@ -143,10 +143,21 @@ def assemble_ner_result(text, entities):
 
 
 if __name__ == "__main__":
-    # res_arr = process_by_regex(r'project.json', r'../FeatureExtraction/data/labeled_ind.txt')
-    res_arr = process_by_predict(r'../entity_extractor_by_ner-master/data/predict_result.json', r'../entity_extractor_by_ner-master/data/test.txt')
-    with open(r'result.json', "w") as f:
-        f.write(json.dumps(res_arr, indent=1, separators=(',', ':'), ensure_ascii=False))
+    ## 单词标签数据
+    # text_label_dict = load_nerlbl_from_manual(json_file)
+
+    ## 文本数据
+    # texts = []
+    # with open(input_file) as f:
+    #     for line in f.readlines():
+    #         texts.append(line.strip())
+
+    # res_arr = process_by_regex(text_label_dict, r'../FeatureExtraction/data/labeled_ind.txt')
+    # res_arr = process_by_predict(r'../entity_extractor_by_ner-master/data/predict_result.json', r'../entity_extractor_by_ner-master/data/test.txt')
+
+    ## 写结果
+    # with open(r'result.json', "w") as f:
+    #     f.write(json.dumps(res_arr, indent=1, separators=(',', ':'), ensure_ascii=False))
 
 
 #
