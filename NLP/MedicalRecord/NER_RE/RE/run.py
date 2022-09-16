@@ -6,8 +6,8 @@ import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader, random_split
 from sklearn.metrics import accuracy_score
 import time
+import argparse
 import random
-from sys import argv
 from utils import *
 
 torch.cuda.empty_cache()
@@ -16,7 +16,7 @@ torch.cuda.empty_cache()
 model_name, hidden_size, model_output, BATCH_SIZE = "../../BertModels/medical-roberta-wwm", 768, 'output', 8
 
 name = "rebert"
-num_cls = 2
+num_cls = 4
 max_length = 500
 epochs = 50
 
@@ -51,8 +51,8 @@ class BertTextClassficationModel(torch.nn.Module):
             token_embdings_2.append(sequence_output[k][int(pos_2[0])+1:int(pos_2[1])].mean(axis=0).unsqueeze(dim=0))
 
 
-        x1 = self.dense1(self.dropout(F.relu(torch.cat(token_embdings_1))))
-        x2 = self.dense1(self.dropout(F.relu(torch.cat(token_embdings_2))))
+        x1 = self.dense1(self.dropout(F.relu(torch.cat(token_embdings_1)))) # torch.cat 上下拼接
+        x2 = self.dense1(self.dropout(F.relu(torch.cat(token_embdings_2)))) # torch.cat 上下拼接
 
         # pooling layer
         x3 = self.dense2(self.dropout(F.relu(pooler_output)))
@@ -178,11 +178,27 @@ def inference(datasets, sentences, features, labels):
 
 
 if __name__ == "__main__":
-    sentences, pos_pair, labels = load_data()
+    # 参数
+    parser = argparse.ArgumentParser(description='NER&RE TrainData generator parameters')
+    parser.add_argument('-i', type=str, default='project.json', help='input file')
+    parser.add_argument('-o', type=str, default='train_data.txt', help='output file')
+    parser.add_argument('-t', type=str, default='train', help='data type')
+    args = parser.parse_args()
+
+    input = args.i
+    output = args.o
+    type = args.t
+
+    print("input: %s, output: %s, type: %s" % (input, output, type))
+    if type not in ['train', 'inference']:
+        print('Error: parameter type must be one of [train, inference]')
+        exit()
+
+    sentences, pos_pair, labels = load_data(input)
     input_ids, attention_mask = text_tokenize(model_name, sentences, max_length)
     datasets = TextLabelToDataset(input_ids, attention_mask, pos_pair, labels)
 
-    if len(argv) >= 2 and argv[1] == "inference":
+    if type == "inference":
         inference(datasets, sentences, features, labels)
     else:
         train(datasets)

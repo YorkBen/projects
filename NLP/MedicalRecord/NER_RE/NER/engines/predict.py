@@ -26,7 +26,7 @@ class Predictor:
         if configs.use_pretrained_model and not configs.finetune:
             if configs.pretrained_model == 'Bert':
                 from transformers import TFBertModel
-                self.pretrained_model = TFBertModel.from_pretrained('bert-base-chinese')
+                self.pretrained_model = TFBertModel.from_pretrained('bert-base-chinese', cache_dir='cache')
 
         self.ner_model = NerModel(configs, vocab_size, num_classes)
         # 实例化Checkpoint，设置恢复对象为新建立的模型
@@ -57,8 +57,10 @@ class Predictor:
             inputs=model_inputs, inputs_length=inputs_length, targets=y)
         label_predicts, _ = crf_decode(logits, transition_params, inputs_length)
         label_predicts = label_predicts.numpy()
+        print(label_predicts)
         sentence = Sentence[0, 0:inputs_length[0]]
         y_pred = [str(self.dataManager.id2label[val]) for val in label_predicts[0][0:inputs_length[0]]]
+        print(y_pred)
         if self.configs.use_pretrained_model:
             # 去掉[CLS]和[SEP]对应的位置
             y_pred = y_pred[1:-1]

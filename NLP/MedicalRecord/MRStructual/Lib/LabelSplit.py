@@ -2,7 +2,11 @@ import re
 import json
 import logging
 import time
-from Lib.Utils import Utils
+import sys
+
+sys.path.append('../Lib')
+
+from RegexUtil import RegexUtil
 
 class LabelSplit:
     """
@@ -13,7 +17,7 @@ class LabelSplit:
     3. 没有label的文本也输出
     """
     def __init__(self):
-        self.utils = Utils()
+        self.utils = RegexUtil()
         pass
 
     def split_str_by_matrix(self, str, matrix, keys):

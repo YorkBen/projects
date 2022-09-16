@@ -21,11 +21,15 @@ def write_ner_data(arr, file_path):
     with open(file_path, 'w') as f:
         for str, lbl in arr:
             for s, l in zip(str, lbl):
+                # 写空格出错
+                if s.strip() == '':
+                    continue
                 f.write('%s %s\n' % (s, l))
-                if s == '。':
-                    f.write('\n')
-            if s != '。':
-                f.write('\n')
+                # if s == '。':
+                #     f.write('\n')
+            # if s != '。':
+                # f.write('\n')
+            f.write('\n')
 
 
 def write_lines(arr, file_path):
@@ -79,7 +83,7 @@ def get_relations(item):
     relations = []
     for ann in item['annotations'][0]['result']:
         if ann['type'] == 'relation':
-            label = '1' if len(ann["labels"]) == 0 else ann["labels"][0]
+            label = '1' if "labels" not in ann or len(ann["labels"]) == 0 else ann["labels"][0]
             if ann['direction'] == 'right':
                 from_id, to_id = ann['from_id'], ann['to_id']
             else:
@@ -156,22 +160,53 @@ def assembleREData(text, ann_dict, relations):
     return results
 
 
-def assembleNERData(text, ann_dict):
+def assembleNERData(text, ann_dict, key_labels=None, include_labels=None):
     """
     生成命名实体识别标记数据
     """
+    ner_ann_arr = []
+    for ann in ann_dict.values():
+        if ann["type"] == "labels":
+            ner_ann_arr.append(ann)
+
     raw_lbl = ['O' for c in text]
 
+    # 包含了key_labels的文本保留，否则剔除该语句。
+    has_key = True
+    if key_labels is not None:
+        has_key = False
+        for ann in ner_ann_arr:
+            if 'labels' not in ann['value']:
+                continue
+            label = ann['value']['labels'][0]
+            if label in key_labels:
+                has_key = True
+                break
+
+    # 没有关键标签
+    if not has_key:
+        return None
+
     # 标记
-    for ann in ann_dict.values():
-        label = ann['value']['labels'][0]
-        if label in ['缓解因素', '小便', '程度', '放射痛', '转移性疼痛', '持续时间']:
+    proc_labels = None
+    if key_labels is not None:
+        proc_labels = key_labels
+    if include_labels is not None:
+        proc_labels = include_labels if proc_labels is None else (proc_labels + include_labels)
+
+    label_list = [] # 用于记录有多少个不同标记
+    for ann in ner_ann_arr:
+        if 'labels' not in ann['value']:
             continue
+        label = ann['value']['labels'][0]
+        if proc_labels is not None and label not in proc_labels:
+            continue
+        label_list.append(label)
         raw_lbl[ann['value']['start']] = 'B_' + label
         for i in range(ann['value']['start'] + 1, ann['value']['end']):
             raw_lbl[i] = 'I_' + label
 
-    return (text, raw_lbl)
+    return (text, raw_lbl, list(set(label_list)))
 
 
 def merge_text_length(text_lens, n):
@@ -201,20 +236,90 @@ def merge_text_length(text_lens, n):
     return text_lens
 
 
-def split_longtext_item(item):
+def gen_fragment_item(text, start, end, ann_dict, relations):
+    """
+    根据开始和结束位置，生成文本拆分后的标记数据
+    """
+    item_ = {
+        "data": {
+            "text": text[start:end]
+        },
+        "annotations":[{
+            "result": []
+        }]
+    }
+
+    # 开始筛选实体和关系
+    entities = []
+    for ann in ann_dict.values():
+        if ann["value"]["start"] >= start and ann["value"]["start"] < end \
+            and ann["value"]["end"] >= start and  ann["value"]["end"] < end:
+            entities.append(ann["id"])
+            item_["annotations"][0]["result"].append(copy.deepcopy(ann))
+            item_["annotations"][0]["result"][-1]["value"]["start"] = item_["annotations"][0]["result"][-1]["value"]["start"] - start
+            item_["annotations"][0]["result"][-1]["value"]["end"] = item_["annotations"][0]["result"][-1]["value"]["end"] - start
+
+            # print(item_["annotations"][0]["result"][-1]["value"]["text"], \
+            #     text[start:end][item_["annotations"][0]["result"][-1]["value"]["start"]:item_["annotations"][0]["result"][-1]["value"]["end"]])
+
+    # 关系
+    for from_id, to_id, relation in relations:
+        if from_id in entities and to_id in entities:
+            item_["annotations"][0]["result"].append({
+                "from_id":from_id,
+                 "to_id":to_id,
+                 "type":"relation",
+                 "direction":"right",
+                 "labels":[relation]
+            })
+
+    return item_
+
+
+def split_multilinetext_item(item):
+    text = item['data']['text']
+    texts = text.split('\n')
+    if len(texts) == 1:
+        return [item]
+    else:
+        print('split multilinetext item')
+        text_lens = [len(t) for t in texts]
+        print('split num: %s' % len(texts))
+
+        # 所有实体和关系
+        ann_dict, id_list = get_entities(item)
+        relations = get_relations(item)
+
+        # 根据数量合并文本段
+        items = []
+        start = 0
+        for ind, tlen in enumerate(text_lens):
+            end = start + tlen
+            item_ = gen_fragment_item(text, start, end, ann_dict, relations)
+            start = end + 1 # 加上\n偏置
+            items.append(item_)
+            # print(item_)
+        # print(items)
+        # print('relations num: origional:%s, after split:%s' % (len(relations), relations_num))
+        return items
+
+
+def split_longtext_item(item, delta=490, language='CH'):
     """
     如果标注数据文本长度过长，则将标注条目按照'。'拆分成多个。
     """
+    sentence_sep = '。' if language == 'CH' else '. '
+
     text = item['data']['text'].strip()
-    text_length, delta = len(text), 490
+    text_length = len(text)
     if text_length < delta:
         return [item]
     else:
-        print(item)
+        # print(item)
         n = int(math.ceil(text_length / delta))
         print('text length, split num：', text_length, n)
-        texts = text.split('。')
-        text_lens = [len(t) + 1 for t in texts[:-1]]
+        texts = text.split(sentence_sep)
+        text_lens = [len(t) + 1 for t in texts[:-1]] if language == 'CH' else ([len(t) + 2 for t in texts[:-1]] + [len(texts[-1])])
         print('sub text lengths：', text_lens)
         text_lens = merge_text_length(text_lens, n)
         print('merged text lengths：', text_lens)
@@ -225,49 +330,61 @@ def split_longtext_item(item):
 
         # 根据数量合并文本段
         items = []
-        start, relations_num = 0, 0
+        start = 0
         for ind, tlen in enumerate(text_lens):
             end = start + tlen
-            item_ = {
-                "data": {
-                    "text": text[start:end]
-                },
-                "annotations":[{
-                    "result": []
-                }]
-            }
-
-            # 开始筛选实体和关系
-            entities = []
-            for ann in ann_dict.values():
-                if ann["value"]["start"] >= start and  ann["value"]["start"] < end \
-                    and ann["value"]["end"] >= start and  ann["value"]["end"] < end:
-                    entities.append(ann["id"])
-                    item_["annotations"][0]["result"].append(copy.deepcopy(ann))
-                    item_["annotations"][0]["result"][-1]["value"]["start"] = item_["annotations"][0]["result"][-1]["value"]["start"] - start
-                    item_["annotations"][0]["result"][-1]["value"]["end"] = item_["annotations"][0]["result"][-1]["value"]["end"] - start
-
-                    # print(item_["annotations"][0]["result"][-1]["value"]["text"], \
-                    #     text[start:end][item_["annotations"][0]["result"][-1]["value"]["start"]:item_["annotations"][0]["result"][-1]["value"]["end"]])
-
-            # 关系
-            for from_id, to_id, _ in relations:
-                if from_id in entities and to_id in entities:
-                    item_["annotations"][0]["result"].append({
-                        "from_id":from_id,
-                         "to_id":to_id,
-                         "type":"relation",
-                         "direction":"right",
-                         "labels":[]
-                    })
-                    relations_num = relations_num + 1
+            item_ = gen_fragment_item(text, start, end, ann_dict, relations)
+            # print(item_)
 
             # 其它
             start = end
             items.append(item_)
         # print(items)
-        print('relations num: origional:%s, after split:%s' % (len(relations), relations_num))
+        # print('relations num: origional:%s, after split:%s' % (len(relations), relations_num))
         return items
+
+
+def split_item(item, language):
+    """
+    拆分条目。目前包括的规则：
+    1. 含换行符，按换行符拆分每一条
+    2. 文本过长，按句号分隔，将不超过长度的句子拼接在一起。
+    """
+    results = []
+    items = split_multilinetext_item(item)
+    for item_ in items:
+        results.extend(split_longtext_item(item_, language=language))
+
+    results_ = []
+    for item in results:
+        if len(item['data']['text'].strip()) > 2:
+            results_.append(item)
+
+    return results_
+
+
+def balance_ner_data(data):
+    """
+    均衡NER数据，输入格式：[(text, label, label_list)]
+    """
+    label_dict = {}
+    for item in data:
+        for label in item[2]:
+            if label not in label_dict:
+                label_dict[label] = []
+            label_dict[label].append((item[0], item[1]))
+
+    # balance策略，选最小的
+    len_arr = [len(label_dict[label]) for label in label_dict]
+    print('len arr: ', len_arr)
+    choose_num = min(len_arr)
+    print('choose num: ', choose_num)
+
+    result = []
+    for label in label_dict:
+        result.extend(random.sample(label_dict[label], choose_num))
+
+    return result
 
 
 if __name__ == "__main__":
@@ -277,12 +394,14 @@ if __name__ == "__main__":
     parser.add_argument('-o', type=str, default='train_data.txt', help='output file')
     parser.add_argument('-t', type=str, default='NER', help='data type')
     parser.add_argument('-r', type=int, default=1, help='negtive sample ratio')
+    parser.add_argument('-l', type=str, default='CH', help='language')
     args = parser.parse_args()
 
     input = args.i
     output = args.o
     type = args.t
     ratio = args.r
+    language = args.l
 
     print("input: %s, output: %s, runtype: %s, ratio: %s" % (input, output, type, ratio))
     if type not in ['NER', 'RE']:
@@ -299,15 +418,21 @@ if __name__ == "__main__":
     # 生成数据
     results = []
     for item_r in json_data:
-        for item in split_longtext_item(item_r):
+        for item in split_item(item_r, language):
             text = item['data']['text'].strip()
             ann_dict, id_list = get_entities(item)
             if type == 'NER':
-                results.append(assembleNERData(text, ann_dict))
+                ner_r = assembleNERData(text, ann_dict, ['症状', '部位', '性质'])
+                if ner_r is not None:
+                    results.append(ner_r)
             elif type == 'RE':
                 relations = get_relations(item)
                 relations = expand_neg_samples(relations, id_list, ratio)
+                print(relations)
                 results.extend(assembleREData(text, ann_dict, relations))
+
+    if type == 'NER':
+        results = balance_ner_data(results)
 
     random.shuffle(results)
 

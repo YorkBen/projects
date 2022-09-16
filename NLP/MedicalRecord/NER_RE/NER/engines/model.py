@@ -9,7 +9,6 @@ from abc import ABC
 import tensorflow as tf
 from tensorflow_addons.text.crf import crf_log_likelihood
 
-
 class NerModel(tf.keras.Model, ABC):
     def __init__(self, configs, vocab_size, num_classes):
         super(NerModel, self).__init__()
@@ -19,7 +18,7 @@ class NerModel(tf.keras.Model, ABC):
         if self.use_pretrained_model and self.finetune:
             if configs.pretrained_model == 'Bert':
                 from transformers import TFBertModel
-                self.pretrained_model = TFBertModel.from_pretrained('bert-base-chinese')
+                self.pretrained_model = TFBertModel.from_pretrained('bert-base-chinese', cache_dir='cache')
         else:
             self.embedding = tf.keras.layers.Embedding(vocab_size, configs.embedding_dim, mask_zero=True)
 
@@ -70,6 +69,7 @@ class NerModel(tf.keras.Model, ABC):
 
         logits = self.dense(outputs)
         tensor_targets = tf.convert_to_tensor(targets, dtype=tf.int64)
+        # tensor_targets = tf.convert_to_tensor(targets, dtype=tf.int32)
         log_likelihood, self.transition_params = crf_log_likelihood(
             logits, tensor_targets, inputs_length, transition_params=self.transition_params)
         return logits, log_likelihood, self.transition_params

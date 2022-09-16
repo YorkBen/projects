@@ -40,7 +40,8 @@ class DataManager:
 
         self.label_scheme = configs.label_scheme
         self.label_level = configs.label_level
-        self.suffix = configs.suffix
+        # self.suffix = configs.suffix
+        self.suffix = []
 
         self.batch_size = configs.batch_size
 
@@ -54,7 +55,7 @@ class DataManager:
         if configs.use_pretrained_model:
             if configs.pretrained_model == 'Bert':
                 from transformers import BertTokenizer
-                self.tokenizer = BertTokenizer.from_pretrained('bert-base-chinese')
+                self.tokenizer = BertTokenizer.from_pretrained('bert-base-chinese', cache_dir='cache')
             self.max_token_number = len(self.tokenizer)
         else:
             self.max_token_number = len(self.token2id)
@@ -67,14 +68,13 @@ class DataManager:
         若不存在词表则生成，若已经存在则加载词表
         :return:
         """
-        # if not os.path.exists(self.token2id_file):
-            # self.logger.info('label vocab files not exist, building label vocab...')
-        return self.build_vocab(self.train_file)
+        if not os.path.exists(self.token2id_file):
+            self.logger.info('label vocab files not exist, building label vocab...')
 
         self.logger.info('loading vocab...')
         token2id, id2token = {}, {}
         # 不使用预训练模型做嵌入
-        if not self.configs.use_pretrained_model:
+        if self.configs.use_pretrained_model:
             with open(self.token2id_file, 'r', encoding='utf-8') as infile:
                 for row in infile:
                     row = row.strip()
@@ -82,13 +82,18 @@ class DataManager:
                     token2id[token] = token_id
                     id2token[token_id] = token
 
-        label2id, id2label = {}, {}
+        label2id, id2label, labels = {}, {}, []
         with open(self.label2id_file, 'r', encoding='utf-8') as infile:
             for row in infile:
                 row = row.strip()
                 label, label_id = row.split('\t')[0], int(row.split('\t')[1])
                 label2id[label] = label_id
                 id2label[label_id] = label
+                labels.append(label)
+
+        # 生成suffix，modified by pengxiang 20220908
+        self.suffix = [label[2:] for label in labels if label[0] == 'B']
+
         return token2id, id2token, label2id, id2label
 
     def build_vocab(self, train_path):
@@ -99,7 +104,7 @@ class DataManager:
         """
         df_train = read_csv(train_path, names=['token', 'label'], delimiter=self.configs.delimiter)
         token2id, id2token = {}, {}
-        if not self.configs.use_pretrained_model:
+        if self.configs.use_pretrained_model:
             tokens = list(set(df_train['token'][df_train['token'].notnull()]))
             token2id = dict(zip(tokens, range(1, len(tokens) + 1)))
             id2token = dict(zip(range(1, len(tokens) + 1), tokens))
@@ -115,9 +120,8 @@ class DataManager:
 
         labels = list(set(df_train['label'][df_train['label'].notnull()]))
 
-        # 生成suffix
+        # 生成suffix，modified by pengxiang 20220908
         self.suffix = [label[2:] for label in labels if label[0] == 'B']
-
 
         label2id = dict(zip(labels, range(1, len(labels) + 1)))
         id2label = dict(zip(range(1, len(labels) + 1), labels))
@@ -126,6 +130,7 @@ class DataManager:
         with open(self.label2id_file, 'w', encoding='utf-8') as outfile:
             for idx in id2label:
                 outfile.write(id2label[idx] + '\t' + str(idx) + '\n')
+
         return token2id, id2token, label2id, id2label
 
     def padding(self, sample):

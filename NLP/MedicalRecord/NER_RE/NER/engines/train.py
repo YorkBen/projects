@@ -14,6 +14,10 @@ from engines.utils.metrics import metrics
 from tensorflow_addons.text.crf import crf_decode
 
 
+physical_devices = tf.config.list_physical_devices('GPU')
+for device in physical_devices:
+    tf.config.experimental.set_memory_growth(device, True)
+
 class Train:
     def __init__(self, configs, data_manager, logger):
         self.logger = logger
@@ -46,7 +50,7 @@ class Train:
         if configs.use_pretrained_model and not configs.finetune:
             if configs.pretrained_model == 'Bert':
                 from transformers import TFBertModel
-                self.pretrained_model = TFBertModel.from_pretrained('bert-base-chinese')
+                self.pretrained_model = TFBertModel.from_pretrained('bert-base-chinese', cache_dir='cache')
 
         self.ner_model = NerModel(configs, vocab_size, num_classes)
 

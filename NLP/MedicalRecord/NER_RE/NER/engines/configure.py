@@ -93,9 +93,9 @@ class Configure:
         if the_item in config:
             self.hyphen = config[the_item]
 
-        the_item = 'suffix'
-        if the_item in config:
-            self.suffix = config[the_item]
+        # the_item = 'suffix'
+        # if the_item in config:
+        #     self.suffix = config[the_item]
 
         the_item = 'measuring_metrics'
         if the_item in config:
@@ -240,7 +240,7 @@ class Configure:
         logger.info('Labeling Scheme:')
         logger.info('     label          scheme: {}'.format(self.label_scheme))
         logger.info('     label           level: {}'.format(self.label_level))
-        logger.info('     suffixes             : {}'.format(self.suffix))
+        # logger.info('     suffixes             : {}'.format(self.suffix))
         logger.info('     measuring     metrics: {}'.format(self.measuring_metrics))
         logger.info(' ' + '++' * 20)
         logger.info('Model Configuration:')

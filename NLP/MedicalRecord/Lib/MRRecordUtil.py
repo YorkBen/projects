@@ -371,15 +371,14 @@ def process_mr(file_path, with_head=True, type_regex_and_outpath=[('出.*院记�
                 continue
 
             # 空行
-            line = line.strip()
-            if line == '':
+            if line.strip() == '':
                 continue
 
             # 是否是记录起始行
             head_line, line_items = False, []
             if re.match('[IP0-9]{6}', line[:6]):
                 line_items = line.split(',')
-                if len(line_items) >= num_fields and re.search('((记录)|(证明书)|(同意书)|(病程))', line_items[num_fields-2]):
+                if len(line_items) >= num_fields and re.search('((记录)|(证明书)|(同意书)|(病程))', line_items[-2]): # -2 还是 num_fields - 2
                     head_line = True
 
             # 有结果要写入
@@ -405,7 +404,7 @@ def process_mr(file_path, with_head=True, type_regex_and_outpath=[('出.*院记�
 
                 skip = False if mr_nos is None or line_items[0] in mr_nos else True
                 mr_item = line_items[:num_fields]
-                mr_item[-1] = ' '.join(line_items[num_fields-1:]).replace('\"', '')
+                mr_item[-1] = ' '.join(line_items[num_fields-1:]).strip().replace('\"', '')
                 # ###debug####
                 # if elems[0] == '20051022':
                 #     print(skip, line)

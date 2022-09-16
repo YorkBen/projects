@@ -41,6 +41,26 @@ def load_nerlbl_from_manual(json_file):
 
     return result_dict
 
+def merge_regex_result(result):
+    rmv_idx = []
+    for i in range(len(result) - 1):
+        if i in rmv_idx:
+            continue
+        e1 = result[i]
+        for j in range(i+1, len(result)):
+            if j in rmv_idx:
+                continue
+            e2 = result[j]
+
+            if e1[1] <= e2[1] and e1[2] >= e2[2]:
+                rmv_idx.append(j)
+            elif e2[1] <= e1[1] and e2[2] >= e1[2]:
+                rmv_idx.append(i)
+                break
+
+    return [item for idx, item in enumerate(result) if idx not in rmv_idx]
+
+
 
 def label_line_by_regex(text, text_label_dict, language='ZH'):
     """
@@ -61,11 +81,12 @@ def label_line_by_regex(text, text_label_dict, language='ZH'):
 
         ## 多个regex
         for key, label in text_label_dict.items():
+            key = key.replace('.', '\.').replace('-', '\-').replace('(', '\(').replace(')', '\)').replace('+', '\+')
             if ' ' in key:
-                matches = re.finditer('(^| )%s( |$|\.|,)' % key, text, re.I)
+                matches = re.finditer('(^| |\()%s( |$|\.|,|\))' % key, text, re.I)
             else:
-                matches = re.finditer('(^| )%s( |$|\.|,)' % key, text)
-                
+                matches = re.finditer('(^| |\()%s( |$|\.|,|\))' % key, text)
+
             for match in matches:
                 start, end = match.span()
                 match_str = match.group(0)
@@ -75,11 +96,15 @@ def label_line_by_regex(text, text_label_dict, language='ZH'):
                 if match_str[-1] in ['.', ',', ' ']:
                     match_str = match_str[:-1]
                     end = end - 1
+                if match_str[0] == '(' and match_str[-1] == ')':
+                    start = start + 1
+                    end = end - 1
+                    match_str = match_str[1:-1]
 
                 text_label_result.append((ct, start, end, match_str, label))
                 ct = ct + 1
 
-    return text_label_result
+    return merge_regex_result(text_label_result)
 
 
 def process_by_regex(text_label_dict, texts, language='ZH'):
@@ -88,16 +113,16 @@ def process_by_regex(text_label_dict, texts, language='ZH'):
     """
     res_arr = []
     for line_no, text in enumerate(texts):
-        time_start = time()
-        print('processing line: %s' % (line_no+1))
+        # time_start = time()
+        # print('processing line: %s' % (line_no+1))
         text = text.strip()
         labels = label_line_by_regex(text, text_label_dict, language)
         entities = []
         for id, start, end, word, label in labels:
             entities.append(assemble_ner_entity('%s_%s' % (line_no, id), start, end, word, label))
         res_arr.append(assemble_ner_result(text, entities))
-        time_end = time()
-        print('time cost: %s' % (time_end - time_start))
+        # time_end = time()
+        # print('time cost: %s' % (time_end - time_start))
     return res_arr
 
 

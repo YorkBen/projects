@@ -2,10 +2,14 @@ import re
 import json
 import logging
 import time
+import sys
+
 from Lib.DynamicProgramSplit import DynamicProgramSplit
 from Lib.LabelSplit import LabelSplit
-from Lib.Utils import Utils
 
+sys.path.append('../Lib')
+
+from RegexUtil import RegexUtil
 
 class TextStructral:
     """
@@ -14,7 +18,7 @@ class TextStructral:
     模板有多层结构，因此会递归解析。
     """
     def __init__(self):
-        self.Utils = Utils()
+        self.Utils = RegexUtil()
         # self.keys = keys
         # 当字符串中出现如下关键词时，说明是不要的内容，需要去掉。
         # self.remove_keys = [key + '：' for key in self.keys]

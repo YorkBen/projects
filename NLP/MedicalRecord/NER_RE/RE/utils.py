@@ -7,12 +7,12 @@ from transformers import BertTokenizer, BertModel
 from sklearn.metrics import accuracy_score
 
 
-def load_data():
+def load_data(file_path):
     """
     加载训练数据
     """
     lines = []
-    with open('data.txt', "r") as f:
+    with open(file_path, "r") as f:
         for idx, line in enumerate(f.readlines()):
             lines.append(line)
 

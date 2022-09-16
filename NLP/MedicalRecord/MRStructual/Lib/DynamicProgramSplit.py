@@ -2,7 +2,11 @@ import re
 import json
 import logging
 import time
-from Lib.Utils import Utils
+import sys
+
+sys.path.append('../Lib')
+
+from RegexUtil import RegexUtil
 
 class DynamicProgramSplit:
     def __init__(self):
@@ -10,7 +14,7 @@ class DynamicProgramSplit:
         使用动态规划算法来找最优分割节点
         """
         self.matrix_max_cache = {}   # i^j -> max_value
-        self.utils = Utils()
+        self.utils = RegexUtil()
 
 
     def calc_max(self, i, j, matrix, max_pos):

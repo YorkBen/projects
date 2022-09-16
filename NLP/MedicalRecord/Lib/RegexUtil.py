@@ -274,19 +274,22 @@ class RegexUtil:
         result = result + '0' + d2 if len(d2) == 1 else result + d2
 
         # d3
-        if '中上' in d3:
-            d3 = '10'
-        elif '中下' in d3:
-            d3 = '20'
-        elif '初' in d3 or '上旬' in d3:
-            d3 = '05'
-        elif '中' in d3:
-            d3 = '15'
-        elif '末' in d3 or '下旬' in d3:
-            d3 = '25'
+        if d3 is not None:
+            if '中上' in d3:
+                d3 = '10'
+            elif '中下' in d3:
+                d3 = '20'
+            elif '初' in d3 or '上旬' in d3:
+                d3 = '05'
+            elif '中' in d3:
+                d3 = '15'
+            elif '末' in d3 or '下旬' in d3:
+                d3 = '25'
+            else:
+                d3 = self.format_num(d3)
+                d3 = '15' if d3 == '' else d3
         else:
-            d3 = self.format_num(d3)
-            d3 = '15' if d3 == '' else d3
+            d3 = '15'
 
         result = result + '0' + d3 if len(d3) == 1 else result + d3
 
