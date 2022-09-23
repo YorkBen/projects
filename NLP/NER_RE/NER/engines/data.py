@@ -55,7 +55,7 @@ class DataManager:
         if configs.use_pretrained_model:
             if configs.pretrained_model == 'Bert':
                 from transformers import BertTokenizer
-                self.tokenizer = BertTokenizer.from_pretrained('bert-base-chinese', cache_dir='cache')
+                self.tokenizer = BertTokenizer.from_pretrained(configs.bert_model_name, cache_dir='cache')
             self.max_token_number = len(self.tokenizer)
         else:
             self.max_token_number = len(self.token2id)
@@ -70,6 +70,8 @@ class DataManager:
         """
         if not os.path.exists(self.token2id_file):
             self.logger.info('label vocab files not exist, building label vocab...')
+
+        self.build_vocab(self.train_file)
 
         self.logger.info('loading vocab...')
         token2id, id2token = {}, {}

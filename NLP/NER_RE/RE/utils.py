@@ -35,17 +35,6 @@ def load_data(file_path):
     return sentences, pos_pairs, labels
 
 
-def text_tokenize(model_name, sentences, max_length):
-    """
-    文本转化为向量
-    """
-    tokenizer = BertTokenizer.from_pretrained(model_name)
-    sentences_tokened = tokenizer(sentences, padding=True, truncation=True, max_length=max_length, return_tensors='pt')
-    input_ids, attention_mask = sentences_tokened['input_ids'], sentences_tokened['attention_mask']
-    print("sentences tokenize finished...")
-    return input_ids, attention_mask
-
-
 def choose_device(model):
     #获取gpu和cpu的设备信息
     if torch.cuda.is_available():
@@ -64,19 +53,3 @@ def flat_accuracy(preds, labels):
     pred_flat = np.argmax(preds,axis=1).flatten()
     labels_flat = labels.flatten()
     return accuracy_score(labels_flat, pred_flat)
-
-class TextLabelToDataset(Dataset):
-    """
-    使用文本和特征数据作为标签
-    """
-    def __init__(self, input_ids, attention_mask, pos_pair, labels):
-        self.input_ids = input_ids
-        self.attention_mask = attention_mask
-        self.pos_pair = torch.IntTensor(pos_pair)
-        self.labels = torch.Tensor(labels).to(torch.int64)
-
-    def __len__(self):
-        return len(self.labels)
-
-    def __getitem__(self,index):
-        return self.input_ids[index], self.attention_mask[index], self.pos_pair[index], self.labels[index]

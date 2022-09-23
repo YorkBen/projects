@@ -1,7 +1,10 @@
 import os
 import argparse
+import sys
 
-from Lib.LabelStudioTransformer import Transformer
+sys.path.append('../../Lib/LabelStudio')
+
+from LabelStudioTransformer import Transformer
 
 
 if __name__ == '__main__':

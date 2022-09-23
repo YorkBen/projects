@@ -1,7 +1,11 @@
 import random
 import logging
-from Lib.DataLoader import DataLoader
-from Lib.TextClassifier import TextClassifier
+import sys
+
+sys.path.append('../../Lib/Models')
+
+from DataLoader import DataLoader
+from TextClassifier import TextClassifier
 from openpyxl import load_workbook, Workbook
 
 logging.basicConfig(level=logging.DEBUG)

@@ -1,7 +1,7 @@
 import tokenizers
 # 创建分词器
 bwpt = tokenizers.BertWordPieceTokenizer()
-filepath = "data/test.txt" # 语料文件
+filepath = "data/(cancer) AND PDL1.txt" # 语料文件
 #训练分词器
 bwpt.train(
     files=[filepath],
@@ -10,7 +10,9 @@ bwpt.train(
     limit_alphabet=1000
 )
 # 保存训练后的模型词表
-bwpt.save_model('model/tk_pretrain_models/')
+bwpt.save_model('model/gene/')
+
+
 #output： ['./pretrained_models/vocab.txt']
 
 # 加载刚刚训练的tokenizer

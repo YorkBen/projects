@@ -83,7 +83,7 @@ def get_relations(item):
     relations = []
     for ann in item['annotations'][0]['result']:
         if ann['type'] == 'relation':
-            label = '1' if "labels" not in ann or len(ann["labels"]) == 0 else ann["labels"][0]
+            label = '0' if "labels" not in ann or len(ann["labels"]) == 0 else ann["labels"][0]
             if ann['direction'] == 'right':
                 from_id, to_id = ann['from_id'], ann['to_id']
             else:

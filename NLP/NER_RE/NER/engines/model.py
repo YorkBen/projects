@@ -18,7 +18,7 @@ class NerModel(tf.keras.Model, ABC):
         if self.use_pretrained_model and self.finetune:
             if configs.pretrained_model == 'Bert':
                 from transformers import TFBertModel
-                self.pretrained_model = TFBertModel.from_pretrained('bert-base-chinese', cache_dir='cache')
+                self.pretrained_model = TFBertModel.from_pretrained(configs.bert_model_name, cache_dir='cache')
         else:
             self.embedding = tf.keras.layers.Embedding(vocab_size, configs.embedding_dim, mask_zero=True)
 

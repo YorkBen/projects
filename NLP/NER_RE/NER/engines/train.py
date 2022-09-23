@@ -50,7 +50,7 @@ class Train:
         if configs.use_pretrained_model and not configs.finetune:
             if configs.pretrained_model == 'Bert':
                 from transformers import TFBertModel
-                self.pretrained_model = TFBertModel.from_pretrained('bert-base-chinese', cache_dir='cache')
+                self.pretrained_model = TFBertModel.from_pretrained(configs.bert_model_name, cache_dir='cache')
 
         self.ner_model = NerModel(configs, vocab_size, num_classes)
 

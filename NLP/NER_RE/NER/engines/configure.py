@@ -56,6 +56,10 @@ class Configure:
         if the_item in config:
             self.pretrained_model = config[the_item]
 
+        the_item = 'bert_model_name'
+        if the_item in config:
+            self.bert_model_name = config[the_item]
+
         the_item = 'use_middle_model'
         if the_item in config:
             self.use_middle_model = self.str2bool(config[the_item])
@@ -231,6 +235,8 @@ class Configure:
         logger.info('     delimiter            : {}'.format(self.delimiter))
         logger.info('     use  pretrained model: {}'.format(self.use_pretrained_model))
         logger.info('     pretrained      model: {}'.format(self.pretrained_model))
+        logger.info('     bert model       name: {}'.format(self.bert_model_name))
+
         logger.info('     finetune             : {}'.format(self.finetune))
         logger.info('     use    middle   model: {}'.format(self.use_middle_model))
         logger.info('     middle          model: {}'.format(self.middle_model))

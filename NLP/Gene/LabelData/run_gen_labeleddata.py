@@ -11,7 +11,7 @@ data_dir=r'/mnt/d/项目资料/基因表达/通路分析'
 file_gene_path=os.path.join(data_dir, 'gene_alias.txt')
 file_wnt4_path=os.path.join(data_dir, '(cancer) AND (WNT4)文献.txt')
 file_ca_path = os.path.join(data_dir, '(cancer) AND (Carbonic Anhydrase 1)文献.txt')
-file_ner_data = 'project-gene-20220915.json'
+file_ner_data = 'project-gene-20220919.json'
 
 def read_gene_data_file(file_path):
     data = []

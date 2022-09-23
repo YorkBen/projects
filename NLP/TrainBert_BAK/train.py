@@ -33,7 +33,7 @@ config_kwargs = {
 
 ## 加载tokenizer和模型
 train_file='data/test.txt'
-model_path='./model/medical/'
+model_path='./model/gene/'
 token_path='./model/tk_pretrain_models/vocab.txt'
 
 tokenizer =  BertTokenizer.from_pretrained(token_path, do_lower_case=True)

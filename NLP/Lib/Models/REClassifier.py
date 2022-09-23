@@ -8,17 +8,48 @@ import datetime
 import time
 
 class DataToDataset(Dataset):
-    def __init__(self, tokenizer, text_a_arr, text_b_arr, labels, max_length):
-        if text_b_arr is not None:
-            sentences_tokened = tokenizer(text_a_arr, text_b_arr, padding='max_length', truncation='only_first', max_length=max_length, return_tensors='pt')
-            # sentences_tokened = tokenizer(sentences, cmps, padding='max_length', truncation=True, max_length=max_length, return_tensors='pt')
-        else:
-            sentences_tokened = tokenizer(text_a_arr, padding=True, truncation=True, max_length=max_length, return_tensors='pt')
+    def __init__(self, tokenizer, text_arr, labels, max_length):
+        sentences_tokened = tokenizer(text_arr, padding=True, truncation=True, max_length=max_length, return_tensors='pt')
+        input_ids = sentences_tokened['input_ids']
+        token_type_ids = sentences_tokened['token_type_ids']
 
-        self.input_ids = sentences_tokened['input_ids']
+        sharp_tokened = tokenizer(['#', '$', '&'], padding=True, truncation=True, max_length=max_length, return_tensors='pt')
+        sharp_id, dollar_id, addr_id = sharp_tokened['input_ids'][0][1], sharp_tokened['input_ids'][1][1], sharp_tokened['input_ids'][2][1]
+        print('#', sharp_id, '$', dollar_id, '&', addr_id)
+
+        for r_idx, (input_id, token_type_id) in enumerate(zip(input_ids, token_type_ids)):
+            i = 0
+            while i < len(input_id):
+                if input_id[i] == 0:
+                    break
+                if input_id[i] in [sharp_id, dollar_id, addr_id]:
+                    # 匹配start
+                    start = i
+                    match, type = sharp_id, 1
+                    if id == dollar_id:
+                        match, type = dollar_id, 2
+                    elif id == addr_id:
+                        match, type = addr_id, 3
+
+                    # 匹配end
+                    i = i + 1
+                    while i < len(input_id) and input_id[i] != match:
+                        i = i + 1
+
+                    if i == len(input_id):
+                        break
+                    else:
+                        token_type_ids[r_idx][start:i+1] = type
+                        input_ids[r_idx][start] = 0
+                        input_ids[r_idx][i+1] = 0
+
+                i = i+1
+
+        self.input_ids = input_ids
         self.attention_mask = sentences_tokened['attention_mask']
-        self.token_type_ids = sentences_tokened['token_type_ids']
+        self.token_type_ids = token_type_ids
         self.labels = torch.tensor(labels)
+
 
     def __len__(self):
         return len(self.labels)
@@ -37,7 +68,7 @@ class BertTextClassficationModel(torch.nn.Module):
     def forward(self, ids, mask, types):
         if self.frozen_bert:
             with torch.no_grad():
-                outputs = self.bert(input_ids=ids, attention_mask=mask)
+                outputs = self.bert(input_ids=ids, attention_mask=mask, token_type_ids=types)
         else:
             outputs = self.bert(input_ids=ids, attention_mask=mask, token_type_ids=types)
 
@@ -46,7 +77,7 @@ class BertTextClassficationModel(torch.nn.Module):
 
 class TextClassifier:
     def __init__(self, model_save_path='', pre_model_path="hfl/chinese-roberta-wwm-ext",
-                    hidden_size=768, num_cls=2, max_txt_len=500, model_name='BertTextClassifier', model_file_path=None):
+                    hidden_size=768, num_cls=2, max_txt_len=500, model_name='BertTextClassifier', model_file_path=None, device='cuda'):
         logging.info('Initializing Class TextClassifier...')
         # 预训练模型路径
         self.pre_model_path = pre_model_path
@@ -76,7 +107,7 @@ class TextClassifier:
 
         # 初始化运行设备
         #获取gpu和cpu的设备信息
-        if torch.cuda.is_available():
+        if torch.cuda.is_available() and device == 'cuda':
             self.device = torch.device("cuda")
             self.model.to(self.device)
             logging.info("TextClassifier Using Device: CUDA")
@@ -149,16 +180,16 @@ class TextClassifier:
 
         # 训练数据
         train_texts = [item[0] for item in train_data]
-        train_texts_pair = [item[1] for item in train_data] if len(train_data[0]) == 3 else None
+        # train_entity_pair = [((item[1], item[2], item[3]), (item[4], item[5], item[6])) for item in train_data] if len(train_data[0]) == 8 else None
         train_labels = [self.label_num_dict[l] for l in train_labels]
-        train_dataset = DataToDataset(self.tokenizer, train_texts, train_texts_pair, train_labels, self.max_txt_len)
+        train_dataset = DataToDataset(self.tokenizer, train_texts, train_labels, self.max_txt_len)
         self.train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True, num_workers=1)
 
         # 测试数据
         val_texts = [item[0] for item in val_data]
-        val_texts_pair = [item[1] for item in val_data] if len(val_data[0]) == 3 else None
+        # val_texts_pair = [((item[1], item[2], item[3]), (item[4], item[5], item[6])) for item in val_data] if len(val_data[0]) == 8 else None
         val_labels = [self.label_num_dict[l] for l in val_labels]
-        val_dataset = DataToDataset(self.tokenizer, val_texts, val_texts_pair, val_labels, self.max_txt_len)
+        val_dataset = DataToDataset(self.tokenizer, val_texts, val_labels, self.max_txt_len)
         self.val_loader = DataLoader(dataset=val_dataset, batch_size=batch_size, shuffle=True, num_workers=1)
 
 
@@ -267,7 +298,7 @@ class TextClassifier:
                     f.write('%s,%s,%s,%s\n' % (self.texts[k], self.texts_pair[k], self.labels[k], self.num_label_dict[e]))
 
 
-    def predict_nowrite(self):
+    def predict_nowrite(self, output_label=True):
         """
         推理
         """
@@ -287,6 +318,51 @@ class TextClassifier:
 
         print('best accuracy: %s' % pred_acc)
         print(self.num_label_dict)
-        return [(self.num_label_dict[r1], self.num_label_dict[r2]) for r1, r2 in zip(trans_labels, results)]
+        if output_label:
+            return [(self.num_label_dict[r1], self.num_label_dict[r2]) for r1, r2 in zip(trans_labels, results)]
+        else:
+            return [(r1, r2) for r1, r2 in zip(trans_labels, results)]
 
 #
+# if __name__ == '__main__':
+#     import random
+#
+#     def load_data(file_path):
+#         """
+#         输入数据格式：text \t relation name
+#         """
+#         data = []
+#         with open(file_path) as f:
+#             for line in f.readlines():
+#                 arr = line.strip().split('\t')
+#                 data.append((arr[0], arr[1]))
+#
+#         return data
+#
+#     def load_train_val_data(file_path):
+#         data = load_data(file_path)
+#
+#         random.shuffle(data)
+#         train_len = int(len(data) * 0.8)
+#
+#         train_data, val_data = data[:train_len], data[train_len:]
+#         return train_data, val_data
+#
+#     train_data, val_data = load_train_val_data('train_gene_re_4c.txt')
+#
+#     label_cls_dict = {
+#         'null': 0,
+#         'negtive': 1,
+#         'positive': 2,
+#         'relatied': 3
+#     }
+#
+#     # 初始化模型
+#     model = TextClassifier(model_save_path='.',
+#                             pre_model_path="bert-base-cased",
+#                             # pre_model_path="../../Models/BertModels/gene",
+#                             # pre_model_path="hfl/chinese-roberta-wwm-ext",
+#                             num_cls=len(label_cls_dict),
+#                             model_name='pre_gene_re_4c')
+#
+#     model.load_train_val_data(train_data, val_data, label_dict=label_cls_dict, batch_size=8)
