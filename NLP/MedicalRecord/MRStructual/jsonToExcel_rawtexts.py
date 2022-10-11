@@ -25,7 +25,7 @@ if __name__ == '__main__':
 
     # 加载json数据
     json_data = ''
-    with open(r'data/%s/汇总结果_%s.json' % (data_type, postfix)) as f:
+    with open(r'../data/%s/汇总结果_%s.json' % (data_type, postfix)) as f:
         json_data = json.load(f, strict=False)
 
 

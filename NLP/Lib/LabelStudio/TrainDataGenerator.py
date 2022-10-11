@@ -124,7 +124,7 @@ class TrainDataGenerator(TrainDataBase):
         return self.ls_transfomer.assemble_anns(text[start:end], anns)
 
 
-    def gen_ner_data(self, text, entities, key_labels=None, include_labels=None):
+    def gen_ner_data(self, text, entities, key_labels=None, include_labels=None, language='CH'):
         """
         生成命名实体识别标记数据
         entities: [(id, start, end, text, label)]
@@ -146,12 +146,32 @@ class TrainDataGenerator(TrainDataBase):
         proc_labels = ([] if key_labels is None else key_labels) + ([] if include_labels is None else include_labels)
         for id, start, end, e_text, label in entities:
             if len(proc_labels) == 0 or label in proc_labels:
-                raw_lbl[start] = 'B_' + label.replace(' ', '_')
+                raw_lbl[start] = 'B_' + label.replace(' ', '-')
                 for i in range(start+1, end):
-                    raw_lbl[i] = 'I_' + label.replace(' ', '_')
+                    raw_lbl[i] = 'I_' + label.replace(' ', '-')
 
         # # 用于记录有多少个不同标记
         # label_list = all_labels if len(proc_labels) == 0 else list(set(proc_labels).intersection(set(all_labels)))
+
+        # 英文标注按照空格合并替换
+        if language == 'EN':
+            words, labels = [], []
+            start, ind = 0, 0
+            while ind < len(text):
+                c, l = text[ind], raw_lbl[ind]
+                if c in [',', '.', ' ', '!', '?', ':', '\'', '\"']:
+                    if c == '.' and ind != len(text) - 1 and text[ind+1] != ' ':
+                        ind = ind + 1
+                        continue
+                    if text[start:ind] != ' ':
+                        words.append(text[start:ind])
+                        labels.append(raw_lbl[start])
+                    if c != ' ':
+                        start = ind
+                    else:
+                        start = ind + 1
+                ind = ind + 1
+            return words, labels
 
         return (text, raw_lbl)
 
@@ -166,7 +186,23 @@ class TrainDataGenerator(TrainDataBase):
             label_set = set(label_list)
             label_set.remove('O')
             label_list_ = list(label_set)
-            labels = list(set([l.split('_')[1] for l in label_list_]))
+            labels = list(set([l.replace('B_', '').replace('I_', '') for l in label_list_]))
+            for label in labels:
+                if label not in label_data_dict:
+                    label_data_dict[label] = []
+                label_data_dict[label].append((text, label_list))
+
+        return self.balance_data(label_data_dict, strategy=strategy)
+
+    def balance_ner_data_forspacy(self, data, strategy):
+        """
+        均衡NER数据。
+        输入格式为gen_ner_data函数输出的数组：[(text, label_list)]
+        """
+        label_data_dict = {}
+        for text, label_list in data:
+            label_set = set([e[2] for e in label_list])
+            labels = list(label_set)
             for label in labels:
                 if label not in label_data_dict:
                     label_data_dict[label] = []
@@ -180,7 +216,7 @@ class TrainDataGenerator(TrainDataBase):
         写NER数据，格式为字符空格字符BIO标记
         输入格式：每行语句的文本和标记对数组
         """
-        with open(file_path, 'w') as f:
+        with open(file_path, 'w', encoding='utf-8') as f:
             for str, lbl in data:
                 for s, l in zip(str, lbl):
                     # 写空格出错
@@ -277,7 +313,7 @@ class TrainDataGenerator(TrainDataBase):
         return results
 
 
-    def process_gene_ner(self, input, output, balance_strategy):
+    def process_gene_ner(self, input, balance_strategy):
         """
         生成Gene表达NER训练数据
         """
@@ -287,11 +323,29 @@ class TrainDataGenerator(TrainDataBase):
             for item1 in self.split_item_by_sep(item, separator='\n', append_sep=False):
                 for item2 in self.split_item_by_sep(item1, separator='. ', append_sep=True):
                     entities = self.ls_transfomer.get_entities(item2)
-                    r = self.gen_ner_data(item2["data"]["text"], entities)
+                    r = self.gen_ner_data(item2["data"]["text"], entities, language='EN')
                     if r is not None:
                         results.append(r)
 
-        self.write_ner_data(self.balance_ner_data(results, strategy=balance_strategy), output)
+        # self.write_ner_data(self.balance_ner_data(results, strategy=balance_strategy), output)
+        return self.balance_ner_data(results, strategy=balance_strategy)
+
+    def process_gene_ner_forspacy(self, input, balance_strategy):
+        """
+        生成Gene表达NER训练数据，for spacy
+        """
+        json_data = self.ls_transfomer.load_json_file(input)
+        results = []
+        for item in json_data:
+            for item1 in self.split_item_by_sep(item, separator='\n', append_sep=False):
+                for item2 in self.split_item_by_sep(item1, separator='. ', append_sep=True):
+                    entities = self.ls_transfomer.merge_entities(self.ls_transfomer.get_entities(item2))
+                    if len(entities) > 0:
+                        results.append((item2["data"]["text"], [(e[1], e[2], e[4]) for e in entities]))
+
+
+        # self.write_ner_data(self.balance_ner_data(results, strategy=balance_strategy), output)
+        return self.balance_ner_data_forspacy(results, strategy=balance_strategy)
 
 
     def process_clinic_ner(self, input, output):

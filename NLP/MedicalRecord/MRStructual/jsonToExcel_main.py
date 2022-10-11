@@ -276,6 +276,8 @@ if __name__ == '__main__':
 
     ## 写内容 #############
     for ind, item in enumerate(json_data):
+        if item is None:
+            continue
         ct_arr, mr_arr, dr_arr = generate_fs_data(item)
         row_data = {
             '医保编号': get_json_value(item, '医保编号'),

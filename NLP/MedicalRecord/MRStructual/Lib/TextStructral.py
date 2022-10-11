@@ -31,7 +31,7 @@ class TextStructral:
         """
         records = []
         record = []
-        with open(data_file) as f:
+        with open(data_file, encoding="utf-8") as f:
             for line in f.readlines():
                 if line.strip() == '':
                     if len(record) > 0:
@@ -51,7 +51,7 @@ class TextStructral:
         加载正则匹配模板
         """
         template = None
-        with open(template_file) as f:
+        with open(template_file, encoding="utf-8") as f:
             template = json.load(f, strict=False)
             logging.debug('load template: %s' % str(template))
 
@@ -73,7 +73,7 @@ class TextStructral:
         """
         将Json数据写入文件
         """
-        with open(file_path, "w") as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             if data is None:
                 f.write(json.dumps(self.results, indent=1, separators=(',', ':'), ensure_ascii=False))
             else:

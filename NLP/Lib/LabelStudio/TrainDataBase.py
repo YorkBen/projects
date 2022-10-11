@@ -139,7 +139,7 @@ class TrainDataBase:
         """
         将数据行写入文件
         """
-        with open(file_path, 'w') as f:
+        with open(file_path, 'w', encoding='utf-8') as f:
             for l in data:
                 if isinstance(l, tuple) or isinstance(l, list):
                     s = '\t'.join(l)

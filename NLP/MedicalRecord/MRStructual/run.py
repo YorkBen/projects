@@ -168,11 +168,14 @@ def check_date(date1, date2, delta):
     elif date2 == '':
         return False
     else:
-        date1_dt = datetime.datetime.strptime(date1, '%Y%m%d').date()
-        date2_dt = datetime.datetime.strptime(date2, '%Y%m%d').date()
-        if abs((date1_dt - date2_dt).days) < delta:
-            return True
-        else:
+        try:
+            date1_dt = datetime.datetime.strptime(date1, '%Y%m%d').date()
+            date2_dt = datetime.datetime.strptime(date2, '%Y%m%d').date()
+            if abs((date1_dt - date2_dt).days) < delta:
+                return True
+            else:
+                return False
+        except:
             return False
 
 
@@ -339,7 +342,7 @@ if __name__ == '__main__':
     results = join_others(results, load_dict(r'data/%s/tmp/chaoshen_%s.txt' % (data_type, postfix)), '超声')
     results = join_others(results, load_dict(r'data/%s/tmp/fangshe_%s.txt' % (data_type, postfix)), '放射')
     # results = join_others(results, load_dict(r'data/%s/tmp/bingli_%s.txt' % (data_type, postfix)), '病理', delta=360)
-    results = join_others(results, load_dict(r"data/%s/tmp/yz_%s.txt" % (data_type, postfix)), '医嘱')
+    results = join_others(results, load_dict(r"data/%s/tmp/yizhu_%s.txt" % (data_type, postfix)), '医嘱')
 
     ###############结果写到文件####################################
     ts.write_result('../data/%s/汇总结果_%s.json' % (data_type, postfix), results)

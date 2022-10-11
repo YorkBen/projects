@@ -129,17 +129,67 @@ def check_diease_diagnosis(feature_clinic, feature_history, feature_health, feat
     return result
 
 
+feature_names = ['上腹痛', '黄疸', '体温升高', '墨菲征Murphy征', '全血_白细胞_大于_10', '全血_中性粒细胞%_大于_75', '全血_C反应蛋白_大于_10', '全血_血沉_大于_26', '血清_淀粉酶_大于_405', '血清_天冬氨酸氨基转移酶_大于_75', '血清_丙氨酸氨基转移酶_大于_60', '血清_碱性磷酸酶_大于_187.5', '血清_γ-谷氨酰转移酶_大于_90', 'CT_急性阑尾炎', '超声_急性胰腺炎', 'CT急性胰腺炎', 'MR急性胰腺炎', 'DR_肠梗阻', 'CT_肠梗阻', '超声_异位妊娠', '超声_急性胆管炎', 'CT_急性胆管炎', 'MR_急性胆管炎', '超声_急性胆囊炎', 'CT_急性胆囊炎', 'MR_急性胆囊炎', '超声_上尿路结石', 'CT_上尿路结石', 'DR_上尿路结石', '超声_卵巢囊肿', 'CT_卵巢囊肿', 'MR_卵巢囊肿', 'DR_卵巢囊肿', 'CT_消化道穿孔', 'DR_消化道穿孔']
+def get_all_diagnose_features(feature_clinic, feature_history, feature_health, feature_lab, feature_img):
+    """
+    输出所有指南里的特征
+    """
+    result = [
+        feature_clinic[feature_type_names['临床表现'].index('上腹痛')],
+        feature_clinic[feature_type_names['临床表现'].index('黄疸')],
+        feature_health[feature_type_names['体格检查'].index('体温升高')],
+        feature_health[feature_type_names['体格检查'].index('墨菲征Murphy征')],
+
+        feature_lab[feature_type_names['实验室'].index('全血_白细胞_大于_10')],
+        feature_lab[feature_type_names['实验室'].index('全血_中性粒细胞%_大于_75')],
+        feature_lab[feature_type_names['实验室'].index('全血_C反应蛋白_大于_10')],
+        feature_lab[feature_type_names['实验室'].index('全血_血沉_大于_26')],
+        feature_lab[feature_type_names['实验室'].index('血清_淀粉酶_大于_405')],
+        feature_lab[feature_type_names['实验室'].index('血清_天冬氨酸氨基转移酶_大于_75')],
+        feature_lab[feature_type_names['实验室'].index('血清_丙氨酸氨基转移酶_大于_60')],
+        feature_lab[feature_type_names['实验室'].index('血清_碱性磷酸酶_大于_187.5')],
+        feature_lab[feature_type_names['实验室'].index('血清_γ-谷氨酰转移酶_大于_90')],
+
+        feature_img[feature_type_names['影像学'].index('CT_急性阑尾炎')],
+        feature_img[feature_type_names['影像学'].index('超声_急性胰腺炎')],
+        feature_img[feature_type_names['影像学'].index('CT_急性胰腺炎')],
+        feature_img[feature_type_names['影像学'].index('MR_急性胰腺炎')],
+        feature_img[feature_type_names['影像学'].index('DR_肠梗阻')],
+        feature_img[feature_type_names['影像学'].index('CT_肠梗阻')],
+        feature_img[feature_type_names['影像学'].index('超声_异位妊娠')],
+        feature_img[feature_type_names['影像学'].index('超声_急性胆管炎')],
+        feature_img[feature_type_names['影像学'].index('CT_急性胆管炎')],
+        feature_img[feature_type_names['影像学'].index('MR_急性胆管炎')],
+        feature_img[feature_type_names['影像学'].index('超声_急性胆囊炎')],
+        feature_img[feature_type_names['影像学'].index('CT_急性胆囊炎')],
+        feature_img[feature_type_names['影像学'].index('MR_急性胆囊炎')],
+        feature_img[feature_type_names['影像学'].index('超声_上尿路结石')],
+        feature_img[feature_type_names['影像学'].index('CT_上尿路结石')],
+        feature_img[feature_type_names['影像学'].index('DR_上尿路结石')],
+        feature_img[feature_type_names['影像学'].index('超声_卵巢囊肿')],
+        feature_img[feature_type_names['影像学'].index('CT_卵巢囊肿')],
+        feature_img[feature_type_names['影像学'].index('MR_卵巢囊肿')],
+        feature_img[feature_type_names['影像学'].index('DR_卵巢囊肿')],
+        feature_img[feature_type_names['影像学'].index('CT_消化道穿孔')],
+        feature_img[feature_type_names['影像学'].index('DR_消化道穿孔')]
+    ]
+
+    return result
+
+
 if __name__ == '__main__':
     # 参数
     parser = argparse.ArgumentParser(description='Select Data With MR_NOs')
     parser.add_argument('-i', type=str, default='data/', help='特征文件')
-    parser.add_argument('-o', type=str, default='data/diagnose_by_rule_output.txt', help='输出结果')
+    parser.add_argument('-o1', type=str, default='data/diagnose_by_rule_output.txt', help='输出诊断结果')
+    parser.add_argument('-o2', type=str, default='data/diagnose_features.txt', help='输出诊断依据特征')
     args = parser.parse_args()
 
     input = args.i
-    output = args.o
+    output1 = args.o1
+    output2 = args.o2
 
-    results = []
+    results, diagnose_features = [], []
     with open(input) as f:
         for idx, line in enumerate(f.readlines()):
             if idx == 0:
@@ -169,10 +219,18 @@ if __name__ == '__main__':
 
             r.extend(check_diease_diagnosis(feature_clinic, feature_history, feature_health, feature_lab, feature_img))
             results.append(r)
+            diagnose_features.append(get_all_diagnose_features(feature_clinic, feature_history, feature_health, feature_lab, feature_img))
 
 
-    with open(output, 'w') as f:
+    with open(output1, 'w') as f:
         f.write('医保编号	入院时间	诊断编号	急性阑尾炎	急性胰腺炎	肠梗阻	异位妊娠	急性胆管炎	急性胆囊炎	上尿路结石	卵巢囊肿破裂	卵巢囊肿扭转	消化道穿孔\n')
         for r in results:
             arr = [str(e) for e in r]
+            f.write('%s\n' % '	'.join(arr))
+
+
+    with open(output2, 'w', encoding='utf-8') as f:
+        f.write('%s\n' % '	'.join(feature_names))
+        for r in diagnose_features:
+            arr = [str(int(e)) for e in r]
             f.write('%s\n' % '	'.join(arr))

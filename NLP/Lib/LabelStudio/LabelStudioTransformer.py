@@ -10,7 +10,7 @@ class Transformer:
         加载json文件
         """
         json_data = ''
-        with open(file_path) as f:
+        with open(file_path, encoding='utf-8') as f:
             json_data = json.load(f, strict=False)
 
         return json_data
@@ -19,7 +19,7 @@ class Transformer:
         """
         写json文件
         """
-        with open(file_path, "w") as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             f.write(json.dumps(json_data, indent=1, separators=(',', ':'), ensure_ascii=False))
 
 
@@ -44,7 +44,7 @@ class Transformer:
         """
         entities = []
         for r in item['annotations'][0]['result']:
-            if r["type"] == "labels":
+            if r["type"] == "labels" and "text" in r['value'] and 'labels' in r['value']:
                 # 有些标记前后有空格。标点符号，代码处理掉。
                 text = r['value']['text']
                 start = r['value']['start']
@@ -60,9 +60,24 @@ class Transformer:
                 label = r['value']['labels'][0]
                 entities.append((r['id'], start, end, text, label))
 
-        entities = sorted(entities, key=lambda x: x[1])
+        entities = sorted(entities, key=lambda x: (x[1], x[2]))
 
         return entities
+
+    def merge_entities(self, entities):
+        if len(entities) == 0:
+            return entities
+
+        result = []
+        for k in range(len(entities) - 1):
+            e1, e2 = entities[k], entities[k+1]
+            if e1[1] <= e2[1] and e1[2] >= e2[2]:
+                continue
+            else:
+                result.append(e1)
+
+        result.append(entities[-1])
+        return result
 
 
     def search_entities_in_list(self, entities, ids):
