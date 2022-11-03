@@ -1,6 +1,7 @@
 import cv2
 import os
 import sys
+import numpy as np
 
 def video_to_photo(video_path, video_img_folder, target_fps=0):
     # create video img folder
@@ -46,7 +47,9 @@ def cropImg(video_img_folder, crop_img_folder, region, debug=False):
         os.makedirs(crop_img_folder)
 
     for file in os.listdir(video_img_folder):
-        img = cv2.imread(os.path.join(video_img_folder, file))
+        img = cv2.imdecode(np.fromfile(os.path.join(video_img_folder, file), dtype=np.uint8), cv2.IMREAD_COLOR)
+        # img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        # img = cv2.imread()
         img_ = img[region[0]:region[1], region[2]:region[3]]
 
         if debug:
@@ -61,32 +64,83 @@ def cropImg(video_img_folder, crop_img_folder, region, debug=False):
 
 
 if __name__ == '__main__':
-    # base_dir = r'D:\项目资料\息肉假阳性\202208\有息肉肠镜视频'
-    base_dir = r'D:\项目资料\息肉假阳性\202208\无息肉肠镜视频'
+    # base_dir = r'D:\项目资料\息肉假阳性\20221007'
+    base_dir = r'/mnt/d/项目资料/息肉假阳性/20221007'
 
-    video_folder = os.path.join(base_dir, 'videos')
-    img_folder = os.path.join(base_dir, 'images')
-    crop_img_folder = os.path.join(base_dir, 'images_crop')
+    video_folder = os.path.join(base_dir, 'videos_wfz')
+    img_folder = os.path.join(base_dir, 'images_wfz')
+    crop_img_folder = os.path.join(base_dir, 'images_crop_wfz')
     target_fps = 18
     # for filename in os.listdir(video_folder):
     regions = [
         [30,1045, 696,1860],
         [0,950, 465,1560],
-        [34,1044, 517,1685]
+        [0, 1100, 574, 1836],
+        [0, 1100, 664, 1946],
+        [0, 1100, 578, 1826],
+        [34, 1044, 657, 1826],
+        [34, 1044, 727, 1642],
+        [0, 1100, 662, 1642],
+        [30,1045, 656,1830]
     ]
-    # videos = {'3400-原视频.mp4':0, '3404-原视频.mp4':0, '3406-原视频.mp4':0, '3410-原视频.mp4':0, '3424-原视频.mp4':0, '3428-原视频.mp4':0, '3431-原视频.mp4':0, '3433-原视频.mp4':0, '3436-原视频.mp4':0, '3444-原视频.mp4':0, '3454-原视频.mp4':0, '3455-原视频.mp4':0, '3457-原视频.mp4':0, '3459-原视频.mp4':0, '3460-原视频.mp4':0, '3462-原视频.mp4':0, '3469-原视频.mp4':0, '3471-原视频.mp4':0, '3474-原视频.mp4':0, '3476-原视频.mp4':0, '3477-原视频.mp4':0, '3478-原视频.mp4':0, '3479-原视频.mp4':0, '3480-原视频.mp4':0, '3481-原视频.mp4':0, '3485-原视频.mp4':0, '3488-原视频.mp4':0, '3496-原视频.mp4':0, '3497-原视频.mp4':0, '3499-原视频.mp4':0, '3504-原视频.mp4':0, '3510-原视频.mp4':0, '3513-原视频.mp4':0, '3515-原视频.mp4':0, '3520-原视频.mp4':0, '3526-原视频.mp4':0, '3531-原视频.mp4':0, '3532-原视频.mp4':0, '3533-原视频.mp4':0, '3538-原视频.mp4':0}
-    videos = {name:0 for name in os.listdir(video_folder)}
+    # videos = {'1006-原视频.mp4':0}
+    # 1037, 1067, 1087, 1112, 1156, 1255, 1264, 1293, 1307, 1344, 1435, 2003
+    #
+    # videos = {name:0 for name in os.listdir(video_folder)}
+    # print(videos)
+    videos = {
+    '1006-原视频.mp4': 0,
+    '1014-原视频.mp4': 0,
+    '1037-原视频.mp4': 2,
+    '1067-原视频.mp4': 2,
+    '1087-原视频.mp4': 2,
+    '1112-原视频.mp4': 3,
+    '1149-原视频.mp4': 3,
+    '1156-原视频.mp4': 4,
+    '1162-原视频.mp4': 6,
+    '1202-原视频.mp4': 7,
+    '1255-原视频.mp4': 3,
+    '1264-原视频.mp4': 3,
+    '1293-原视频.mp4': 3,
+    '1307-原视频.mp4': 8,
+    '1354-原视频.mp4': 0,
+    '1435-原视频.mp4': 8,
+    '1447-原视频.mp4': 0,
+    '2003-原视频.mp4': 1,
+    '2135-原视频.mp4': 3,
+    '2154-原视频.mp4': 3,
+    '2156-原视频.mp4': 0,
+    '2161-原视频.mp4': 0,
+    '2195-原视频.mp4': 3,
+    '2230-原视频.mp4': 0,
+    '3398-原视频.mp4': 0,
+    '3399-原视频.mp4': 0,
+    '3402-原视频.mp4': 0,
+    '3414-原视频.mp4': 0,
+    '3415-原视频.mp4': 0,
+    '3416-原视频.mp4': 0,
+    '3419-原视频.mp4': 0,
+    '3429-原视频.mp4': 0,
+    '3434-原视频.mp4': 0,
+    '3435-原视频.mp4': 0,
+    '3438-原视频.mp4': 0,
+    '3442-原视频.mp4': 0,
+    '3479-原视频.mp4': 0,
+    '3497-原视频.mp4': 0,
+    '3513-原视频.mp4': 0,
+    '3538-原视频.mp4': 0}
+
+
     for filename in list(videos.keys()):
         print('processing: %s' % filename)
-        region = regions[videos[filename]]
         video_path = os.path.join(video_folder, filename)
         name = filename.replace('-原视频', '').replace('.mp4', '')
         video_img_folder = os.path.join(img_folder, name)
+        # video_to_photo(video_path, video_img_folder, target_fps)
+
         video_crop_img_folder = os.path.join(crop_img_folder, name)
-        video_to_photo(video_path, video_img_folder, target_fps)
+        region = regions[videos[filename]]
         cropImg(video_img_folder, video_crop_img_folder, region, False)
-
-
 
 
 ##

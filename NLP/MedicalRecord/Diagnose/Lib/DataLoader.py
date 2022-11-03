@@ -16,7 +16,7 @@ class DataLoader:
         logging.debug('Loading data lines...')
         lines = []
         start_line = 1 if skip_title else 0
-        with open(file_path, "r") as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             for line in f.readlines()[start_line:]:
                 # 如果要拆分行
                 if separate:

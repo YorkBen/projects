@@ -230,7 +230,7 @@ class Transformer:
         return manual_json
 
 
-    def assemble_ner_entity_ann(self, id, start, end, text, label):
+    def assemble_ner_entity_ann(self, id, start, end, text, label, score=0.5):
         """
         组装单个命名实体标记
         """
@@ -243,7 +243,7 @@ class Transformer:
                 "start": start,
                 "end": end,
                 "text": text,
-                "score": 0.50,
+                "score": score,
                 "labels":[
                     label
                 ]
