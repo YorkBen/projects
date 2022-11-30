@@ -6,15 +6,15 @@ import re
 class RegexBase:
     def __init__(self):
         # inner_neg
-        self.inner_neg = '[^，；、。无未不]{,4}'
-        self.inner_neg2 = '[^，；。无未不]{,4}'
-        self.inner_neg3 = '[^；。无未不]{,4}'
-        self.inner_neg_x = '[^，；、。无未不]{,12}'
-        self.inner_neg_x2 = '[^，；。无未不]{,12}'
-        self.inner_neg_x3 = '[^；。无未不]{,12}'
-        self.inner_neg_xx = '[^，；、。无未不]{,20}'
-        self.inner_neg_xx2 = '[^，；。无未不]{,20}'
-        self.inner_neg_xx3 = '[^；。无未不]{,20}'
+        self.inner_neg = '[^，；、。无未不非]{,4}'
+        self.inner_neg2 = '[^，；。无未不非]{,4}'
+        self.inner_neg3 = '[^；。无未不非]{,4}'
+        self.inner_neg_x = '[^，；、。无未不非]{,12}'
+        self.inner_neg_x2 = '[^，；。无未不非]{,12}'
+        self.inner_neg_x3 = '[^；。无未不非]{,12}'
+        self.inner_neg_xx = '[^，；、。无未不非]{,20}'
+        self.inner_neg_xx2 = '[^，；。无未不非]{,20}'
+        self.inner_neg_xx3 = '[^；。无未不非]{,20}'
         self.inner = '[^，；、。]*?'
         self.inner2 = '[^，；。]*?'
         self.inner3 = '[^；。]*?'
@@ -123,12 +123,66 @@ class RegexBase:
         """
         pos_match = re.search(word, text)
         mt1_sp2 = pos_match.span()[1]
-        match2 = re.search(r"(无[^痛])|(不[^详全均])|未|(否认)|(除外)|(排除)", text[:mt1_sp2])
+        match21 = re.search(r"(无[^痛])", text[:mt1_sp2])
+        match22 = re.search(r"(不[^详全均适])|未|非|(否认)|(除外)|(排除)", text[:mt1_sp2])
         match3 = re.search(r"(不明显)|(阴性)|(排除)|(((未见)|无)(明显)?异常)|([(（][-—][)）])", text[mt1_sp2:])
-        if match2 and not '诱因' in text[:mt1_sp2]:
-            return True, match2
+        if match21 and not '诱因' in text[:mt1_sp2]:
+            return True, match21
+        elif match22:
+            return True, match22
         elif match3:
             return True, match3
+        else:
+            return False, None
+
+    def check_neg_word_findpos(self, text, word):
+        """
+        检查text中是否有否定词，word为主体词, text为文本片段。
+        """
+        if text.find(word) == -1:
+            return False, None
+
+        mt1_sp2 = text.find(word) + len(word)
+        match21 = re.search(r"(无[^痛])", text[:mt1_sp2])
+        match22 = re.search(r"(不[^详全均适])|未|非|(否认)|(除外)|(排除)", text[:mt1_sp2])
+        match3 = re.search(r"(不明显)|(阴性)|(排除)|(((未见)|无)(明显)?异常)|([(（][-—][)）])", text[mt1_sp2:])
+        if match21 and not '诱因' in text[:mt1_sp2]:
+            return True, match21
+        elif match22:
+            return True, match22
+        elif match3:
+            return True, match3
+        else:
+            return False, None
+
+
+    def check_prefix(self, text, word, pattern):
+        """
+        检查前缀中是否包含模式
+        """
+        if word not in text:
+            raise Exception("word not in text")
+
+        pos = text.find(word)
+        pre_text = text[:pos]
+        match = re.search(pattern, pre_text)
+        if match is not None:
+            return True, match
+        else:
+            return False, None
+
+    def check_postfix(self, text, word, pattern):
+        """
+        检查后缀中是否包含模式
+        """
+        if word not in text:
+            raise Exception("word not in text")
+
+        pos = text.find(word) + len(word)
+        post_text = text[pos:] if pos < len(text) else ''
+        match = re.search(pattern, post_text)
+        if match is not None:
+            return True, match
         else:
             return False, None
 

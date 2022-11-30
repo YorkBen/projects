@@ -62,12 +62,11 @@ class Diagnoser:
         X = self.scaler.transform(X)
         probs_list = self.model.predict_proba(X).tolist()
 
+        result = []
         if pred_num is not None and prob_delta is None:
-            result = []
             for probs in probs_list:
                 result.append(self.filt_by_num(probs, pred_num, out_format))
         elif prob_delta is not None:
-            result = []
             for probs in probs_list:
                 result.append(self.filt_by_prob(probs, prob_delta, out_format))
 

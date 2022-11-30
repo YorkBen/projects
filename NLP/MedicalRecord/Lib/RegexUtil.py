@@ -8,7 +8,7 @@ class RegexUtil:
         """
         pass
 
-    def format_by_type(self, str, type):
+    def format_by_type(self, str, type, regex=''):
         """
         根据type类型格式化字符串。
         type类型：
@@ -35,8 +35,21 @@ class RegexUtil:
             return self.format_temprature(str)
         elif type == "pressure":
             return self.format_pressure(str)
-        elif type != "":
-            return self.format_regex(str, type)
+        elif type == "word" or type == "address" or type == "name":
+            return self.format_word(str)
+        elif type == "no":
+            return self.format_no(str)
+        elif type == "text" or type == "":
+            return self.format_text(str)
+        elif type == "phonenum":
+            return self.format_phonenum(str)
+        elif type == "regex":
+            return self.format_regex(str, regex)
+        elif type == "date_desc":
+            return [self.format_date(str), self.format_text(str)]
+        else:
+            raise TypeError("type: %s不在处理类型里!" % type)
+
 
 
     def replace_chinese_num(self, str):
@@ -86,7 +99,7 @@ class RegexUtil:
         """
         解析字符串中的日期，并做标准化输出
         """
-        r = re.search(r'(20[0-9]{2})[年\./\-]([01]?[0-9])[月\./\-]?(([0123]?[0-9])|[底初末中上下旬]{1,3})?', str, re.I)
+        r = re.search(r'([12][980][0-9]{2})[年\./\-]([01]?[0-9])[月\./\-]?(([0123]?[0-9])|[底初末中上下旬]{1,3})?', str, re.I)
         if r:
             return self.format_date_output(r[1], r[2], r[3])
         else:
@@ -102,10 +115,52 @@ class RegexUtil:
         """
         格式化血压
         """
-        return self.format_regex(str, re.compile(r'\d{2,3}/\d{2,3}[mmhgMMHG]*?'))
+        return self.format_regex(str, re.compile(r'\d{2,3}\s*/\s*\d{2,3}\s*[mmhgMMHG]*')).replace(' ', '')
 
-    def format_regex(self, str, pattern_str):
-        match = re.search(pattern_str, str)
+    def format_no(self, txt):
+        """
+        格式化编号
+        """
+        return self.format_regex(txt, re.compile(r'[0-9a-zA-Z]{1,}[+]?[0-9a-zA-Z]{1,}'))
+
+    def format_phonenum(self, str):
+        """
+        格式化血压
+        """
+        return self.format_regex(str, re.compile(r'([0-9]{11})|([+]?([0-9]{2,3}\-)?[0-9]{6,9})'))
+
+    def format_word(self, val):
+        """
+        格式化短文本
+        """
+        val = self.format_text(val)
+        return val.split('\n')[0].split('\t')[0].strip()
+
+    def format_text(self, val):
+        """
+        格式化长文本
+        """
+        if len(val) > 0 and val[0] in [':', '：']:
+            val = val[1:]
+        # 去除病历中的[***]内容
+        val = self.remove_squarebracket_cnt(val)
+        # 去掉包含在移除键数组中的key
+        # val = self.utils.remove_after_keys(val, self.remove_keys)
+        # 去掉末尾的（
+        val = re.sub(r'（\s*\n?$', '', val)
+        # 去掉一个（
+        val = re.sub(r'^\s*）\s*\n?$', '', val)
+        # 去掉末尾的序号1、2、等
+        val = re.sub(r'[1-9一二三四五六七八九]+[、. ]+$', '', val)
+        # 去掉; ;;
+        val = re.sub(r';[; ]+;', '', val)
+        # 合并多个空格
+        val = re.sub(r'[ ]{2,}', ' ', val)
+
+        return val.strip()
+
+    def format_regex(self, txt, pattern_str):
+        match = re.search(pattern_str, txt)
         if match is None:
             return ''
         else:

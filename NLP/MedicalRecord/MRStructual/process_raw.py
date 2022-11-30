@@ -60,11 +60,11 @@ if __name__ == "__main__":
     postfix = args.p
     type = args.t
 
-    mr_nos = load_mrno('data/%s/labeled_ind_%s.txt' % (type, postfix), with_head=False)
-    # mr_nos = None # 处理所有
+    # mr_nos = load_mrno('data/%s/labeled_ind_%s.txt' % (type, postfix), with_head=False)
+    mr_nos = None # 处理所有
 
     # 处理病历数据
-    process_mr(file_path=r"data/%s/medical_record.csv" % type, with_head=True,
+    process_mr(file_path=r"data/%s/medical_record.csv" % type, with_head=False,
                 type_regex_and_outpath=[
                     ('入.*院记录', r"data/%s/tmp/mr_ry_%s.txt" % (type, postfix)),
                     ('出院记录', r"data/%s/tmp/mr_cy_%s.txt" % (type, postfix)),
@@ -72,8 +72,8 @@ if __name__ == "__main__":
                     ('日常病程', r"data/%s/tmp/mr_rc_%s.txt" % (type, postfix))
                 ], mr_nos=mr_nos)
 
-    process_common(mr_nos, r"data/%s/超声" % type, r"data/%s/tmp/chaoshen_%s.txt" % (type, postfix), data_type='超声')
-    process_common(mr_nos, r"data/%s/放射" % type, r"data/%s/tmp/fangshe_%s.txt" % (type, postfix), data_type='放射')
-    process_common(mr_nos, r"data/%s/检验" % type, r"data/%s/tmp/is_%s.txt" % (type, postfix), data_type='检验')
-    process_common(mr_nos, r"data/%s/医嘱" % type, r"data/%s/tmp/yizhu_%s.txt" % (type, postfix), data_type='医嘱')
+    # process_common(mr_nos, r"data/%s/超声" % type, r"data/%s/tmp/chaoshen_%s.txt" % (type, postfix), data_type='超声')
+    # process_common(mr_nos, r"data/%s/放射" % type, r"data/%s/tmp/fangshe_%s.txt" % (type, postfix), data_type='放射')
+    # process_common(mr_nos, r"data/%s/检验" % type, r"data/%s/tmp/is_%s.txt" % (type, postfix), data_type='检验')
+    # process_common(mr_nos, r"data/%s/医嘱" % type, r"data/%s/tmp/yizhu_%s.txt" % (type, postfix), data_type='医嘱')
     # process_bingli(mr_nos, r"data/%s/病理" % type, r"data/tmp/bingli_%s.txt" % postfix)

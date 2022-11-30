@@ -338,46 +338,48 @@ def unify_prompt_name(prompt):
     return prompt
 
 
-def get_relation_type_dict(relation_data):
-
-    def compare(a, b):
-        a = a[::-1]
-        b = b[::-1]
-        res = ''
-        for i in range(min(len(a), len(b))):
-            if a[i] == b[i]:
-                res += a[i]
-            else:
-                break
-        if res == "":
-            return res
-        elif res[::-1][0] == " ":
-            return res[::-1][1:]
-        return ""
-
-    relation_type_dict = {}
-    added_list = []
-    for i in range(len(relation_data)):
-        added = False
-        if relation_data[i][0] not in added_list:
-            for j in range(i + 1, len(relation_data)):
-                match = compare(relation_data[i][0], relation_data[j][0])
-                if match != "":
-                    match = unify_prompt_name(match)
-                    if relation_data[i][0] not in added_list:
-                        added_list.append(relation_data[i][0])
-                        relation_type_dict.setdefault(match, []).append(
-                            relation_data[i][1])
-                    added_list.append(relation_data[j][0])
-                    relation_type_dict.setdefault(match, []).append(
-                        relation_data[j][1])
-                    added = True
-            if not added:
-                added_list.append(relation_data[i][0])
-                suffix = relation_data[i][0].rsplit("的", 1)[1]
-                suffix = unify_prompt_name(suffix)
-                relation_type_dict[suffix] = relation_data[i][1]
-    return relation_type_dict
+# def get_relation_type_dict(relation_data):
+#
+#     def compare(a, b):
+#         a = a[::-1]
+#         b = b[::-1]
+#         res = ''
+#         for i in range(min(len(a), len(b))):
+#             if a[i] == b[i]:
+#                 res += a[i]
+#             else:
+#                 break
+#         if res == "":
+#             return res
+#         elif res[::-1][0] == " ":
+#             return res[::-1][1:]
+#         return ""
+#
+#     relation_type_dict = {}
+#     added_list = []
+#     for i in range(len(relation_data)):
+#         added = False
+#         if relation_data[i][0] not in added_list:
+#             for j in range(i + 1, len(relation_data)):
+#                 match = compare(relation_data[i][0], relation_data[j][0])
+#                 if match != "":
+#                     match = unify_prompt_name(match)
+#                     if relation_data[i][0] not in added_list:
+#                         added_list.append(relation_data[i][0])
+#                         relation_type_dict.setdefault(match, []).append(
+#                             relation_data[i][1])
+#                     added_list.append(relation_data[j][0])
+#                     relation_type_dict.setdefault(match, []).append(
+#                         relation_data[j][1])
+#                     added = True
+#             if not added:
+#                 # added_list.append(relation_data[i][0])
+#                 # suffix = relation_data[i][0].rsplit("的", 1)[1]
+#                 # suffix = unify_prompt_name(suffix)
+#                 # relation_type_dict[suffix] = relation_data[i][1]
+#                 pass
+#                 # 数量太小，只有一个的测试数据直接不处理
+#     return relation_type_dict
 
 
 def add_entity_negative_example(examples, texts, prompts, label_set,
@@ -460,7 +462,7 @@ def add_full_negative_example(examples, texts, relation_prompts, predicate_set,
                 for predicate in predicate_set:
                     # The relation prompt is constructed as follows:
                     # subject + "的" + predicate
-                    prompt = subject + " " + predicate
+                    prompt = subject + (predicate if predicate.startswith("'s") else " " + predicate)
                     if prompt not in relation_prompt:
                         negative_result = {
                             "content": texts[i],
@@ -658,7 +660,7 @@ def convert_ext_examples(raw_examples,
                 object_id = relation["to_id"]
                 # The relation prompt is constructed as follows:
                 # subject + "的" + predicate
-                prompt = entity_map[subject_id]["name"] + " " + predicate
+                prompt = entity_map[subject_id]["name"] + (predicate if predicate.startswith("'s") else " " + predicate)
                 if entity_map[subject_id]["name"] not in subject_golden:
                     subject_golden.append(entity_map[subject_id]["name"])
                 result = {

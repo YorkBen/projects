@@ -496,7 +496,7 @@ def dbc2sbc(s):
 
 def cut_chinese_sent(para):
     """
-    Cut the Chinese sentences more precisely, reference to 
+    Cut the Chinese sentences more precisely, reference to
     "https://blog.csdn.net/blmoistawinde/article/details/82379256".
     """
     para = re.sub(r'([。！？\?])([^”’])', r'\1\n\2', para)
@@ -511,11 +511,11 @@ def get_id_and_prob(span_set, offset_mapping):
     """
     Return text id and probability of predicted spans
 
-    Args: 
+    Args:
         span_set (set): set of predicted spans.
         offset_mapping (list[int]): list of pair preserving the
                 index of start and end char in original text pair (prompt + text) for each token.
-    Returns: 
+    Returns:
         sentence_id (list[tuple]): index of start and end char in original text.
         prob (list[float]): probabilities of predicted spans.
     """

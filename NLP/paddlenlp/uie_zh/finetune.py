@@ -123,10 +123,10 @@ def do_train():
                 tokenizer.save_pretrained(save_dir)
                 logger.enable()
 
-                precision, recall, f1 = evaluate(model, metric, dev_data_loader)
+                precision, recall, f1, record_acc = evaluate(model, metric, dev_data_loader)
                 logger.info(
-                    "Evaluation precision: %.5f, recall: %.5f, F1: %.5f" %
-                    (precision, recall, f1))
+                    "Evaluation precision: %.5f, recall: %.5f, F1: %.5f, Record Acc: %.5f" %
+                    (precision, recall, f1, record_acc))
                 if f1 > best_f1:
                     logger.info(
                         f"best F1 performence has been updated: {best_f1:.5f} --> {f1:.5f}"

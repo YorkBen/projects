@@ -24,8 +24,40 @@ from paddlenlp.metrics import SpanEvaluator
 from paddlenlp.utils.log import logger
 
 from model import UIE
-from utils import convert_example, reader, unify_prompt_name, get_relation_type_dict, create_data_loader
+from utils import convert_example, reader, unify_prompt_name, create_data_loader
 
+ner_labels = [
+    "Multiply Gene",
+    "Multiply Cancer",
+    "Signal Pathway",
+    "Gene Function",
+    "Gene MultiFunction",
+    "Cancer",
+    "Gene"
+]
+
+relation_words = [
+    "is positively related to",
+    "is negatively related to",
+    'is related to',
+    "is dependent on",
+    "is the responsive gene of",
+    "promotes the dependent gene of",
+    "inhibits the dependent gene of",
+    "promotes the target gene of",
+    "inhibits the target gene of",
+    "is the transcriptional coactivation of",
+    "promotes the signaling pathway of",
+    "inhibits the signaling pathway of",
+    "'s target genes is",
+    "'s signaling pathway contains",
+    "is upstream of",
+    "is downstream of",
+    "act as the function of",
+    "act as the multi-function of",
+    'promotes',
+    'inhibits'
+]
 
 @paddle.no_grad()
 def evaluate(model, metric, data_loader):
@@ -44,12 +76,26 @@ def evaluate(model, metric, data_loader):
                                      pos_ids)
         start_ids = paddle.cast(start_ids, 'float32')
         end_ids = paddle.cast(end_ids, 'float32')
-        num_correct, num_infer, num_label = metric.compute(
+        num_correct, num_infer, num_label, num_correct_record, num_record = metric.compute(
             start_prob, end_prob, start_ids, end_ids)
-        metric.update(num_correct, num_infer, num_label)
-    precision, recall, f1 = metric.accumulate()
+        metric.update(num_correct, num_infer, num_label, num_correct_record, num_record)
+    precision, recall, f1, record_acc = metric.accumulate()
     model.train()
-    return precision, recall, f1
+    return precision, recall, f1, record_acc
+
+
+def evaluate_subset(model, trans_fn, subset, type, key):
+    test_data_loader = create_data_loader(subset,
+                                          mode="test",
+                                          batch_size=args.batch_size,
+                                          trans_fn=trans_fn)
+
+    metric = SpanEvaluator()
+    precision, recall, f1, record_acc = evaluate(model, metric, test_data_loader)
+    logger.info("-----------------------------")
+    logger.info("%s：%s" % (type, key))
+    logger.info("Evaluation Precision: %.5f | Recall: %.5f | F1: %.5f | Sample Num: %d" %
+                (precision, recall, f1, len(subset)))
 
 
 def do_eval():
@@ -60,66 +106,37 @@ def do_eval():
                            data_path=args.test_path,
                            max_seq_len=args.max_seq_len,
                            lazy=False)
-    class_dict = {}
-    relation_data = []
-    if args.debug:
-        for data in test_ds:
-            class_name = unify_prompt_name(data['prompt'])
-            # Only positive examples are evaluated in debug mode
-            if len(data['result_list']) != 0:
-                if re.search('(promote)|(inhibit)|(relatied to)', data['prompt']):
-                    relation_data.append((data['prompt'], data))
-                else:
-                    class_dict.setdefault(class_name, []).append(data)
-
-        relation_type_dict = get_relation_type_dict(relation_data)
-        for k, v in relation_type_dict.items():
-            if k =='relatied to':
-                print(v)
-            print(k)
-    else:
-        class_dict["all_classes"] = test_ds
 
     trans_fn = partial(convert_example,
                        tokenizer=tokenizer,
                        max_seq_len=args.max_seq_len)
 
-    for key in class_dict.keys():
-        if args.debug:
-            test_ds = MapDataset(class_dict[key])
-        else:
-            test_ds = class_dict[key]
+    ner_dict, relation_dict = {}, {}
+    if args.debug:
+        for data in test_ds:
+            is_ner = False
+            if len(data['result_list']) != 0:
+                for ner_label in ner_labels:
+                    if data['prompt'] == ner_label:
+                        ner_dict.setdefault(ner_label, []).append(data)
+                        is_ner = True
+                        break
 
-        test_data_loader = create_data_loader(test_ds,
-                                              mode="test",
-                                              batch_size=args.batch_size,
-                                              trans_fn=trans_fn)
-        sample_num = len(test_data_loader) * args.batch_size 
+                if not is_ner:
+                    for word in relation_words:
+                        if data['prompt'].endswith(word):
+                            relation_dict.setdefault(word, []).append(data)
+                            break
 
-        metric = SpanEvaluator()
-        precision, recall, f1 = evaluate(model, metric, test_data_loader)
-        logger.info("-----------------------------")
-        logger.info("Class Name: %s" % key)
-        logger.info("Evaluation Precision: %.5f | Recall: %.5f | F1: %.5f | Sample Num: %d" %
-                    (precision, recall, f1, sample_num))
+        for key in ner_dict.keys():
+            evaluate_subset(model, trans_fn, MapDataset(ner_dict[key]), "实体", key)
 
-    if args.debug and len(relation_type_dict.keys()) != 0:
-        for key in relation_type_dict.keys():
-            test_ds = MapDataset(relation_type_dict[key])
+        for key in relation_dict.keys():
+            evaluate_subset(model, trans_fn, MapDataset(relation_dict[key]), "关系", key)
 
-            test_data_loader = create_data_loader(test_ds,
-                                                  mode="test",
-                                                  batch_size=args.batch_size,
-                                                  trans_fn=trans_fn)
+    else:
+        evaluate_subset(model, trans_fn, test_ds, "实体+关系", "all")
 
-            sample_num = len(test_data_loader) * args.batch_size
-
-            metric = SpanEvaluator()
-            precision, recall, f1 = evaluate(model, metric, test_data_loader)
-            logger.info("-----------------------------")
-            logger.info("关系：%s" % key)
-            logger.info("Evaluation Precision: %.5f | Recall: %.5f | F1: %.5f | Sample Num: %d" %
-                        (precision, recall, f1, sample_num))
 
 
 if __name__ == "__main__":

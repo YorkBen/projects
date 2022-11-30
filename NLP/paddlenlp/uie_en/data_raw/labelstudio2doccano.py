@@ -34,7 +34,7 @@ def append_attrs(data, item, label_id, relation_id):
                 mapp[anno["id"]] = label_id
 
     for anno in data["annotations"][0]["result"]:
-        if anno["type"] == "relation":
+        if anno["type"] == "relation" and anno["from_id"] in mapp and anno["to_id"] in mapp:
             relation_id += 1
             item["relations"].append({
                 "id": relation_id,
@@ -42,6 +42,9 @@ def append_attrs(data, item, label_id, relation_id):
                 "to_id": mapp[anno["to_id"]],
                 "type": anno["labels"][0] if "labels" in anno and len(anno["labels"]) > 0 else 'null'
             })
+        elif anno["type"] == "relation":
+            print(data["data"])
+            print(anno["labels"][0])
 
     return item, label_id, relation_id
 

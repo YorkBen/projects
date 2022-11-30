@@ -1,30 +1,24 @@
 """
 临床正则提取类
 """
-import sys
 import json
 import re
 import logging
-import os
-import argparse
 import copy
 from openpyxl import load_workbook, Workbook
 from openpyxl.styles import Font, Border, Side, PatternFill, colors, Alignment
 
-sys.path.append('../FeatureExtracModel')
-sys.path.append('../Lib')
 from RegexBase import RegexBase
-from MRRecordUtil import *
 from RegexUtil import RegexUtil
+from MRRecordUtil import *
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 class ClinicRule(RegexBase):
-    def __init__(self, type='腹痛', postfix='4335'):
+    def __init__(self, mdl):
         super(ClinicRule, self).__init__()
 
-        self.type = type
-        self.postfix = postfix
+        self.mdl = mdl
 
         self.utils = RegexUtil()
         self.hl_font1 = Font(name="Arial", size=14, color="00FF0000")
@@ -62,7 +56,7 @@ class ClinicRule(RegexBase):
             {'id':'YDLXX1', 'name': '阴道流血', 'src': ['现病史'], 'type': 'model'},  # model
             {'id':'PNGBX1', 'name': '排尿改变', 'src': ['现病史'], 'type': 'model'},  # model
             {'id':'FTSCFX1', 'name': '放射痛（侧腹、腹股沟、睾丸或大阴唇）', 'src': ['现病史'], 'type': 'model'},  # model
-            {'id':'YCFTX1', 'name': '腰、侧腹痛', 'src': ['现病史'], 'type': 'model'},  # model
+            {'id':'YCFTX1', 'name': '腰/侧腹痛', 'src': ['现病史'], 'type': 'model'},  # model
             {'id':'SEX', 'name': '性别', 'src': ['性别'], 'default': 1}, # 0 男，1 女
             {'id':'AGE', 'name': '年龄', 'src': ['年龄'], 'default': 38.8}, # 38.8 中国人平均年龄
 
@@ -219,27 +213,26 @@ class ClinicRule(RegexBase):
         return results
 
 
-    def predict_by_model(self, txts, name):
+    def predict_by_model(self, txts, feature_name):
         """
         使用模型预测特征
         """
-        # 准备数据
-        keywords = [name for i in range(len(txts))]
-        labels = ['1' for i in range(len(txts))]
+        self.mdl.set_schema('%s[阴性,阳性,未知]' % feature_name)
+        outputs = predictor.predict(txts)
+        results = []
+        for text, output in zip(txts, outputs):
+            for k, v in output.items():
+                v_ = sorted(v, key=lambda x: x['probability'], reverse=True)
+                if v_[0] == '阴性':
+                    value = 0
+                elif v_[0] == '阳性':
+                    value = 1
+                else:
+                    value = 2
+                results.append([value, '', '', text, 0])
+                break
 
-        model = TextClassifier(model_save_path=r'output/models/textclassify',
-                                pre_model_path=r"D:/projects/NLP/BertModels/medical-roberta-wwm",
-                                num_cls=3,
-                                model_name=name,
-                                model_file_path=r'D:\projects\NLP\MedicalRecord\FeatureExtraction\data\%s\models\%s.pth' % (self.type, name)
-                                )
-
-        model.load_data(txts, labels, label_dict={'0': 0, '1': 1, '2': 2}, texts_pair=keywords, batch_size=8, is_training=False)
-        results = model.predict_nowrite()
-
-        results_ = [[r, '', '', txt, 0] for (txt, r) in zip(txts, results)]
-
-        return results_
+        return results
 
 
     def process_common_regex(self, r_strc, match1_strc, txt, record, feature):
@@ -618,10 +611,9 @@ class ClinicRule(RegexBase):
             print('processing feature: %s,  type: %s' % (feature['name'], feature['type'] if 'type' in feature else 'regex'))
             # 模型
             if 'type' in feature and feature['type'] == 'model':
-                # txts = self.get_txt_from_records(records, feature['src'])
-                # f_results = self.predict_by_model(txts, feature['name'])
-                # results[feature['id']] = f_results
-                results[feature['name']] = ['', '', '', '']
+                txts = self.get_txt_from_records(records, feature['src'])
+                f_results = self.predict_by_model(txts, feature['name'])
+                results[feature['name']] = f_results
             else:
                 f_results = self.predict_by_regex(records, feature)
                 # print(feature['name'], f_results)

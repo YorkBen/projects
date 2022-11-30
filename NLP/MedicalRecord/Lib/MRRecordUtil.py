@@ -369,6 +369,9 @@ def process_mr(file_path, with_head=True, type_regex_and_outpath=[('出.*院记�
             # 第一行
             if idx == 0 and with_head:
                 continue
+            else:
+                if ord(line[0]) == 65279: # BOM字符
+                    line = line[1:]
 
             # 空行
             if line.strip() == '':

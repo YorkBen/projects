@@ -25,9 +25,10 @@ class TextStructral:
         self.remove_keys = ['输血史：', '民族：', '婚育史：', '记录医师签名：', '上述病史记录已征得陈述者认同。', '医师：', '医师签名：']
 
 
-    def load_records(self, data_file):
+    def load_records(self, data_file, keys=None, separator='||'):
         """
         加载文本数据，每一段文本数据前后以空行分隔。
+        记录第一行的第一个字段作为key
         """
         records = []
         record = []
@@ -35,11 +36,14 @@ class TextStructral:
             for line in f.readlines():
                 if line.strip() == '':
                     if len(record) > 0:
-                        records.append(record)
+                        if keys is not None and record[0].split(separator)[0].strip() in keys or \
+                            keys is None:
+                            records.append(record)
                         record = []
                 else:
                     record.append(line)
-            records.append(record)
+
+
 
         logging.debug('load records: %s' % len(records))
         self.records = records
