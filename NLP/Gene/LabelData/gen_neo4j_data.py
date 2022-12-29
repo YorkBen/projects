@@ -29,6 +29,40 @@ def create_relations(tx, text_from, label_from, text_to, label_to, rel_label):
     tx.run("MATCH (f:%s), (t:%s)  WHERE f.id=toInteger(%s) and t.id=toInteger(%s) CREATE (f)-[r:%s]->(t)" % (label_from, label_to, text_from, text_to, rel_label))
     print("MATCH (f:%s), (t:%s)  WHERE f.id='%s' and t.id='%s' CREATE (f)-[r:%s]->(t)" % (label_from, label_to, text_from, text_to, rel_label))
 
+entity_name_map = {
+    "Gene": "Gene",
+    "MultiGene": "Multiply_Gene",
+    "Cancer": "Cancer",
+    "MultiCancer": "Multiply_Cancer",
+    "signal pathway": "Signal_Pathway",
+    "GeneFunction": "Gene_Function",
+    "Gene multiFunction": "Gene_Multi-Function"
+}
+
+relation_name_map = {
+    "gene:positive": 'promotes',
+    "gene:negtive": 'inhibits',
+    "gene:relatied": 'is_related_to',
+    "gene:promote dependence": "promotes_the_dependent_gene_of",
+    "gene:inhibite dependence": "inhibits_the_dependent_gene_of",
+    "gene:promote target": "promotes_the_target_gene_of",
+    "gene:inhibite target": "inhibits_the_target_gene_of",
+    "gene:dependence": "is_dependent_on",
+    "gene:target": "'s_target_genes_is",
+    "gene:transcriptional coactivation": "is_the_transcriptional_coactivation_of",
+    "gene:promote pathway": "promotes_the_signaling_pathway_of",
+    "gene:inhibite pathway": "inhibits_the_signaling_pathway_of",
+    "gene:pathway": "'s_signaling_pathway_contains",
+    "gene:responsive": "is_the_responsive_gene_of",
+    "gene:positive relatied": "is_positively_related_to",
+    "gene:negtive relatied": "is_negatively_related_to",
+    "gene:upstream": "is_upstream_of",
+    "gene:downstream": "is_downstream_of",
+    "gene:Gene function": "act_as_the_function_of",
+    "gene:Gene multifunction": "act_as_the_multi-function_of",
+
+    "gene:abbrev": "is_the_abbreviation_of"
+}
 
 if __name__ == "__main__":
     # 参数
@@ -49,105 +83,21 @@ if __name__ == "__main__":
     for item in t.load_json_file(input):
         for e in t.get_entities(item):
             text = e[3] if e[3][-1] != '）' else e[3][:-1]
-            label = e[4]
-            if label == 'Gene multiFunction':
-                label = 'MultiplyGeneFunction'
-            elif label == 'GeneFunction':
-                label = 'GeneFunction'
-            elif label == 'MultiCancer':
-                label = 'MultiplyCancer'
-            elif label == 'MultiGene':
-                label = 'MultiplyGene'
-            elif label == 'signal pathway':
-                label = 'SignalPathway'
+            label = entity_name_map[e[4]]
 
             if label not in entity_type_list_dict:
                 entity_type_list_dict[label] = []
-
-            if text not in entity_type_list_dict[label]:
-                entity_type_list_dict[label].append(text)
+            entity_type_list_dict[label].append(text)
 
             entity_dict[e[0]] = (text, label)
+        entity_type_list_dict[label] = list(set(entity_type_list_dict[label]))
 
 
         for r in t.get_relations(item):
             e0, e1 = entity_dict[r[0]], entity_dict[r[1]]
             e0_id = entity_type_list_dict[e0[1]].index(e0[0]) + 1
             e1_id = entity_type_list_dict[e1[1]].index(e1[0]) + 1
-            if r[-1] == "gene:positive":
-                label = 'promote'
-            elif r[-1] == "gene:negtive":
-                label = 'inhibit'
-
-            elif r[-1] == "gene:relatied":
-                label = 'relatied'
-                # label = 'is relatied to'
-            elif r[-1] == "gene:positive relatied":
-                label = 'positively_relatied'
-                # label = 'is positively relatied to'
-            elif r[-1] == "gene:negtive relatied":
-                label = 'negtively_relatied'
-                # label = 'is negtively relatied to'
-
-            elif r[-1] == "gene:abbrev":
-                label = 'abbreviation'
-                # label = 'is abbreviation of'
-            elif r[-1] == "gene:Gene function":
-                label = 'Gene_Function'
-                # label = 'is Gene function of'
-            elif r[-1] == "gene:Gene multifunction":
-                label = 'Gene_Function'
-                # label = 'is Multiply Gene function of'
-
-            elif r[-1] == "gene:pathway":
-                label = 'pathway'
-                # label = 'is pathway of'
-            elif r[-1] == "gene:inhibite pathway":
-                label = 'inhibite_pathway'
-                # label = 'inhibite pathway of'
-
-            elif r[-1] == "gene:promote pathway":
-                label = 'promote_pathway'
-                # label = 'promote pathway of'
-
-
-            elif r[-1] == "gene:target":
-                label = 'target'
-                # label = 'is target of'
-            elif r[-1] == "gene:inhibite target":
-                label = 'inhibite_target'
-                # label = 'inhibite target of'
-            elif r[-1] == "gene:promote target":
-                label = 'promote_target'
-                # label = 'promote target of'
-
-            elif r[-1] == "gene:dependence":
-                label = 'dependence'
-                # label = 'is dependent of'
-
-            elif r[-1] == "gene:inhibite dependence":
-                label = 'inhibite_dependence'
-                # label = 'inhibite dependence of'
-
-            elif r[-1] == "gene:promote dependence":
-                label = 'promote_dependence'
-                # label = 'promote dependence of'
-
-            elif r[-1] == "gene:responsive":
-                label = 'responsive'
-                # label = 'is responsive to'
-            elif r[-1] == "gene:transcriptional coactivation":
-                label = 'transcriptional_coactivation'
-                # label = 'is transcriptional coactivation of'
-
-
-            elif r[-1] == "gene:upstream":
-                label = 'upstream'
-            elif r[-1] == "gene:downstream":
-                label = 'downstream'
-
-            else:
-                label = r[-1]
+            label = relation_name_map[r[-1]]
 
             relations.append((e0_id, e0[1], e1_id, e1[1], label))
 

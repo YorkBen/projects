@@ -173,8 +173,9 @@ def thread_run(text_data, idx):
 
 
 if __name__ == "__main__":
-    gen_train_val_data()
-    gene_dict = load_gene_dict()
+    # gen_train_val_data()
+    # gene_dict = load_gene_dict()
+    gene_dict = {}
     gene_dict_1 = load_cancel_dict()
     gene_dict_2 = load_dict_from_ner_data()
     gene_dict |= gene_dict_1
@@ -186,39 +187,63 @@ if __name__ == "__main__":
     # exit()
 
     thread_max_num = 14
+    random.seed(2345)
 
-    text_data = []
-    with open('train_data.text') as f:
-        for line in f.readlines():
-            text_data.append(line[:-1].replace('\\n', '\n'))
+    inhibits_data = []
+    with open('../Data/20221207/inhibits_data.text') as f:
+        for item in f.readlines():
+            inhibits_data.append(item[:-1].replace('\\n', '\n'))
 
-    text_data_len = len(text_data)
-    results = Manager().list()
-    for i in range(text_data_len):
-        results.append(None)
+    promotes_data = []
+    with open('../Data/20221207/promotes_data.text') as f:
+        for item in f.readlines():
+            promotes_data.append(item[:-1].replace('\\n', '\n'))
 
-    for k1 in range(0, text_data_len, thread_max_num):
-        threads, thread_idxs = [], []
-        for k2 in range(0, thread_max_num):
-            idx = k1 + k2
-            if idx < text_data_len:
-                # t = threading.Thread(target=thread_run, args=(text_data[idx], idx))
-                t = Process(target=thread_run, args=([text_data[idx]], idx))
-                threads.append(t)
-                thread_idxs.append(idx)
+    uncertain_data = []
+    with open('../Data/20221207/uncertain_data.text') as f:
+        for item in f.readlines():
+            uncertain_data.append(item[:-1].replace('\\n', '\n'))
 
-        # 开启进程
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
+    random.shuffle(inhibits_data)
+    random.shuffle(promotes_data)
+    random.shuffle(uncertain_data)
 
-        # # 检测这轮线程是否都执行完
-        # for idx in thread_idxs:
-        #     if results[idx] is None:
-        #         time.sleep(5)
+    uncertain_data_len_half = len(uncertain_data) // 2
 
-        # 本轮线程都执行完，先写结果
-        print('write file...')
-        with open(r'train_data.json', "w") as f:
-            f.write(json.dumps([item for item in results if item is not None], indent=1, separators=(',', ':'), ensure_ascii=False))
+    inhibits_data.extend(uncertain_data[:uncertain_data_len_half])
+    promotes_data.extend(uncertain_data[uncertain_data_len_half:])
+    random.shuffle(inhibits_data)
+    random.shuffle(promotes_data)
+
+    for out_path, text_data in zip(['../Data/20221207/promotes_data.json', '../Data/20221207/inhibits_data.json'], [promotes_data, inhibits_data]):
+        print('processing %s' % out_path)
+        text_data_len = len(text_data)
+        results = Manager().list()
+        for i in range(text_data_len):
+            results.append(None)
+
+        for k1 in range(0, text_data_len, thread_max_num):
+            threads, thread_idxs = [], []
+            for k2 in range(0, thread_max_num):
+                idx = k1 + k2
+                if idx < text_data_len:
+                    # t = threading.Thread(target=thread_run, args=(text_data[idx], idx))
+                    t = Process(target=thread_run, args=([text_data[idx]], idx))
+                    threads.append(t)
+                    thread_idxs.append(idx)
+
+            # 开启进程
+            for t in threads:
+                t.start()
+            for t in threads:
+                t.join()
+
+            # # 检测这轮线程是否都执行完
+            # for idx in thread_idxs:
+            #     if results[idx] is None:
+            #         time.sleep(5)
+
+            # 本轮线程都执行完，先写结果
+            print('write file...')
+            with open(out_path, "w") as f:
+                f.write(json.dumps([item for item in results if item is not None], indent=1, separators=(',', ':'), ensure_ascii=False))
