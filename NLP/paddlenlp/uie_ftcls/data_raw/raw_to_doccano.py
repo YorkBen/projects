@@ -136,24 +136,6 @@ def process_text_regex(text):
         if len(t) == 0:
             continue
 
-        if re.search('(血HCG)|(考虑)|(可能)|(细胞)|(回声)|(酶)|(蛋白)|(脉搏)|(呼吸)|(体温)|(转氨酶)|(进一步)|(具体不详)|(((腹部平片)|(检查)|(彩超)|(超声)).*示)|(诊断为)|(平扫)|(附件区' + inner_neg + '(影|囊|灶|(包块)|(增厚)))', t):
-            continue
-
-        if re.search('([B彩超声]{2}.*[;：:])|([起发]病.*来)|(病理)|(病检)|(镜下)|(肠镜)|(内镜)|(退镜)|(活检)|(免疫组化)|(腺体)|(DNA)|(理结果回报[：:])|(为求诊?治)|([于在].*[治疗就诊处理]{2})|([急门]诊.*(以拟))|(以.*[收入住院]{2})|(我[院科].*诊)|(查血)|(瘢痕)|(切口)|(皮肤)|(就诊)|(血常规)|(尿常规)|(MRI)|(MRCP)|(CT)|(成像)|(检测)|(测定)|([三四五六七八九]项)', t):
-            continue
-
-        if re.search('(痛)|(腹)|(疼痛)|(进食)|(活动)|(体位)|(大便)|(排气)|(加重)|(减轻)|(坐)|(站)|(抽搐)', t):
-            results.append(t)
-            continue
-
-        for feature in features:
-            if re.search(feature['regex'], t, re.I):
-                results.append(t)
-                added = True
-                break
-        if added:
-            continue
-
         ### 时间
         for regex in [time_re, re2, re3, re4, re5]:
             if re.search(regex, t, re.I):
@@ -173,14 +155,34 @@ def process_text_regex(text):
         if added:
             continue
 
+        # 其它关键词
+        if re.search('(血HCG)|(考虑)|(可能)|(细胞)|(回声)|(酶)|(蛋白)|(脉搏)|(呼吸)|(体温)|(转氨酶)|(进一步)|(具体不详)|(((腹部平片)|(检查)|(彩超)|(超声)).*示)|(诊断为)|(平扫)|(附件区' + inner_neg + '(影|囊|灶|(包块)|(增厚)))', t):
+            continue
+
+        if re.search('([B彩超声]{2}.*[;：:])|([起发]病.*来)|(病理)|(病检)|(镜下)|(肠镜)|(内镜)|(退镜)|(活检)|(免疫组化)|(腺体)|(DNA)|(理结果回报[：:])|(为求诊?治)|([于在].*[治疗就诊处理]{2})|([急门]诊.*(以拟))|(以.*[收入住院]{2})|(我[院科].*诊)|(查血)|(瘢痕)|(切口)|(皮肤)|(就诊)|(血常规)|(尿常规)|(MRI)|(MRCP)|(CT)|(成像)|(检测)|(测定)|([三四五六七八九]项)', t):
+            continue
+
+        # 特征词
+        for feature in features:
+            if re.search(feature['regex'], t, re.I):
+                results.append(t)
+                added = True
+                break
+        if added:
+            continue
+
+        if re.search('(痛)|(腹)|(疼痛)|(进食)|(活动)|(体位)|(反射)|(大便)|(冷汗)|(弥漫性)|(发作)|(排气)|(加重)|(加剧)|(不剧)|(减轻)|(坐)|(站)|(抽搐)|(重视)|(^无)|(持续)|(间断)|(忍受)|(持续)|(大汗)', t):
+            results.append(t)
+            continue
+
     return '，'.join(results)
 
 
 def filt_data(text):
     """
-    过滤非腹痛数据，非腹痛数据，诊断类型为？
+    从整个文本过滤非腹痛数据，非腹痛数据，诊断类型为？
     """
-    if re.search('(胃|腹|腰|肋|肝|脾|肾|(剑突下)|(附件区)|(脐周)|(麦氏点))' + '[^，；。棘突脊椎]*?' + '((不适)|痛|(坠?胀))', text) or \
+    if re.search('(胃|腹|腰|肋|肝|脾|肾|(剑突下)|(附件区)|(脐周)|(麦氏点)|(季肋区))' + '[^，；。棘突脊椎]*?' + '((不适)|痛|疼|(坠?胀))', text) or \
         re.search('肛门坠胀', text):
         return True
     else:
@@ -206,7 +208,7 @@ def read_input(input_path):
             if not filt_data(arr[0] + arr[1] + arr[2]):
                 continue
 
-            txt = process_text_regex(arr[1] + '。' + arr[2])
+            txt = process_text_regex(arr[1] + '。今日检查' + arr[2])
 
             match_item = {'match_str': arr[3].strip().replace(',', '，'), 'label': arr[4]}
 
