@@ -135,25 +135,56 @@ class RegexBase:
         else:
             return False, None
 
+
     def check_neg_word_findpos(self, text, word):
         """
         检查text中是否有否定词，word为主体词, text为文本片段。
         """
-        if text.find(word) == -1:
-            return False, None
+        # match_word = re.search('(([^，。]*?)|^)%s(([^，。]*?)|$)' % word.replace('-', '\-').replace('+', '\+').replace('(', '\(').replace(')', '\)').replace('[', '\[').replace(']', '\]').replace('*', '\*').replace('?', '\?'), text)
+        # if match_word is None:
+        #     return False, None
+        # text = match_word.group(0)
 
-        mt1_sp2 = text.find(word) + len(word)
-        match21 = re.search(r"(无[^痛])", text[:mt1_sp2])
-        match22 = re.search(r"(不[^详全均适])|未|非|(否认)|(除外)|(排除)", text[:mt1_sp2])
-        match3 = re.search(r"(不明显)|(阴性)|(排除)|(((未见)|无)(明显)?异常)|([(（][-—][)）])", text[mt1_sp2:])
-        if match21 and not '诱因' in text[:mt1_sp2]:
-            return True, match21
-        elif match22:
-            return True, match22
-        elif match3:
-            return True, match3
-        else:
-            return False, None
+        word_start = text.find(word)
+        pre_text, tail_text = text[:word_start], text[word_start + len(word):]
+        # 前缀含无
+        for match_wu in re.finditer(r"(无)", pre_text):
+            if match_wu is not None:
+                pre_after_text = pre_text[match_wu.span()[1]:]
+                if pre_after_text.startswith('痛') or '诱因' in pre_after_text:
+                    continue
+                else:
+                    return True, match_wu
+
+        # 前缀含不
+        for match_bu in re.finditer(r"(不)", pre_text):
+            if match_bu is not None:
+                pre_after_text = pre_text[match_bu.span()[1]:]
+                if re.match('[详全均适]|(规则)', pre_after_text):
+                    continue
+                else:
+                    return True, match_bu
+
+        # 前缀含非
+        for match_fei in re.finditer(r"(非)", pre_text):
+            if match_fei is not None:
+                pre_after_text = pre_text[match_fei.span()[1]:]
+                if pre_after_text.startswith('常'):
+                    continue
+                else:
+                    return True, match_fei
+
+        # 其它前缀
+        for match_pre in re.finditer(r"未|(否认)|(除外)|(排除)", pre_text):
+            if match_pre is not None:
+                return True, match_pre
+
+        # 后缀
+        for match_post in re.finditer(r"(不明显)|(阴性)|未|(否认)|(除外)|(无" + self.inner_neg + "缓解)|(排除)|(((未见)|(未及)|无)(明显)?异常)|([(（][-—][)）])", tail_text):
+            if match_post is not None:
+                return True, match_post
+
+        return False, None
 
 
     def check_prefix(self, text, word, pattern):
@@ -171,6 +202,7 @@ class RegexBase:
         else:
             return False, None
 
+
     def check_postfix(self, text, word, pattern):
         """
         检查后缀中是否包含模式
@@ -185,6 +217,17 @@ class RegexBase:
             return True, match
         else:
             return False, None
+
+
+    def check_exclude_match(self, text, word, pattern):
+        """
+        某些匹配是其它匹配的一部分，如果符合其它匹配，则否定。比如腹胀痛匹配后，否定腹胀。
+        """
+        match = re.search(pattern, text)
+        if match is not None and word in match.group(0):
+            return True
+        else:
+            return False
 
 
     def check_suspect_word(self, text, word):

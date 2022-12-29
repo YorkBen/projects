@@ -1,8 +1,13 @@
 import json
 
-with open('合并后数据3.json', encoding="utf-8") as f:
+with open('合并后数据32.json', encoding="utf-8") as f:
     json_data = json.load(f, strict=False)
 
+for idx, item in enumerate(json_data):
+    if item['txt'] == '者10天前无明显诱因出现左下腹部疼痛，持续疼痛，不伴右腹部疼痛，10天前无明显诱因右侧背部开始起红疹、水疱，无右侧腹部疼痛，大便未解，体力体重较前明显减轻':
+        print(idx)
+
+exit()
 with open('tmp.txt', encoding="utf-8") as f:
     for line in f.readlines():
         arr = line.strip().split('\t')
